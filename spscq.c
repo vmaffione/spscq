@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define CACHELINE_ALIGNED __attribute__((aligned(64)))
 
@@ -76,27 +77,27 @@ msq_create(int qlen, int rbatch)
     return mq;
 }
 
-static unsigned int
+static inline unsigned int
 msq_wspace(struct msq *mq)
 {
     return (mq->read - 1 - mq->write_priv) & mq->qmask;
 }
 
 /* No boundary checks, to be called after msq_wspace(). */
-static void
+static inline void
 msq_write_local(struct msq *mq, struct mbuf *m)
 {
     mq->q[mq->write_priv & mq->qmask] = m;
     mq->write_priv++;
 }
 
-static void
+static inline void
 msq_write_publish(struct msq *mq)
 {
     mq->write = mq->write_priv;
 }
 
-static int
+static inline int
 msq_write(struct msq *mq, struct mbuf *m)
 {
     unsigned int write_next = mq->write_priv + 1;
@@ -110,14 +111,14 @@ msq_write(struct msq *mq, struct mbuf *m)
     return 0;
 }
 
-static unsigned int
+static inline unsigned int
 msq_rspace(struct msq *mq)
 {
     return mq->write - mq->read_priv;
 }
 
 /* No boundary checks, to be called after msq_rspace(). */
-static struct mbuf *
+static inline struct mbuf *
 msq_read_local(struct msq *mq)
 {
     struct mbuf *m = mq->q[mq->read_priv];
@@ -125,13 +126,13 @@ msq_read_local(struct msq *mq)
     return m;
 }
 
-static void
+static inline void
 msq_read_publish(struct msq *mq)
 {
     mq->read = mq->read_priv;
 }
 
-static struct mbuf *
+static inline struct mbuf *
 msq_read(struct msq *mq)
 {
     struct mbuf *m;
@@ -145,21 +146,82 @@ msq_read(struct msq *mq)
     return m;
 }
 
+static void
+msq_dump(const char *prefix, struct msq *mq)
+{
+    printf("[%s] r %u rspace %u w %u wspace %u\n", prefix, mq->read & mq->qmask,
+           msq_rspace(mq), mq->write & mq->qmask, msq_wspace(mq));
+}
+
+struct global {
+    unsigned int qlen;
+    unsigned int rbatch;
+    struct msq *mq;
+};
+
+static void *
+producer(void *opaque)
+{
+    struct global *g = (struct global *)opaque;
+    struct msq *mq   = g->mq;
+    struct mbuf *m   = mbuf_alloc();
+
+    msq_dump("P", mq);
+    msq_write(mq, m);
+    msq_dump("P", mq);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+
+static void *
+consumer(void *opaque)
+{
+    struct global *g = (struct global *)opaque;
+    struct msq *mq   = g->mq;
+    struct mbuf *m;
+
+    msq_dump("C", mq);
+    m = msq_read(mq);
+    msq_dump("C", mq);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+
 int
 main(int argc, char **argv)
 {
-    {
-        struct msq *mq = msq_create(128, 4);
-        struct mbuf *m = mbuf_alloc();
+    pthread_t pth, cth;
+    struct global _g;
+    struct global *g = &_g;
 
-        printf("wspace %u rspace %u\n", msq_wspace(mq), msq_rspace(mq));
-        m->len = 18;
-        msq_write(mq, m);
-        printf("wspace %u rspace %u\n", msq_wspace(mq), msq_rspace(mq));
-        m = msq_read(mq);
-        printf("wspace %u rspace %u\n", msq_wspace(mq), msq_rspace(mq));
-        free(mq);
-        free(m);
+    {
+        g->qlen   = 128;
+        g->rbatch = 4;
+        g->mq     = msq_create(g->qlen, g->rbatch);
+
+        if (pthread_create(&pth, NULL, producer, g)) {
+            perror("pthread_create(producer");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pthread_create(&cth, NULL, consumer, g)) {
+            perror("pthread_create(consumer)");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pthread_join(pth, NULL)) {
+            perror("pthread_join(producer)");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pthread_join(cth, NULL)) {
+            perror("pthread_join(consumer)");
+            exit(EXIT_FAILURE);
+        }
+
+        free(g->mq);
     }
 
     return 0;
