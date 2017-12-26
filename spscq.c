@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#undef QDEBUG
+
 #define CACHELINE_ALIGNED __attribute__((aligned(64)))
 
 /* Alloc zeroed memory, aborting on failure. */
@@ -176,7 +178,7 @@ msq_free(struct msq *mq)
 
 struct global {
     /* Test length as a number of packets. */
-    unsigned int num_packets;
+    long int num_packets;
 
     /* Queue length. */
     unsigned int qlen;
@@ -191,17 +193,20 @@ struct global {
 static void *
 msq_producer(void *opaque)
 {
-    struct global *g  = (struct global *)opaque;
-    unsigned int left = g->num_packets;
-    struct mbuf *m    = mbuf_alloc();
-    struct msq *mq    = g->mq;
+    struct global *g = (struct global *)opaque;
+    long int left    = g->num_packets;
+    struct mbuf *m   = mbuf_alloc();
+    struct msq *mq   = g->mq;
 
-    while (left) {
+    while (left > 0) {
+#ifdef QDEBUG
         msq_dump("P", mq);
+#endif
         if (msq_write(mq, m) == 0) {
             --left;
         }
     }
+    msq_dump("P", mq);
 
     pthread_exit(NULL);
     return NULL;
@@ -210,18 +215,21 @@ msq_producer(void *opaque)
 static void *
 msq_consumer(void *opaque)
 {
-    struct global *g  = (struct global *)opaque;
-    unsigned int left = g->num_packets;
-    struct msq *mq    = g->mq;
+    struct global *g = (struct global *)opaque;
+    long int left    = g->num_packets;
+    struct msq *mq   = g->mq;
     struct mbuf *m;
 
-    while (left) {
+    while (left > 0) {
+#ifdef QDEBUG
         msq_dump("C", mq);
+#endif
         m = msq_read(mq);
         if (m) {
             --left;
         }
     }
+    msq_dump("C", mq);
 
     pthread_exit(NULL);
     return NULL;
