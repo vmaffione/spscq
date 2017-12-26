@@ -31,6 +31,14 @@ mbuf_alloc()
     return szalloc(sizeof(struct mbuf));
 }
 
+void
+mbuf_free(struct mbuf *m)
+{
+    if (m) {
+        free(m);
+    }
+}
+
 /* Multi-section queue, based on the Lamport classic queue.
  * All indices are free running. */
 struct msq {
@@ -121,7 +129,7 @@ msq_rspace(struct msq *mq)
 static inline struct mbuf *
 msq_read_local(struct msq *mq)
 {
-    struct mbuf *m = mq->q[mq->read_priv];
+    struct mbuf *m = mq->q[mq->read_priv & mq->qmask];
     mq->read_priv++;
     return m;
 }
@@ -153,37 +161,67 @@ msq_dump(const char *prefix, struct msq *mq)
            msq_rspace(mq), mq->write & mq->qmask, msq_wspace(mq));
 }
 
+static void
+msq_free(struct msq *mq)
+{
+    struct mbuf *m;
+
+    while ((m = msq_read(mq)) != NULL) {
+        mbuf_free(m);
+    }
+
+    memset(mq, 0, sizeof(*mq));
+    free(mq);
+}
+
 struct global {
+    /* Test length as a number of packets. */
+    unsigned int num_packets;
+
+    /* Queue length. */
     unsigned int qlen;
+
+    /* Max consumer batch. */
     unsigned int rbatch;
+
+    /* The queue. */
     struct msq *mq;
 };
 
 static void *
-producer(void *opaque)
+msq_producer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    struct msq *mq   = g->mq;
-    struct mbuf *m   = mbuf_alloc();
+    struct global *g  = (struct global *)opaque;
+    unsigned int left = g->num_packets;
+    struct mbuf *m    = mbuf_alloc();
+    struct msq *mq    = g->mq;
 
-    msq_dump("P", mq);
-    msq_write(mq, m);
-    msq_dump("P", mq);
+    while (left) {
+        msq_dump("P", mq);
+        if (msq_write(mq, m) == 0) {
+            --left;
+        }
+    }
 
     pthread_exit(NULL);
     return NULL;
 }
 
 static void *
-consumer(void *opaque)
+msq_consumer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    struct msq *mq   = g->mq;
+    struct global *g  = (struct global *)opaque;
+    unsigned int left = g->num_packets;
+    struct msq *mq    = g->mq;
     struct mbuf *m;
 
-    msq_dump("C", mq);
-    m = msq_read(mq);
-    msq_dump("C", mq);
+    while (left) {
+        msq_dump("C", mq);
+        m = msq_read(mq);
+        if (m) {
+            --left;
+        }
+    }
 
     pthread_exit(NULL);
     return NULL;
@@ -197,31 +235,32 @@ main(int argc, char **argv)
     struct global *g = &_g;
 
     {
-        g->qlen   = 128;
-        g->rbatch = 4;
-        g->mq     = msq_create(g->qlen, g->rbatch);
+        g->num_packets = 1000;
+        g->qlen        = 128;
+        g->rbatch      = 4;
+        g->mq          = msq_create(g->qlen, g->rbatch);
 
-        if (pthread_create(&pth, NULL, producer, g)) {
-            perror("pthread_create(producer");
+        if (pthread_create(&pth, NULL, msq_producer, g)) {
+            perror("pthread_create(msq_producer");
             exit(EXIT_FAILURE);
         }
 
-        if (pthread_create(&cth, NULL, consumer, g)) {
-            perror("pthread_create(consumer)");
+        if (pthread_create(&cth, NULL, msq_consumer, g)) {
+            perror("pthread_create(msq_consumer)");
             exit(EXIT_FAILURE);
         }
 
         if (pthread_join(pth, NULL)) {
-            perror("pthread_join(producer)");
+            perror("pthread_join(msq_producer)");
             exit(EXIT_FAILURE);
         }
 
         if (pthread_join(cth, NULL)) {
-            perror("pthread_join(consumer)");
+            perror("pthread_join(msq_consumer)");
             exit(EXIT_FAILURE);
         }
 
-        free(g->mq);
+        msq_free(g->mq);
     }
 
     return 0;
