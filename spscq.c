@@ -24,7 +24,9 @@ struct mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
-struct lampq {
+/* Multi-section queue, based on the Lamport classic queue.
+ * All indices are free running. */
+struct msq {
     /* Producer private data. */
     CACHELINE_ALIGNED
     unsigned int write_priv;
@@ -44,29 +46,83 @@ struct lampq {
     /* Shared read only data. */
     CACHELINE_ALIGNED
     unsigned int qlen;
+    unsigned int qmask;
+    unsigned int rbatch;
 
     /* The queue. */
     CACHELINE_ALIGNED
     struct mbuf *q[0];
 };
 
-static struct lampq *
-lampq_create(int qlen)
+static struct msq *
+msq_create(int qlen, int rbatch)
 {
-    struct lampq *lq =
-        szalloc(sizeof(struct lampq) + qlen * sizeof(struct mbuf));
+    struct msq *mq = szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0]));
 
-    lq->qlen = qlen;
+    if (qlen < 2 || ((qlen & (qlen - 1)) != 0)) {
+        exit(EXIT_FAILURE);
+    }
 
-    return lq;
+    mq->qlen   = qlen;
+    mq->qmask  = qlen - 1;
+    mq->rbatch = rbatch;
+
+    return mq;
+}
+
+static unsigned int
+msq_rspace(struct msq *mq)
+{
+    return mq->write - mq->read_priv;
+}
+
+static unsigned int
+msq_wspace(struct msq *mq)
+{
+    return (mq->read - 1 - mq->write_priv) & mq->qmask;
+}
+
+static void
+msq_write_local(struct msq *mq, struct mbuf *m)
+{
+    mq->q[mq->write_priv & mq->qmask] = m;
+    mq->write_priv++;
+}
+
+static void
+msq_write_publish(struct msq *mq)
+{
+    mq->write = mq->write_priv;
+}
+
+static int
+msq_write(struct msq *mq, struct mbuf *m)
+{
+    unsigned int write_next = mq->write_priv + 1;
+
+    if (write_next == mq->read) {
+        return -1; /* no space */
+    }
+    msq_write_local(mq, m);
+    msq_write_publish(mq);
+
+    return 0;
 }
 
 int
 main(int argc, char **argv)
 {
+    struct mbuf m;
+
+    memset(&m, 0, sizeof(m));
+
     {
-        struct lampq *lq = lampq_create(128);
-        free(lq);
+        struct msq *mq = msq_create(128, 4);
+        printf("wspace %u rspace %u\n", msq_wspace(mq), msq_rspace(mq));
+        msq_write(mq, &m);
+        printf("wspace %u rspace %u\n", msq_wspace(mq), msq_rspace(mq));
+        free(mq);
     }
+
     return 0;
 }
