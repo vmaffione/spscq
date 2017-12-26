@@ -9,3 +9,6 @@ spscq: spscq.o
 
 clean:
 	-rm -rf $(OBJS)
+
+format:
+	clang-format -i -style=file $(shell git ls-files *.c *.h)
