@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "tsc.h"
+
 #undef QDEBUG
 
 #define CACHELINE_ALIGNED __attribute__((aligned(64)))
@@ -240,8 +242,10 @@ main(int argc, char **argv)
     struct global _g;
     struct global *g = &_g;
 
+    tsc_init();
+
     {
-        g->num_packets = 1000;
+        g->num_packets = 100000;
         g->qlen        = 128;
         g->rbatch      = 4;
         g->mq          = msq_create(g->qlen, g->rbatch);

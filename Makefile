@@ -7,7 +7,7 @@ LDFLAGS=-lpthread
 
 all: $(PROGS)
 
-spscq: spscq.o
+spscq: spscq.o tsc.o
 
 clean:
 	-rm -rf $(OBJS)
