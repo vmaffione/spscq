@@ -50,7 +50,7 @@ struct msq {
 
     /* Producer write, consumer read. */
     CACHELINE_ALIGNED
-    unsigned int write;
+    volatile unsigned int write;
 
     /* Consumer private data. */
     CACHELINE_ALIGNED
@@ -58,7 +58,7 @@ struct msq {
 
     /* Producer read, consumer write. */
     CACHELINE_ALIGNED
-    unsigned int read;
+    volatile unsigned int read;
 
     /* Shared read only data. */
     CACHELINE_ALIGNED
@@ -110,9 +110,7 @@ msq_write_publish(struct msq *mq)
 static inline int
 msq_write(struct msq *mq, struct mbuf *m)
 {
-    unsigned int write_next = mq->write_priv + 1;
-
-    if (write_next == mq->read) {
+    if (msq_wspace(mq) == 0) {
         return -1; /* no space */
     }
     msq_write_local(mq, m);

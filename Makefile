@@ -1,7 +1,8 @@
 CC=clang
 OBJS=spscq.o
 PROGS=spscq
-CFLAGS=-O2 -Wall -Werror -g
+CFLAGS=-Wall -Werror -g
+CFLAGS+=-O2
 LDFLAGS=-lpthread
 
 all: $(PROGS)
