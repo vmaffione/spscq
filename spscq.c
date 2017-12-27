@@ -253,13 +253,22 @@ struct global {
     struct mbuf *pool;
 };
 
+#define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
+    ({                                                                         \
+        struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
+        m->len         = pool_idx_++;                                          \
+        m;                                                                     \
+    })
+
 static void *
 msq_legacy_producer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    long int left    = g->num_packets;
-    struct mbuf *m   = mbuf_alloc();
-    struct msq *mq   = g->mq;
+    struct global *g       = (struct global *)opaque;
+    unsigned int pool_mask = g->mbufs - 1;
+    long int left          = g->num_packets;
+    struct mbuf *pool      = g->pool;
+    struct msq *mq         = g->mq;
+    unsigned int pool_idx  = 0;
 
     runon("P", g->p_core);
 
@@ -268,7 +277,7 @@ msq_legacy_producer(void *opaque)
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
-        if (msq_write(mq, m) == 0) {
+        if (msq_write(mq, mbuf_get(pool, pool_idx, pool_mask)) == 0) {
             --left;
         }
     }
@@ -307,11 +316,13 @@ msq_legacy_consumer(void *opaque)
 static void *
 msq_producer(void *opaque)
 {
-    struct global *g   = (struct global *)opaque;
-    long int left      = g->num_packets;
-    struct mbuf *m     = mbuf_alloc();
-    unsigned int batch = g->batch;
-    struct msq *mq     = g->mq;
+    struct global *g       = (struct global *)opaque;
+    unsigned int pool_mask = g->mbufs - 1;
+    long int left          = g->num_packets;
+    unsigned int batch     = g->batch;
+    struct mbuf *pool      = g->pool;
+    struct msq *mq         = g->mq;
+    unsigned int pool_idx  = 0;
 
     runon("P", g->p_core);
 
@@ -328,7 +339,7 @@ msq_producer(void *opaque)
             }
             left -= avail;
             for (; avail > 0; avail--) {
-                msq_write_local(mq, m);
+                msq_write_local(mq, mbuf_get(pool, pool_idx, pool_mask));
             }
             msq_write_publish(mq);
         }
