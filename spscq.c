@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <time.h>
+#include <pthread.h>
+#include <errno.h>
+#include <sched.h>
 
 #include "tsc.h"
 
@@ -21,6 +24,42 @@ szalloc(size_t size)
     }
     memset(p, 0, size);
     return p;
+}
+
+static void
+runon(const char *name, int i)
+{
+    static int NUM_CPUS = 0;
+    cpu_set_t cpumask;
+
+    if (NUM_CPUS == 0) {
+        NUM_CPUS = sysconf(_SC_NPROCESSORS_ONLN);
+        printf("system has %d cores\n", NUM_CPUS);
+    }
+    CPU_ZERO(&cpumask);
+    if (i >= 0) {
+        CPU_SET(i, &cpumask);
+    } else {
+        /* -1 means it can run on any CPU */
+        int j;
+
+        i = -1;
+        for (j = 0; j < NUM_CPUS; j++) {
+            CPU_SET(j, &cpumask);
+        }
+    }
+
+    if ((errno = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t),
+                                        &cpumask)) != 0) {
+        printf("Unable to set affinity for %s on %d : %s\n", name, i,
+               strerror(errno));
+    }
+
+    if (i >= 0) {
+        printf("thread %s on core %d\n", name, i);
+    } else {
+        printf("thread %s on any core in 0..%d\n", name, NUM_CPUS - 1);
+    }
 }
 
 struct mbuf {
@@ -80,6 +119,7 @@ msq_create(int qlen, int rbatch)
     struct msq *mq = szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0]));
 
     if (qlen < 2 || ((qlen & (qlen - 1)) != 0)) {
+        printf("Error: queue length %d is not a power of two\n", qlen);
         exit(EXIT_FAILURE);
     }
 
@@ -187,6 +227,10 @@ struct global {
     /* Max consumer batch. */
     unsigned int rbatch;
 
+    /* Affinity for producer and consumer. */
+    int p_core, c_core;
+
+    /* Timestamp to compute experiment statistics. */
     struct timespec begin, end;
 
     /* The queue. */
@@ -200,6 +244,8 @@ msq_producer(void *opaque)
     long int left    = g->num_packets;
     struct mbuf *m   = mbuf_alloc();
     struct msq *mq   = g->mq;
+
+    runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
@@ -224,6 +270,8 @@ msq_consumer(void *opaque)
     struct msq *mq   = g->mq;
     struct mbuf *m;
 
+    runon("C", g->c_core);
+
     while (left > 0) {
 #ifdef QDEBUG
         msq_dump("C", mq);
@@ -243,10 +291,12 @@ msq_consumer(void *opaque)
 static void
 usage(const char *progname)
 {
-    printf("%s [-h]"
-           " [-n NUM_PACKETS]"
-           " [-b MAX_CONSUMER_BATCH]"
-           " [-l QUEUE_LENGTH]"
+    printf("%s [-h]\n"
+           "    [-n NUM_PACKETS (in millions)]\n"
+           "    [-b MAX_CONSUMER_BATCH]\n"
+           "    [-l QUEUE_LENGTH]\n"
+           "    [-c PRODUCER_CORE_ID)]\n"
+           "    [-c CONSUMER_CORE_ID)]\n"
            "\n",
            progname);
 }
@@ -260,18 +310,20 @@ main(int argc, char **argv)
     int opt;
 
     memset(g, 0, sizeof(*g));
-    g->num_packets = 10000000;
+    g->num_packets = 10 * 1000000;
     g->qlen        = 128;
     g->rbatch      = 4;
+    g->p_core      = -1;
+    g->c_core      = -1;
 
-    while ((opt = getopt(argc, argv, "hn:b:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
             return 0;
 
         case 'n':
-            g->num_packets = atoi(optarg);
+            g->num_packets = atoi(optarg) * 1000000;
             if (g->num_packets < 0) {
                 printf("    Invalid number of packets '%s'\n", optarg);
                 return -1;
@@ -293,6 +345,16 @@ main(int argc, char **argv)
                 return -1;
             }
             break;
+
+        case 'c': {
+            int val = atoi(optarg);
+            if (g->p_core < 0) {
+                g->p_core = val;
+            } else if (g->c_core < 0) {
+                g->c_core = val;
+            }
+            break;
+        }
         }
     }
 
