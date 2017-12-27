@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "tsc.h"
 
@@ -186,6 +187,8 @@ struct global {
     /* Max consumer batch. */
     unsigned int rbatch;
 
+    struct timespec begin, end;
+
     /* The queue. */
     struct msq *mq;
 };
@@ -198,6 +201,7 @@ msq_producer(void *opaque)
     struct mbuf *m   = mbuf_alloc();
     struct msq *mq   = g->mq;
 
+    clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
 #ifdef QDEBUG
         msq_dump("P", mq);
@@ -229,10 +233,22 @@ msq_consumer(void *opaque)
             --left;
         }
     }
+    clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
 
     pthread_exit(NULL);
     return NULL;
+}
+
+static void
+usage(const char *progname)
+{
+    printf("%s [-h]"
+           " [-n NUM_PACKETS]"
+           " [-b MAX_CONSUMER_BATCH]"
+           " [-l QUEUE_LENGTH]"
+           "\n",
+           progname);
 }
 
 int
@@ -241,14 +257,52 @@ main(int argc, char **argv)
     pthread_t pth, cth;
     struct global _g;
     struct global *g = &_g;
+    int opt;
+
+    memset(g, 0, sizeof(*g));
+    g->num_packets = 10000000;
+    g->qlen        = 128;
+    g->rbatch      = 4;
+
+    while ((opt = getopt(argc, argv, "hn:b:l:")) != -1) {
+        switch (opt) {
+        case 'h':
+            usage(argv[0]);
+            return 0;
+
+        case 'n':
+            g->num_packets = atoi(optarg);
+            if (g->num_packets < 0) {
+                printf("    Invalid number of packets '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'b':
+            g->rbatch = atoi(optarg);
+            if (g->rbatch < 1) {
+                printf("    Invalid receiver batch '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'l':
+            g->qlen = atoi(optarg);
+            if (g->qlen < 2) {
+                printf("    Invalid queue length '%s'\n", optarg);
+                return -1;
+            }
+            break;
+        }
+    }
 
     tsc_init();
 
     {
-        g->num_packets = 100000;
-        g->qlen        = 128;
-        g->rbatch      = 4;
-        g->mq          = msq_create(g->qlen, g->rbatch);
+        unsigned long int ndiff;
+        double mpps;
+
+        g->mq = msq_create(g->qlen, g->rbatch);
 
         if (pthread_create(&pth, NULL, msq_producer, g)) {
             perror("pthread_create(msq_producer");
@@ -269,6 +323,11 @@ main(int argc, char **argv)
             perror("pthread_join(msq_consumer)");
             exit(EXIT_FAILURE);
         }
+
+        ndiff = (g->end.tv_sec - g->begin.tv_sec) * 1000000000U +
+                (g->end.tv_nsec - g->begin.tv_nsec);
+        mpps = g->num_packets * 1000.0 / ndiff;
+        printf("Throughput %3.3f Mpps\n", mpps);
 
         msq_free(g->mq);
     }
