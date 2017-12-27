@@ -310,11 +310,11 @@ msq_producer(void *opaque)
         msq_dump("P", mq);
 #endif
         if (avail) {
+            left -= avail;
             for (; avail > 0; avail--) {
                 msq_write_local(mq, m);
             }
             msq_write_publish(mq);
-            left -= avail;
         }
     }
     msq_dump("P", mq);
@@ -340,11 +340,11 @@ msq_consumer(void *opaque)
         msq_dump("C", mq);
 #endif
         if (avail) {
+            left -= avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
             }
             msq_read_publish(mq);
-            left -= avail;
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
