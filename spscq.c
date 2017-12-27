@@ -217,6 +217,8 @@ msq_free(struct msq *mq)
     free(mq);
 }
 
+typedef void *(*pc_function_t)(void *);
+
 struct global {
     /* Test length as a number of packets. */
     long int num_packets;
@@ -238,7 +240,7 @@ struct global {
 };
 
 static void *
-msq_producer(void *opaque)
+msq_legacy_producer(void *opaque)
 {
     struct global *g = (struct global *)opaque;
     long int left    = g->num_packets;
@@ -263,7 +265,7 @@ msq_producer(void *opaque)
 }
 
 static void *
-msq_consumer(void *opaque)
+msq_legacy_consumer(void *opaque)
 {
     struct global *g = (struct global *)opaque;
     long int left    = g->num_packets;
@@ -291,29 +293,31 @@ msq_consumer(void *opaque)
 static int
 run_test(struct global *g)
 {
+    pc_function_t prod_func = msq_legacy_producer;
+    pc_function_t cons_func = msq_legacy_consumer;
     unsigned long int ndiff;
     pthread_t pth, cth;
     double mpps;
 
     g->mq = msq_create(g->qlen, g->rbatch);
 
-    if (pthread_create(&pth, NULL, msq_producer, g)) {
-        perror("pthread_create(msq_producer");
+    if (pthread_create(&pth, NULL, prod_func, g)) {
+        perror("pthread_create(producer)");
         exit(EXIT_FAILURE);
     }
 
-    if (pthread_create(&cth, NULL, msq_consumer, g)) {
-        perror("pthread_create(msq_consumer)");
+    if (pthread_create(&cth, NULL, cons_func, g)) {
+        perror("pthread_create(consumer)");
         exit(EXIT_FAILURE);
     }
 
     if (pthread_join(pth, NULL)) {
-        perror("pthread_join(msq_producer)");
+        perror("pthread_join(producer)");
         exit(EXIT_FAILURE);
     }
 
     if (pthread_join(cth, NULL)) {
-        perror("pthread_join(msq_consumer)");
+        perror("pthread_join(consumer)");
         exit(EXIT_FAILURE);
     }
 
