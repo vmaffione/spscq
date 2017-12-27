@@ -232,6 +232,8 @@ struct global {
     /* Affinity for producer and consumer. */
     int p_core, c_core;
 
+    const char *test_type;
+
     /* Timestamp to compute experiment statistics. */
     struct timespec begin, end;
 
@@ -293,11 +295,19 @@ msq_legacy_consumer(void *opaque)
 static int
 run_test(struct global *g)
 {
-    pc_function_t prod_func = msq_legacy_producer;
-    pc_function_t cons_func = msq_legacy_consumer;
+    pc_function_t prod_func = NULL;
+    pc_function_t cons_func = NULL;
     unsigned long int ndiff;
     pthread_t pth, cth;
     double mpps;
+
+    if (!strcmp(g->test_type, "msql")) {
+        prod_func = msq_legacy_producer;
+        cons_func = msq_legacy_consumer;
+    } else {
+        printf("Error: unknown test type '%s'\n", g->test_type);
+        exit(EXIT_FAILURE);
+    }
 
     g->mq = msq_create(g->qlen, g->rbatch);
 
@@ -338,8 +348,9 @@ usage(const char *progname)
            "    [-n NUM_PACKETS (in millions)]\n"
            "    [-b MAX_CONSUMER_BATCH]\n"
            "    [-l QUEUE_LENGTH]\n"
-           "    [-c PRODUCER_CORE_ID)]\n"
-           "    [-c CONSUMER_CORE_ID)]\n"
+           "    [-c PRODUCER_CORE_ID]\n"
+           "    [-c CONSUMER_CORE_ID]\n"
+           "    [-t TEST_TYPE (msql,msq,ff)]\n"
            "\n",
            progname);
 }
@@ -357,8 +368,9 @@ main(int argc, char **argv)
     g->rbatch      = 4;
     g->p_core      = -1;
     g->c_core      = -1;
+    g->test_type   = "msql";
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -397,6 +409,10 @@ main(int argc, char **argv)
             }
             break;
         }
+
+        case 't':
+            g->test_type = optarg;
+            break;
         }
     }
 
