@@ -260,6 +260,8 @@ struct global {
         m;                                                                     \
     })
 
+#define mbuf_put(m_, sum_) sum_ += m_->len
+
 static void *
 msq_legacy_producer(void *opaque)
 {
@@ -293,6 +295,7 @@ msq_legacy_consumer(void *opaque)
     struct global *g = (struct global *)opaque;
     long int left    = g->num_packets;
     struct msq *mq   = g->mq;
+    unsigned int sum = 0;
     struct mbuf *m;
 
     runon("C", g->c_core);
@@ -304,10 +307,12 @@ msq_legacy_consumer(void *opaque)
         m = msq_read(mq);
         if (m) {
             --left;
+            mbuf_put(m, sum);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
+    printf("[C] sum = %x\n", sum);
 
     pthread_exit(NULL);
     return NULL;
@@ -357,6 +362,7 @@ msq_consumer(void *opaque)
     long int left      = g->num_packets;
     unsigned int batch = g->batch;
     struct msq *mq     = g->mq;
+    unsigned int sum   = 0;
     struct mbuf *m;
 
     runon("C", g->c_core);
@@ -374,12 +380,14 @@ msq_consumer(void *opaque)
             left -= avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
+                mbuf_put(m, sum);
             }
             msq_read_publish(mq);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
+    printf("[C] sum = %x\n", sum);
 
     pthread_exit(NULL);
     return NULL;
