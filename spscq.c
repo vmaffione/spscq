@@ -106,7 +106,7 @@ struct msq {
     CACHELINE_ALIGNED
     unsigned int qlen;
     unsigned int qmask;
-    unsigned int rbatch;
+    unsigned int batch;
 
     /* The queue. */
     CACHELINE_ALIGNED
@@ -114,7 +114,7 @@ struct msq {
 };
 
 static struct msq *
-msq_create(int qlen, int rbatch)
+msq_create(int qlen, int batch)
 {
     struct msq *mq = szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0]));
 
@@ -123,9 +123,9 @@ msq_create(int qlen, int rbatch)
         exit(EXIT_FAILURE);
     }
 
-    mq->qlen   = qlen;
-    mq->qmask  = qlen - 1;
-    mq->rbatch = rbatch;
+    mq->qlen  = qlen;
+    mq->qmask = qlen - 1;
+    mq->batch = batch;
 
     return mq;
 }
@@ -227,7 +227,7 @@ struct global {
     unsigned int qlen;
 
     /* Max consumer batch. */
-    unsigned int rbatch;
+    unsigned int batch;
 
     /* Affinity for producer and consumer. */
     int p_core, c_core;
@@ -295,10 +295,11 @@ msq_legacy_consumer(void *opaque)
 static void *
 msq_producer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    long int left    = g->num_packets;
-    struct mbuf *m   = mbuf_alloc();
-    struct msq *mq   = g->mq;
+    struct global *g   = (struct global *)opaque;
+    long int left      = g->num_packets;
+    struct mbuf *m     = mbuf_alloc();
+    unsigned int batch = g->batch;
+    struct msq *mq     = g->mq;
 
     runon("P", g->p_core);
 
@@ -310,6 +311,9 @@ msq_producer(void *opaque)
         msq_dump("P", mq);
 #endif
         if (avail) {
+            if (avail > batch) {
+                avail = batch;
+            }
             left -= avail;
             for (; avail > 0; avail--) {
                 msq_write_local(mq, m);
@@ -326,9 +330,10 @@ msq_producer(void *opaque)
 static void *
 msq_consumer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    long int left    = g->num_packets;
-    struct msq *mq   = g->mq;
+    struct global *g   = (struct global *)opaque;
+    long int left      = g->num_packets;
+    unsigned int batch = g->batch;
+    struct msq *mq     = g->mq;
     struct mbuf *m;
 
     runon("C", g->c_core);
@@ -340,6 +345,9 @@ msq_consumer(void *opaque)
         msq_dump("C", mq);
 #endif
         if (avail) {
+            if (avail > batch) {
+                avail = batch;
+            }
             left -= avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
@@ -374,7 +382,7 @@ run_test(struct global *g)
         exit(EXIT_FAILURE);
     }
 
-    g->mq = msq_create(g->qlen, g->rbatch);
+    g->mq = msq_create(g->qlen, g->batch);
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
         perror("pthread_create(producer)");
@@ -411,7 +419,7 @@ usage(const char *progname)
 {
     printf("%s [-h]\n"
            "    [-n NUM_PACKETS (in millions)]\n"
-           "    [-b MAX_CONSUMER_BATCH]\n"
+           "    [-b MAX_BATCH]\n"
            "    [-l QUEUE_LENGTH]\n"
            "    [-c PRODUCER_CORE_ID]\n"
            "    [-c CONSUMER_CORE_ID]\n"
@@ -430,7 +438,7 @@ main(int argc, char **argv)
     memset(g, 0, sizeof(*g));
     g->num_packets = 10 * 1000000;
     g->qlen        = 128;
-    g->rbatch      = 4;
+    g->batch       = 32;
     g->p_core      = -1;
     g->c_core      = -1;
     g->test_type   = "msql";
@@ -450,8 +458,8 @@ main(int argc, char **argv)
             break;
 
         case 'b':
-            g->rbatch = atoi(optarg);
-            if (g->rbatch < 1) {
+            g->batch = atoi(optarg);
+            if (g->batch < 1) {
                 printf("    Invalid receiver batch '%s'\n", optarg);
                 return -1;
             }
