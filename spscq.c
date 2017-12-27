@@ -292,6 +292,68 @@ msq_legacy_consumer(void *opaque)
     return NULL;
 }
 
+static void *
+msq_producer(void *opaque)
+{
+    struct global *g = (struct global *)opaque;
+    long int left    = g->num_packets;
+    struct mbuf *m   = mbuf_alloc();
+    struct msq *mq   = g->mq;
+
+    runon("P", g->p_core);
+
+    clock_gettime(CLOCK_MONOTONIC, &g->begin);
+    while (left > 0) {
+        unsigned int avail = msq_wspace(mq);
+
+#ifdef QDEBUG
+        msq_dump("P", mq);
+#endif
+        if (avail) {
+            for (; avail > 0; avail--) {
+                msq_write_local(mq, m);
+            }
+            msq_write_publish(mq);
+            left -= avail;
+        }
+    }
+    msq_dump("P", mq);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+
+static void *
+msq_consumer(void *opaque)
+{
+    struct global *g = (struct global *)opaque;
+    long int left    = g->num_packets;
+    struct msq *mq   = g->mq;
+    struct mbuf *m;
+
+    runon("C", g->c_core);
+
+    while (left > 0) {
+        unsigned int avail = msq_rspace(mq);
+
+#ifdef QDEBUG
+        msq_dump("C", mq);
+#endif
+        if (avail) {
+            for (; avail > 0; avail--) {
+                m = msq_read_local(mq);
+            }
+            msq_read_publish(mq);
+            left -= avail;
+        }
+    }
+    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    msq_dump("C", mq);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+
 static int
 run_test(struct global *g)
 {
@@ -304,6 +366,9 @@ run_test(struct global *g)
     if (!strcmp(g->test_type, "msql")) {
         prod_func = msq_legacy_producer;
         cons_func = msq_legacy_consumer;
+    } else if (!strcmp(g->test_type, "msq")) {
+        prod_func = msq_producer;
+        cons_func = msq_consumer;
     } else {
         printf("Error: unknown test type '%s'\n", g->test_type);
         exit(EXIT_FAILURE);
