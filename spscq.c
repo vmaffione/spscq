@@ -113,12 +113,18 @@ struct msq {
     struct mbuf *q[0];
 };
 
+static int
+is_power_of_two(int x)
+{
+    return !x || !(x & (x - 1));
+}
+
 static struct msq *
 msq_create(int qlen, int batch)
 {
     struct msq *mq = szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0]));
 
-    if (qlen < 2 || ((qlen & (qlen - 1)) != 0)) {
+    if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
         exit(EXIT_FAILURE);
     }
@@ -223,11 +229,14 @@ struct global {
     /* Test length as a number of packets. */
     long int num_packets;
 
-    /* Queue length. */
+    /* Length of the SPSC queue. */
     unsigned int qlen;
 
     /* Max consumer batch. */
     unsigned int batch;
+
+    /* Number of mbufs in the pool. */
+    unsigned int mbufs;
 
     /* Affinity for producer and consumer. */
     int p_core, c_core;
@@ -239,6 +248,9 @@ struct global {
 
     /* The queue. */
     struct msq *mq;
+
+    /* A pool of preallocated mbufs. */
+    struct mbuf *pool;
 };
 
 static void *
@@ -382,7 +394,12 @@ run_test(struct global *g)
         exit(EXIT_FAILURE);
     }
 
-    g->mq = msq_create(g->qlen, g->batch);
+    if (g->mbufs < 1 || !is_power_of_two(g->mbufs)) {
+        printf("Error: mbufs pool size %d is not a power of two\n", g->mbufs);
+        exit(EXIT_FAILURE);
+    }
+    g->pool = malloc(g->mbufs * sizeof(g->pool[0]));
+    g->mq   = msq_create(g->qlen, g->batch);
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
         perror("pthread_create(producer)");
@@ -409,6 +426,7 @@ run_test(struct global *g)
     mpps = g->num_packets * 1000.0 / ndiff;
     printf("Throughput %3.3f Mpps\n", mpps);
 
+    free(g->pool);
     msq_free(g->mq);
 
     return 0;
@@ -421,6 +439,7 @@ usage(const char *progname)
            "    [-n NUM_PACKETS (in millions)]\n"
            "    [-b MAX_BATCH]\n"
            "    [-l QUEUE_LENGTH]\n"
+           "    [-L NUM_MBUFS]\n"
            "    [-c PRODUCER_CORE_ID]\n"
            "    [-c CONSUMER_CORE_ID]\n"
            "    [-t TEST_TYPE (msql,msq,ff)]\n"
@@ -438,12 +457,13 @@ main(int argc, char **argv)
     memset(g, 0, sizeof(*g));
     g->num_packets = 10 * 1000000;
     g->qlen        = 128;
+    g->mbufs       = 4;
     g->batch       = 32;
     g->p_core      = -1;
     g->c_core      = -1;
     g->test_type   = "msql";
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -469,6 +489,14 @@ main(int argc, char **argv)
             g->qlen = atoi(optarg);
             if (g->qlen < 2) {
                 printf("    Invalid queue length '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'L':
+            g->mbufs = atoi(optarg);
+            if (g->mbufs < 1) {
+                printf("    Invalid number of mbufs '%s'\n", optarg);
                 return -1;
             }
             break;
