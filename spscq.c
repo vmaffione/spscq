@@ -288,6 +288,45 @@ msq_consumer(void *opaque)
     return NULL;
 }
 
+static int
+run_test(struct global *g)
+{
+    unsigned long int ndiff;
+    pthread_t pth, cth;
+    double mpps;
+
+    g->mq = msq_create(g->qlen, g->rbatch);
+
+    if (pthread_create(&pth, NULL, msq_producer, g)) {
+        perror("pthread_create(msq_producer");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pthread_create(&cth, NULL, msq_consumer, g)) {
+        perror("pthread_create(msq_consumer)");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pthread_join(pth, NULL)) {
+        perror("pthread_join(msq_producer)");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pthread_join(cth, NULL)) {
+        perror("pthread_join(msq_consumer)");
+        exit(EXIT_FAILURE);
+    }
+
+    ndiff = (g->end.tv_sec - g->begin.tv_sec) * 1000000000U +
+            (g->end.tv_nsec - g->begin.tv_nsec);
+    mpps = g->num_packets * 1000.0 / ndiff;
+    printf("Throughput %3.3f Mpps\n", mpps);
+
+    msq_free(g->mq);
+
+    return 0;
+}
+
 static void
 usage(const char *progname)
 {
@@ -304,7 +343,6 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-    pthread_t pth, cth;
     struct global _g;
     struct global *g = &_g;
     int opt;
@@ -359,40 +397,7 @@ main(int argc, char **argv)
     }
 
     tsc_init();
-
-    {
-        unsigned long int ndiff;
-        double mpps;
-
-        g->mq = msq_create(g->qlen, g->rbatch);
-
-        if (pthread_create(&pth, NULL, msq_producer, g)) {
-            perror("pthread_create(msq_producer");
-            exit(EXIT_FAILURE);
-        }
-
-        if (pthread_create(&cth, NULL, msq_consumer, g)) {
-            perror("pthread_create(msq_consumer)");
-            exit(EXIT_FAILURE);
-        }
-
-        if (pthread_join(pth, NULL)) {
-            perror("pthread_join(msq_producer)");
-            exit(EXIT_FAILURE);
-        }
-
-        if (pthread_join(cth, NULL)) {
-            perror("pthread_join(msq_consumer)");
-            exit(EXIT_FAILURE);
-        }
-
-        ndiff = (g->end.tv_sec - g->begin.tv_sec) * 1000000000U +
-                (g->end.tv_nsec - g->begin.tv_nsec);
-        mpps = g->num_packets * 1000.0 / ndiff;
-        printf("Throughput %3.3f Mpps\n", mpps);
-
-        msq_free(g->mq);
-    }
+    run_test(g);
 
     return 0;
 }
