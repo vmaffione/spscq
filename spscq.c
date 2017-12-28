@@ -273,10 +273,11 @@ msq_legacy_producer(void *opaque)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
+        struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
-        if (msq_write(mq, mbuf_get(pool, pool_idx, pool_mask)) == 0) {
+        if (msq_write(mq, m) == 0) {
             --left;
         } else {
             pool_idx--;
@@ -341,9 +342,16 @@ msq_producer(void *opaque)
             if (avail > batch) {
                 avail = batch;
             }
+#if 0
+            /* Enable this to get a consistent 'sum' in the consumer. */
+            if (avail > left) {
+                avail = left;
+            }
+#endif
             left -= avail;
             for (; avail > 0; avail--) {
-                msq_write_local(mq, mbuf_get(pool, pool_idx, pool_mask));
+                struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+                msq_write_local(mq, m);
             }
             msq_write_publish(mq);
         }
