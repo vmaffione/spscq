@@ -1,5 +1,5 @@
-#ifndef __TSC_H__
-#define __TSC_H__
+#ifndef __MLIB_H__
+#define __MLIB_H__
 
 #include <stdint.h>
 
@@ -24,4 +24,9 @@ tsc_sleep_till(uint64_t when)
         barrier();
 }
 
-#endif /* __TSC_H__ */
+/* Prepend this to a struct field to make it aligned. */
+#define CACHELINE_ALIGNED __attribute__((aligned(64)))
+
+void runon(const char *prefix, int cpuid);
+
+#endif /* __MLIB_H__ */

@@ -1,10 +1,15 @@
+#define _GNU_SOURCE
 #include "mlib.h"
 #include <stdio.h>
-#include <fcntl.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <sys/time.h>
+#include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <errno.h>
+#include <sched.h>
 
 /* initialize to avoid a division by 0 */
 uint64_t ticks_per_second = 1000000000; /* set by tsc_init() */
@@ -52,4 +57,40 @@ uint64_t
 tsc2ns(uint64_t tsc)
 {
     return tsc * 1000000000UL / ticks_per_second;
+}
+
+void
+runon(const char *name, int i)
+{
+    static int NUM_CPUS = 0;
+    cpu_set_t cpumask;
+
+    if (NUM_CPUS == 0) {
+        NUM_CPUS = sysconf(_SC_NPROCESSORS_ONLN);
+        printf("system has %d cores\n", NUM_CPUS);
+    }
+    CPU_ZERO(&cpumask);
+    if (i >= 0) {
+        CPU_SET(i, &cpumask);
+    } else {
+        /* -1 means it can run on any CPU */
+        int j;
+
+        i = -1;
+        for (j = 0; j < NUM_CPUS; j++) {
+            CPU_SET(j, &cpumask);
+        }
+    }
+
+    if ((errno = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t),
+                                        &cpumask)) != 0) {
+        printf("Unable to set affinity for %s on %d : %s\n", name, i,
+               strerror(errno));
+    }
+
+    if (i >= 0) {
+        printf("thread %s on core %d\n", name, i);
+    } else {
+        printf("thread %s on any core in 0..%d\n", name, NUM_CPUS - 1);
+    }
 }

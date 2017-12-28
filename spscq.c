@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,13 +5,10 @@
 #include <time.h>
 #include <pthread.h>
 #include <errno.h>
-#include <sched.h>
 
 #include "mlib.h"
 
 #undef QDEBUG
-
-#define CACHELINE_ALIGNED __attribute__((aligned(64)))
 
 /* Alloc zeroed memory, aborting on failure. */
 static void *
@@ -24,42 +20,6 @@ szalloc(size_t size)
     }
     memset(p, 0, size);
     return p;
-}
-
-static void
-runon(const char *name, int i)
-{
-    static int NUM_CPUS = 0;
-    cpu_set_t cpumask;
-
-    if (NUM_CPUS == 0) {
-        NUM_CPUS = sysconf(_SC_NPROCESSORS_ONLN);
-        printf("system has %d cores\n", NUM_CPUS);
-    }
-    CPU_ZERO(&cpumask);
-    if (i >= 0) {
-        CPU_SET(i, &cpumask);
-    } else {
-        /* -1 means it can run on any CPU */
-        int j;
-
-        i = -1;
-        for (j = 0; j < NUM_CPUS; j++) {
-            CPU_SET(j, &cpumask);
-        }
-    }
-
-    if ((errno = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t),
-                                        &cpumask)) != 0) {
-        printf("Unable to set affinity for %s on %d : %s\n", name, i,
-               strerror(errno));
-    }
-
-    if (i >= 0) {
-        printf("thread %s on core %d\n", name, i);
-    } else {
-        printf("thread %s on any core in 0..%d\n", name, NUM_CPUS - 1);
-    }
 }
 
 struct mbuf {
