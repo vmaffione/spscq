@@ -235,9 +235,6 @@ struct global {
     /* Max consumer batch. */
     unsigned int batch;
 
-    /* Number of mbufs in the pool. */
-    unsigned int mbufs;
-
     /* Affinity for producer and consumer. */
     int p_core, c_core;
 
@@ -266,8 +263,8 @@ static void *
 msq_legacy_producer(void *opaque)
 {
     struct global *g       = (struct global *)opaque;
-    unsigned int pool_mask = g->mbufs - 1;
     long int left          = g->num_packets;
+    unsigned int pool_mask = g->mq->qmask;
     struct mbuf *pool      = g->pool;
     struct msq *mq         = g->mq;
     unsigned int pool_idx  = 0;
@@ -281,6 +278,8 @@ msq_legacy_producer(void *opaque)
 #endif
         if (msq_write(mq, mbuf_get(pool, pool_idx, pool_mask)) == 0) {
             --left;
+        } else {
+            pool_idx--;
         }
     }
     msq_dump("P", mq);
@@ -322,8 +321,8 @@ static void *
 msq_producer(void *opaque)
 {
     struct global *g       = (struct global *)opaque;
-    unsigned int pool_mask = g->mbufs - 1;
     long int left          = g->num_packets;
+    unsigned int pool_mask = g->mq->qmask;
     unsigned int batch     = g->batch;
     struct mbuf *pool      = g->pool;
     struct msq *mq         = g->mq;
@@ -413,12 +412,8 @@ run_test(struct global *g)
         exit(EXIT_FAILURE);
     }
 
-    if (g->mbufs < 1 || !is_power_of_two(g->mbufs)) {
-        printf("Error: mbufs pool size %d is not a power of two\n", g->mbufs);
-        exit(EXIT_FAILURE);
-    }
-    g->pool = malloc(g->mbufs * sizeof(g->pool[0]));
     g->mq   = msq_create(g->qlen, g->batch);
+    g->pool = malloc(g->qlen * sizeof(g->pool[0]));
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
         perror("pthread_create(producer)");
@@ -476,13 +471,12 @@ main(int argc, char **argv)
     memset(g, 0, sizeof(*g));
     g->num_packets = 10 * 1000000;
     g->qlen        = 128;
-    g->mbufs       = 4;
     g->batch       = 32;
     g->p_core      = -1;
     g->c_core      = -1;
     g->test_type   = "msql";
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -508,14 +502,6 @@ main(int argc, char **argv)
             g->qlen = atoi(optarg);
             if (g->qlen < 2) {
                 printf("    Invalid queue length '%s'\n", optarg);
-                return -1;
-            }
-            break;
-
-        case 'L':
-            g->mbufs = atoi(optarg);
-            if (g->mbufs < 1) {
-                printf("    Invalid number of mbufs '%s'\n", optarg);
                 return -1;
             }
             break;
