@@ -5,6 +5,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "mlib.h"
 
@@ -27,6 +28,33 @@ is_power_of_two(int x)
 {
     return !x || !(x & (x - 1));
 }
+
+static unsigned int
+roundup(unsigned int x, unsigned int y)
+{
+    return ((x + (y - 1)) / y) * y;
+}
+
+static unsigned int
+ilog2(unsigned int x)
+{
+    unsigned int probe = 0x00000001U;
+    unsigned int ret   = 0;
+    unsigned int c;
+
+    assert(x != 0);
+
+    for (c = 0; probe != 0; probe <<= 1, c++) {
+        if (x & probe) {
+            ret = c;
+        }
+    }
+
+    return ret;
+}
+
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#define likely(x) __builtin_expect(!!(x), 1)
 
 struct mbuf {
     unsigned int len;
@@ -65,8 +93,11 @@ struct global {
     /* Timestamp to compute experiment statistics. */
     struct timespec begin, end;
 
-    /* The queue. */
+    /* The lamport-like queue. */
     struct msq *mq;
+
+    /* The ff-like queue. */
+    struct iffq *fq;
 
     /* A pool of preallocated mbufs. */
     struct mbuf *pool;
@@ -342,6 +373,280 @@ msq_consumer(void *opaque)
     pthread_exit(NULL);
     return NULL;
 }
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+/*
+ * Improved FastForward queue, used by pspat.
+ */
+struct iffq {
+    /* shared (constant) fields */
+    unsigned long entry_mask;
+    unsigned long seqbit_shift;
+    unsigned long line_entries;
+    unsigned long line_mask;
+
+    /* producer fields */
+    CACHELINE_ALIGNED
+    unsigned long prod_write;
+    unsigned long prod_check;
+
+    /* consumer fields */
+    CACHELINE_ALIGNED
+    unsigned long cons_clear;
+    unsigned long cons_read;
+
+    /* the queue */
+    CACHELINE_ALIGNED
+    uintptr_t q[0];
+};
+
+static inline size_t
+iffq_size(unsigned long entries)
+{
+    return roundup(sizeof(struct iffq) + entries * sizeof(uintptr_t), 64);
+}
+
+/**
+ * iffq_insert - enqueue a new value
+ * @m: the mailbox where to enqueue
+ * @v: the value to be enqueued
+ *
+ * Returns 0 on success, -ENOBUFS on failure.
+ */
+static inline int
+iffq_insert(struct iffq *m, void *v)
+{
+    uintptr_t *h = &m->q[m->prod_write & m->entry_mask];
+
+    if (unlikely(m->prod_write == m->prod_check)) {
+        /* Leave a cache line empty. */
+        if (m->q[(m->prod_check + m->line_entries) & m->entry_mask])
+            return -ENOBUFS;
+        m->prod_check += m->line_entries;
+        __builtin_prefetch(h + m->line_entries);
+    }
+    assert((((uintptr_t)v) & 0x1) == 0);
+    *h = (uintptr_t)v | ((m->prod_write >> m->seqbit_shift) & 0x1);
+    m->prod_write++;
+    return 0;
+}
+
+static inline int
+__iffq_empty(struct iffq *m, unsigned long i, uintptr_t v)
+{
+    return (!v) || ((v ^ (i >> m->seqbit_shift)) & 0x1);
+}
+
+/**
+ * iffq_empty - test for an empty mailbox
+ * @m: the mailbox to test
+ *
+ * Returns non-zero if the mailbox is empty
+ */
+static inline int
+iffq_empty(struct iffq *m)
+{
+    uintptr_t v = m->q[m->cons_read & m->entry_mask];
+
+    return __iffq_empty(m, m->cons_read, v);
+}
+
+/**
+ * iffq_extract - extract a value
+ * @m: the mailbox where to extract from
+ *
+ * Returns the extracted value, NULL if the mailbox
+ * is empty. It does not free up any entry, use
+ * iffq_clear/iffq_cler_all for that
+ */
+static inline void *
+iffq_extract(struct iffq *m)
+{
+    uintptr_t v = m->q[m->cons_read & m->entry_mask];
+
+    if (__iffq_empty(m, m->cons_read, v))
+        return NULL;
+
+    m->cons_read++;
+
+    return (void *)(v & ~0x1);
+}
+
+/**
+ * iffq_clear - clear the previously extracted entries
+ * @m: the mailbox to be cleared
+ *
+ */
+static inline void
+iffq_clear(struct iffq *m)
+{
+    unsigned long s = m->cons_read & m->line_mask;
+
+    for (; (m->cons_clear & m->line_mask) != s;
+         m->cons_clear += m->line_entries) {
+        m->q[m->cons_clear & m->entry_mask] = 0;
+    }
+}
+
+/**
+ * iffq_cancel - remove from the mailbox all instances of a value
+ * @m: the mailbox
+ * @v: the value to be removed
+ */
+void iffq_cancel(struct iffq *m, uintptr_t v);
+
+static inline void
+iffq_prefetch(struct iffq *m)
+{
+    __builtin_prefetch((void *)m->q[m->cons_read & m->entry_mask]);
+}
+
+/**
+ * iffq_init - initialize a pre-allocated mailbox
+ * @m: the mailbox to be initialized
+ * @entries: the number of entries
+ * @line_size: the line size in bytes
+ *
+ * Both entries and line_size must be a power of 2.
+ * Returns 0 on success, -errno on failure.
+ */
+int
+iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
+{
+    unsigned long entries_per_line;
+
+    if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
+        entries <= 2 * line_size || line_size < sizeof(uintptr_t))
+        return -EINVAL;
+
+    entries_per_line = line_size / sizeof(uintptr_t);
+
+    m->line_entries = entries_per_line;
+    m->line_mask    = ~(entries_per_line - 1);
+    m->entry_mask   = entries - 1;
+    m->seqbit_shift = ilog2(entries);
+
+#ifdef QDEBUG
+    printf("iffq: line_entries %lu line_mask %lx entry_mask %lx seqbit_shift "
+           "%lu\n",
+           m->line_entries, m->line_mask, m->entry_mask, m->seqbit_shift);
+#endif
+
+    m->cons_clear = 0;
+    m->cons_read  = m->line_entries;
+    m->prod_write = m->line_entries;
+    m->prod_check = 2 * m->line_entries;
+
+    return 0;
+}
+
+/**
+ * iffq_create - create a new mailbox
+ * @entries: the number of entries
+ * @line_size: the line size in bytes
+ *
+ * Both entries and line_size must be a power of 2.
+ */
+struct iffq *
+iffq_create(unsigned long entries, unsigned long line_size)
+{
+    struct iffq *m;
+    int err;
+
+    m = szalloc(iffq_size(entries));
+    if (m == NULL) {
+        return NULL;
+    }
+
+    err = iffq_init(m, entries, line_size);
+    if (err) {
+        free(m);
+        return NULL;
+    }
+
+    return m;
+}
+
+/**
+ * iffq_free - delete a mailbox
+ * @m: the mailbox to be deleted
+ */
+void
+iffq_free(struct iffq *m)
+{
+    free(m);
+}
+
+void
+iffq_dump(const char *prefix, struct iffq *fq)
+{
+    printf("%s: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
+           fq->cons_read, fq->prod_write, fq->prod_check);
+}
+
+static void *
+iffq_producer(void *opaque)
+{
+    struct global *g       = (struct global *)opaque;
+    long int left          = g->num_packets;
+    unsigned int pool_mask = g->qlen - 1;
+    struct mbuf *pool      = g->pool;
+    struct iffq *fq        = g->fq;
+    unsigned int pool_idx  = 0;
+
+    runon("P", g->p_core);
+
+    (void)iffq_empty;
+    (void)iffq_clear;
+    (void)iffq_prefetch;
+
+    clock_gettime(CLOCK_MONOTONIC, &g->begin);
+    while (left > 0) {
+        struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+#ifdef QDEBUG
+        iffq_dump("P", fq);
+#endif
+        if (iffq_insert(fq, m) == 0) {
+            --left;
+        } else {
+            pool_idx--;
+        }
+    }
+    iffq_dump("P", fq);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+
+static void *
+iffq_consumer(void *opaque)
+{
+    struct global *g = (struct global *)opaque;
+    long int left    = g->num_packets;
+    struct iffq *fq  = g->fq;
+    unsigned int sum = 0;
+    struct mbuf *m;
+
+    runon("C", g->c_core);
+
+    while (left > 0) {
+#ifdef QDEBUG
+        iffq_dump("C", fq);
+#endif
+        m = iffq_extract(fq);
+        if (m) {
+            --left;
+            mbuf_put(m, sum);
+        }
+    }
+    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    iffq_dump("C", fq);
+    printf("[C] sum = %x\n", sum);
+
+    pthread_exit(NULL);
+    return NULL;
+}
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 static int
 run_test(struct global *g)
@@ -358,12 +663,21 @@ run_test(struct global *g)
     } else if (!strcmp(g->test_type, "msq")) {
         prod_func = msq_producer;
         cons_func = msq_consumer;
+    } else if (!strcmp(g->test_type, "iffq")) {
+        prod_func = iffq_producer;
+        cons_func = iffq_consumer;
     } else {
         printf("Error: unknown test type '%s'\n", g->test_type);
         exit(EXIT_FAILURE);
     }
 
-    g->mq   = msq_create(g->qlen, g->batch);
+    if (!strcmp(g->test_type, "msql") || !strcmp(g->test_type, "msq")) {
+        g->mq = msq_create(g->qlen, g->batch);
+    } else if (!strcmp(g->test_type, "iffq")) {
+        g->fq = iffq_create(g->qlen, 32);
+    } else {
+        assert(0);
+    }
     g->pool = malloc(g->qlen * sizeof(g->pool[0]));
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
