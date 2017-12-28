@@ -35,12 +35,12 @@ roundup(unsigned int x, unsigned int y)
     return ((x + (y - 1)) / y) * y;
 }
 
-static unsigned int
-ilog2(unsigned int x)
+static unsigned long int
+ilog2(unsigned long int x)
 {
-    unsigned int probe = 0x00000001U;
-    unsigned int ret   = 0;
-    unsigned int c;
+    unsigned long int probe = 0x00000001U;
+    unsigned long int ret   = 0;
+    unsigned long int c;
 
     assert(x != 0);
 
@@ -448,7 +448,7 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
 /**
  * iffq_create - create a new mailbox
  * @entries: the number of entries
- * @line_size: the line size in bytes
+ * @line_size: the line size in bytes (not in entries)
  *
  * Both entries and line_size must be a power of 2.
  */
@@ -485,7 +485,7 @@ iffq_free(struct iffq *m)
 void
 iffq_dump(const char *prefix, struct iffq *fq)
 {
-    printf("%s: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
+    printf("[%s]: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
            fq->cons_read, fq->prod_write, fq->prod_check);
 }
 
@@ -540,7 +540,7 @@ iffq_empty(struct iffq *m)
  *
  * Returns the extracted value, NULL if the mailbox
  * is empty. It does not free up any entry, use
- * iffq_clear/iffq_cler_all for that
+ * iffq_clear for that
  */
 static inline struct mbuf *
 iffq_extract(struct iffq *fq)
@@ -588,10 +588,9 @@ iffq_producer(void *opaque)
     unsigned int pool_idx  = 0;
 
     runon("P", g->p_core);
-
     (void)iffq_empty;
-    (void)iffq_clear;
     (void)iffq_prefetch;
+    iffq_dump("P", fq);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
@@ -621,6 +620,7 @@ iffq_consumer(void *opaque)
     struct mbuf *m;
 
     runon("C", g->c_core);
+    iffq_dump("C", fq);
 
     while (left > 0) {
 #ifdef QDEBUG
@@ -630,6 +630,7 @@ iffq_consumer(void *opaque)
         if (m) {
             --left;
             mbuf_put(m, sum);
+            iffq_clear(fq);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
