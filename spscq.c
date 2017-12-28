@@ -397,7 +397,7 @@ struct iffq {
 
     /* the queue */
     CACHELINE_ALIGNED
-    uintptr_t q[0];
+    volatile uintptr_t q[0];
 };
 
 static inline size_t
@@ -433,11 +433,9 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
     m->entry_mask   = entries - 1;
     m->seqbit_shift = ilog2(entries);
 
-#ifdef QDEBUG
     printf("iffq: line_entries %lu line_mask %lx entry_mask %lx seqbit_shift "
            "%lu\n",
            m->line_entries, m->line_mask, m->entry_mask, m->seqbit_shift);
-#endif
 
     m->cons_clear = 0;
     m->cons_read  = m->line_entries;
@@ -501,14 +499,14 @@ iffq_dump(const char *prefix, struct iffq *fq)
 static inline int
 iffq_insert(struct iffq *fq, struct mbuf *m)
 {
-    uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
+    volatile uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
 
     if (unlikely(fq->prod_write == fq->prod_check)) {
         /* Leave a cache line empty. */
         if (fq->q[(fq->prod_check + fq->line_entries) & fq->entry_mask])
             return -ENOBUFS;
         fq->prod_check += fq->line_entries;
-        __builtin_prefetch(h + fq->line_entries);
+        //__builtin_prefetch(h + fq->line_entries);
     }
     assert((((uintptr_t)m) & 0x1) == 0);
     *h = (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
