@@ -107,6 +107,7 @@ struct global {
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
  */
+typedef struct mbuf *msq_entry_t; /* trick to use volatile */
 struct msq {
     /* Producer private data. */
     CACHELINE_ALIGNED
@@ -132,7 +133,7 @@ struct msq {
 
     /* The queue. */
     CACHELINE_ALIGNED
-    struct mbuf *q[0];
+    volatile msq_entry_t q[0];
 };
 
 static struct msq *
