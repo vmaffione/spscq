@@ -22,6 +22,12 @@ szalloc(size_t size)
     return p;
 }
 
+static int
+is_power_of_two(int x)
+{
+    return !x || !(x & (x - 1));
+}
+
 struct mbuf {
     unsigned int len;
     unsigned int __padding[7];
@@ -29,22 +35,47 @@ struct mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
-struct mbuf *
-mbuf_alloc()
-{
-    return szalloc(sizeof(struct mbuf));
-}
+#define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
+    ({                                                                         \
+        struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
+        m->len         = pool_idx_++;                                          \
+        m;                                                                     \
+    })
 
-void
-mbuf_free(struct mbuf *m)
-{
-    if (m) {
-        free(m);
-    }
-}
+#define mbuf_put(m_, sum_) sum_ += m_->len
 
-/* Multi-section queue, based on the Lamport classic queue.
- * All indices are free running. */
+typedef void *(*pc_function_t)(void *);
+struct msq;
+
+struct global {
+    /* Test length as a number of packets. */
+    long int num_packets;
+
+    /* Length of the SPSC queue. */
+    unsigned int qlen;
+
+    /* Max consumer batch. */
+    unsigned int batch;
+
+    /* Affinity for producer and consumer. */
+    int p_core, c_core;
+
+    const char *test_type;
+
+    /* Timestamp to compute experiment statistics. */
+    struct timespec begin, end;
+
+    /* The queue. */
+    struct msq *mq;
+
+    /* A pool of preallocated mbufs. */
+    struct mbuf *pool;
+};
+
+/*
+ * Multi-section queue, based on the Lamport classic queue.
+ * All indices are free running.
+ */
 struct msq {
     /* Producer private data. */
     CACHELINE_ALIGNED
@@ -72,12 +103,6 @@ struct msq {
     CACHELINE_ALIGNED
     struct mbuf *q[0];
 };
-
-static int
-is_power_of_two(int x)
-{
-    return !x || !(x & (x - 1));
-}
 
 static struct msq *
 msq_create(int qlen, int batch)
@@ -173,51 +198,9 @@ msq_dump(const char *prefix, struct msq *mq)
 static void
 msq_free(struct msq *mq)
 {
-    struct mbuf *m;
-
-    while ((m = msq_read(mq)) != NULL) {
-        mbuf_free(m);
-    }
-
     memset(mq, 0, sizeof(*mq));
     free(mq);
 }
-
-typedef void *(*pc_function_t)(void *);
-
-struct global {
-    /* Test length as a number of packets. */
-    long int num_packets;
-
-    /* Length of the SPSC queue. */
-    unsigned int qlen;
-
-    /* Max consumer batch. */
-    unsigned int batch;
-
-    /* Affinity for producer and consumer. */
-    int p_core, c_core;
-
-    const char *test_type;
-
-    /* Timestamp to compute experiment statistics. */
-    struct timespec begin, end;
-
-    /* The queue. */
-    struct msq *mq;
-
-    /* A pool of preallocated mbufs. */
-    struct mbuf *pool;
-};
-
-#define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
-    ({                                                                         \
-        struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
-        m->len         = pool_idx_++;                                          \
-        m;                                                                     \
-    })
-
-#define mbuf_put(m_, sum_) sum_ += m_->len
 
 static void *
 msq_legacy_producer(void *opaque)
