@@ -407,101 +407,6 @@ iffq_size(unsigned long entries)
 }
 
 /**
- * iffq_insert - enqueue a new value
- * @m: the mailbox where to enqueue
- * @v: the value to be enqueued
- *
- * Returns 0 on success, -ENOBUFS on failure.
- */
-static inline int
-iffq_insert(struct iffq *m, void *v)
-{
-    uintptr_t *h = &m->q[m->prod_write & m->entry_mask];
-
-    if (unlikely(m->prod_write == m->prod_check)) {
-        /* Leave a cache line empty. */
-        if (m->q[(m->prod_check + m->line_entries) & m->entry_mask])
-            return -ENOBUFS;
-        m->prod_check += m->line_entries;
-        __builtin_prefetch(h + m->line_entries);
-    }
-    assert((((uintptr_t)v) & 0x1) == 0);
-    *h = (uintptr_t)v | ((m->prod_write >> m->seqbit_shift) & 0x1);
-    m->prod_write++;
-    return 0;
-}
-
-static inline int
-__iffq_empty(struct iffq *m, unsigned long i, uintptr_t v)
-{
-    return (!v) || ((v ^ (i >> m->seqbit_shift)) & 0x1);
-}
-
-/**
- * iffq_empty - test for an empty mailbox
- * @m: the mailbox to test
- *
- * Returns non-zero if the mailbox is empty
- */
-static inline int
-iffq_empty(struct iffq *m)
-{
-    uintptr_t v = m->q[m->cons_read & m->entry_mask];
-
-    return __iffq_empty(m, m->cons_read, v);
-}
-
-/**
- * iffq_extract - extract a value
- * @m: the mailbox where to extract from
- *
- * Returns the extracted value, NULL if the mailbox
- * is empty. It does not free up any entry, use
- * iffq_clear/iffq_cler_all for that
- */
-static inline void *
-iffq_extract(struct iffq *m)
-{
-    uintptr_t v = m->q[m->cons_read & m->entry_mask];
-
-    if (__iffq_empty(m, m->cons_read, v))
-        return NULL;
-
-    m->cons_read++;
-
-    return (void *)(v & ~0x1);
-}
-
-/**
- * iffq_clear - clear the previously extracted entries
- * @m: the mailbox to be cleared
- *
- */
-static inline void
-iffq_clear(struct iffq *m)
-{
-    unsigned long s = m->cons_read & m->line_mask;
-
-    for (; (m->cons_clear & m->line_mask) != s;
-         m->cons_clear += m->line_entries) {
-        m->q[m->cons_clear & m->entry_mask] = 0;
-    }
-}
-
-/**
- * iffq_cancel - remove from the mailbox all instances of a value
- * @m: the mailbox
- * @v: the value to be removed
- */
-void iffq_cancel(struct iffq *m, uintptr_t v);
-
-static inline void
-iffq_prefetch(struct iffq *m)
-{
-    __builtin_prefetch((void *)m->q[m->cons_read & m->entry_mask]);
-}
-
-/**
  * iffq_init - initialize a pre-allocated mailbox
  * @m: the mailbox to be initialized
  * @entries: the number of entries
@@ -582,6 +487,94 @@ iffq_dump(const char *prefix, struct iffq *fq)
 {
     printf("%s: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
            fq->cons_read, fq->prod_write, fq->prod_check);
+}
+
+/**
+ * iffq_insert - enqueue a new value
+ * @m: the mailbox where to enqueue
+ * @v: the value to be enqueued
+ *
+ * Returns 0 on success, -ENOBUFS on failure.
+ */
+static inline int
+iffq_insert(struct iffq *fq, struct mbuf *m)
+{
+    uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
+
+    if (unlikely(fq->prod_write == fq->prod_check)) {
+        /* Leave a cache line empty. */
+        if (fq->q[(fq->prod_check + fq->line_entries) & fq->entry_mask])
+            return -ENOBUFS;
+        fq->prod_check += fq->line_entries;
+        __builtin_prefetch(h + fq->line_entries);
+    }
+    assert((((uintptr_t)m) & 0x1) == 0);
+    *h = (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
+    fq->prod_write++;
+    return 0;
+}
+
+static inline int
+__iffq_empty(struct iffq *fq, unsigned long i, uintptr_t v)
+{
+    return (!v) || ((v ^ (i >> fq->seqbit_shift)) & 0x1);
+}
+
+/**
+ * iffq_empty - test for an empty mailbox
+ * @m: the mailbox to test
+ *
+ * Returns non-zero if the mailbox is empty
+ */
+static inline int
+iffq_empty(struct iffq *m)
+{
+    uintptr_t v = m->q[m->cons_read & m->entry_mask];
+
+    return __iffq_empty(m, m->cons_read, v);
+}
+
+/**
+ * iffq_extract - extract a value
+ * @fq: the mailbox where to extract from
+ *
+ * Returns the extracted value, NULL if the mailbox
+ * is empty. It does not free up any entry, use
+ * iffq_clear/iffq_cler_all for that
+ */
+static inline struct mbuf *
+iffq_extract(struct iffq *fq)
+{
+    uintptr_t v = fq->q[fq->cons_read & fq->entry_mask];
+
+    if (__iffq_empty(fq, fq->cons_read, v))
+        return NULL;
+
+    fq->cons_read++;
+
+    return (struct mbuf *)(v & ~0x1);
+}
+
+/**
+ * iffq_clear - clear the previously extracted entries
+ * @fq: the mailbox to be cleared
+ *
+ */
+static inline void
+iffq_clear(struct iffq *fq)
+{
+    unsigned long s = fq->cons_read & fq->line_mask;
+
+    for (; (fq->cons_clear & fq->line_mask) != s;
+         fq->cons_clear += fq->line_entries) {
+        fq->q[fq->cons_clear & fq->entry_mask] = 0;
+    }
+}
+
+static inline void
+iffq_prefetch(struct iffq *fq)
+{
+    __builtin_prefetch((void *)fq->q[fq->cons_read & fq->entry_mask]);
 }
 
 static void *
