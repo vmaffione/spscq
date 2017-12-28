@@ -142,7 +142,7 @@ msq_create(int qlen, int batch)
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     mq->qlen  = qlen;
@@ -421,8 +421,10 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
     unsigned long entries_per_line;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
-        entries <= 2 * line_size || line_size < sizeof(uintptr_t))
+        entries <= 2 * line_size || line_size < sizeof(uintptr_t)) {
+        printf("Error: invalid entries/linesize parameters\n");
         return -EINVAL;
+    }
 
     entries_per_line = line_size / sizeof(uintptr_t);
 
@@ -667,8 +669,14 @@ run_test(struct global *g)
 
     if (!strcmp(g->test_type, "msql") || !strcmp(g->test_type, "msq")) {
         g->mq = msq_create(g->qlen, g->batch);
+        if (!g->mq) {
+            exit(EXIT_FAILURE);
+        }
     } else if (!strcmp(g->test_type, "iffq")) {
-        g->fq = iffq_create(g->qlen, 32);
+        g->fq = iffq_create(g->qlen, /*line_size=*/64);
+        if (!g->fq) {
+            exit(EXIT_FAILURE);
+        }
     } else {
         assert(0);
     }
@@ -729,7 +737,7 @@ main(int argc, char **argv)
 
     memset(g, 0, sizeof(*g));
     g->num_packets = 10 * 1000000;
-    g->qlen        = 128;
+    g->qlen        = 256;
     g->batch       = 32;
     g->p_core      = -1;
     g->c_core      = -1;
