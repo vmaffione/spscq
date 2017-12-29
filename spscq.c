@@ -317,9 +317,9 @@ msq_producer(void *opaque)
             if (avail > batch) {
                 avail = batch;
             }
-#if 0
+#if 1
             /* Enable this to get a consistent 'sum' in the consumer. */
-            if (avail > left) {
+            if (unlikely(avail > left)) {
                 avail = left;
             }
 #endif
@@ -509,7 +509,9 @@ iffq_insert(struct iffq *fq, struct mbuf *m)
         fq->prod_check += fq->line_entries;
         //__builtin_prefetch(h + fq->line_entries);
     }
+#if 0
     assert((((uintptr_t)m) & 0x1) == 0);
+#endif
     *h = (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
     fq->prod_write++;
     return 0;
