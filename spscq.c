@@ -461,7 +461,7 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
     unsigned long entries_per_line;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
-        entries <= 2 * line_size || line_size < sizeof(uintptr_t)) {
+        entries * sizeof(uintptr_t) <= 2 * line_size || line_size < sizeof(uintptr_t)) {
         printf("Error: invalid entries/linesize parameters\n");
         return -EINVAL;
     }
