@@ -9,7 +9,8 @@
 
 #include "mlib.h"
 
-#undef QDEBUG
+#undef QDEBUG /* dump queue state at each operation */
+#undef RATE   /* period */
 
 /* Alloc zeroed memory, aborting on failure. */
 static void *
@@ -293,6 +294,9 @@ msq_legacy_consumer(void *opaque)
     return NULL;
 }
 
+#define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
+#define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
+
 static void *
 msq_producer(void *opaque)
 {
@@ -303,6 +307,11 @@ msq_producer(void *opaque)
     struct mbuf *pool      = g->pool;
     struct msq *mq         = g->mq;
     unsigned int pool_idx  = 0;
+#ifdef RATE
+    long long int thresh = g->num_packets - HUNDREDMILLIONS;
+    struct timespec rate_last;
+    clock_gettime(CLOCK_MONOTONIC, &rate_last);
+#endif
 
     runon("P", g->p_core);
 
@@ -329,6 +338,20 @@ msq_producer(void *opaque)
                 msq_write_local(mq, m);
             }
             msq_write_publish(mq);
+#ifdef RATE
+            if (unlikely(left < thresh)) {
+                unsigned long long int ndiff;
+                struct timespec now;
+                double mpps;
+                clock_gettime(CLOCK_MONOTONIC, &now);
+                ndiff = (now.tv_sec - rate_last.tv_sec) * ONEBILLION +
+                        (now.tv_nsec - rate_last.tv_nsec);
+                mpps = HUNDREDMILLIONS * 1000.0 / ndiff;
+                printf("%3.3f Mpps\n", mpps);
+                thresh -= HUNDREDMILLIONS;
+                rate_last = now;
+            }
+#endif
         }
     }
     msq_dump("P", mq);
@@ -703,7 +726,7 @@ run_test(struct global *g)
         exit(EXIT_FAILURE);
     }
 
-    ndiff = (g->end.tv_sec - g->begin.tv_sec) * 1000000000U +
+    ndiff = (g->end.tv_sec - g->begin.tv_sec) * ONEBILLION +
             (g->end.tv_nsec - g->begin.tv_nsec);
     mpps = g->num_packets * 1000.0 / ndiff;
     printf("Throughput %3.3f Mpps\n", mpps);
