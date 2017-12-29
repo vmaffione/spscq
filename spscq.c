@@ -604,7 +604,7 @@ iffq_clear(struct iffq *fq)
 {
     unsigned long s = fq->cons_read & fq->line_mask;
 
-    for (; (fq->cons_clear & fq->line_mask) != s;
+    for (; (fq->cons_clear /* & fq->line_mask */) != s;
          fq->cons_clear += fq->line_entries) {
         fq->q[fq->cons_clear & fq->entry_mask] = 0;
     }
