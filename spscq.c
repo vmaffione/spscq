@@ -273,6 +273,7 @@ static void *
 msq_legacy_producer(void *opaque)
 {
     struct global *const g       = (struct global *)opaque;
+    const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     struct mbuf *const pool      = g->pool;
@@ -289,6 +290,9 @@ msq_legacy_producer(void *opaque)
 #endif
         if (msq_write(mq, m) == 0) {
             --left;
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
         } else {
             pool_idx--;
         }
@@ -303,6 +307,7 @@ static void *
 msq_legacy_consumer(void *opaque)
 {
     struct global *const g = (struct global *)opaque;
+    const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     struct msq *const mq   = g->mq;
     unsigned int sum       = 0;
@@ -321,6 +326,9 @@ msq_legacy_consumer(void *opaque)
         if (m) {
             --left;
             mbuf_put(m, sum);
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
         }
 #ifdef RATE
         RATE_BODY(left);
@@ -338,6 +346,7 @@ static void *
 msq_producer(void *opaque)
 {
     struct global *const g       = (struct global *)opaque;
+    const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     const unsigned int batch     = g->batch;
@@ -368,6 +377,9 @@ msq_producer(void *opaque)
             for (; avail > 0; avail--) {
                 struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
                 msq_write_local(mq, m);
+                if (spin) {
+                    tsc_sleep_till(rdtsc() + spin);
+                }
             }
             msq_write_publish(mq);
         }
@@ -382,6 +394,7 @@ static void *
 msq_consumer(void *opaque)
 {
     struct global *const g   = (struct global *)opaque;
+    const uint64_t spin      = g->cons_spin_ticks;
     long long int left       = g->num_packets;
     const unsigned int batch = g->batch;
     struct msq *const mq     = g->mq;
@@ -407,6 +420,9 @@ msq_consumer(void *opaque)
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
                 mbuf_put(m, sum);
+                if (spin) {
+                    tsc_sleep_till(rdtsc() + spin);
+                }
             }
             msq_read_publish(mq);
         }
@@ -632,6 +648,7 @@ static void *
 iffq_producer(void *opaque)
 {
     struct global *const g       = (struct global *)opaque;
+    const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
     struct mbuf *const pool      = g->pool;
@@ -651,6 +668,9 @@ iffq_producer(void *opaque)
 #endif
         if (iffq_insert(fq, m) == 0) {
             --left;
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
         } else {
             pool_idx--;
         }
@@ -665,6 +685,7 @@ static void *
 iffq_consumer(void *opaque)
 {
     struct global *const g = (struct global *)opaque;
+    const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     struct iffq *const fq  = g->fq;
     unsigned int sum       = 0;
@@ -684,6 +705,9 @@ iffq_consumer(void *opaque)
         if (m) {
             --left;
             mbuf_put(m, sum);
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
             iffq_clear(fq);
         }
 #ifdef RATE
