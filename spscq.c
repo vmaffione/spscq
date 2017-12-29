@@ -721,10 +721,9 @@ usage(const char *progname)
            "    [-n NUM_PACKETS (in millions)]\n"
            "    [-b MAX_BATCH]\n"
            "    [-l QUEUE_LENGTH]\n"
-           "    [-L NUM_MBUFS]\n"
            "    [-c PRODUCER_CORE_ID]\n"
            "    [-c CONSUMER_CORE_ID]\n"
-           "    [-t TEST_TYPE (msql,msq,ff)]\n"
+           "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "\n",
            progname);
 }
@@ -786,6 +785,11 @@ main(int argc, char **argv)
 
         case 't':
             g->test_type = optarg;
+            break;
+
+        default:
+            usage(argv[0]);
+            return 0;
             break;
         }
     }
