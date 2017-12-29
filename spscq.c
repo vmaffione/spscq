@@ -10,7 +10,10 @@
 #include "mlib.h"
 
 #undef QDEBUG /* dump queue state at each operation */
-#undef RATE   /* period */
+#undef RATE  /* periodically print rate estimates */
+
+#define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
+#define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
 
 /* Alloc zeroed memory, aborting on failure. */
 static void *
@@ -56,6 +59,26 @@ ilog2(unsigned long int x)
 
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define likely(x) __builtin_expect(!!(x), 1)
+
+/* Ugly but useful macros for online rate estimation. */
+#define RATE_HEADER(g_)                                                        \
+    long long int thresh_ = g_->num_packets - HUNDREDMILLIONS;                 \
+    struct timespec rate_last_;                                                \
+    clock_gettime(CLOCK_MONOTONIC, &rate_last_);
+
+#define RATE_BODY(left_)                                                       \
+    if (unlikely(left_ < thresh_)) {                                           \
+        unsigned long long int ndiff;                                          \
+        struct timespec now;                                                   \
+        double mpps;                                                           \
+        clock_gettime(CLOCK_MONOTONIC, &now);                                  \
+        ndiff = (now.tv_sec - rate_last_.tv_sec) * ONEBILLION +                \
+                (now.tv_nsec - rate_last_.tv_nsec);                            \
+        mpps = HUNDREDMILLIONS * 1000.0 / ndiff;                               \
+        printf("%3.3f Mpps\n", mpps);                                          \
+        thresh_ -= HUNDREDMILLIONS;                                            \
+        rate_last_ = now;                                                      \
+    }
 
 struct mbuf {
     unsigned int len;
@@ -273,6 +296,9 @@ msq_legacy_consumer(void *opaque)
     struct msq *mq     = g->mq;
     unsigned int sum   = 0;
     struct mbuf *m;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     runon("C", g->c_core);
 
@@ -285,6 +311,9 @@ msq_legacy_consumer(void *opaque)
             --left;
             mbuf_put(m, sum);
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
@@ -293,9 +322,6 @@ msq_legacy_consumer(void *opaque)
     pthread_exit(NULL);
     return NULL;
 }
-
-#define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
-#define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
 
 static void *
 msq_producer(void *opaque)
@@ -307,11 +333,6 @@ msq_producer(void *opaque)
     struct mbuf *pool      = g->pool;
     struct msq *mq         = g->mq;
     unsigned int pool_idx  = 0;
-#ifdef RATE
-    long long int thresh = g->num_packets - HUNDREDMILLIONS;
-    struct timespec rate_last;
-    clock_gettime(CLOCK_MONOTONIC, &rate_last);
-#endif
 
     runon("P", g->p_core);
 
@@ -326,7 +347,7 @@ msq_producer(void *opaque)
             if (avail > batch) {
                 avail = batch;
             }
-#if 1
+#ifndef RATE
             /* Enable this to get a consistent 'sum' in the consumer. */
             if (unlikely(avail > left)) {
                 avail = left;
@@ -338,20 +359,6 @@ msq_producer(void *opaque)
                 msq_write_local(mq, m);
             }
             msq_write_publish(mq);
-#ifdef RATE
-            if (unlikely(left < thresh)) {
-                unsigned long long int ndiff;
-                struct timespec now;
-                double mpps;
-                clock_gettime(CLOCK_MONOTONIC, &now);
-                ndiff = (now.tv_sec - rate_last.tv_sec) * ONEBILLION +
-                        (now.tv_nsec - rate_last.tv_nsec);
-                mpps = HUNDREDMILLIONS * 1000.0 / ndiff;
-                printf("%3.3f Mpps\n", mpps);
-                thresh -= HUNDREDMILLIONS;
-                rate_last = now;
-            }
-#endif
         }
     }
     msq_dump("P", mq);
@@ -369,6 +376,9 @@ msq_consumer(void *opaque)
     struct msq *mq     = g->mq;
     unsigned int sum   = 0;
     struct mbuf *m;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     runon("C", g->c_core);
 
@@ -389,6 +399,9 @@ msq_consumer(void *opaque)
             }
             msq_read_publish(mq);
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
@@ -644,6 +657,9 @@ iffq_consumer(void *opaque)
     struct iffq *fq    = g->fq;
     unsigned int sum   = 0;
     struct mbuf *m;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     runon("C", g->c_core);
     iffq_dump("C", fq);
@@ -658,6 +674,9 @@ iffq_consumer(void *opaque)
             mbuf_put(m, sum);
             iffq_clear(fq);
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     iffq_dump("C", fq);
