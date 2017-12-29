@@ -106,6 +106,9 @@ struct global {
     /* Length of the SPSC queue. */
     unsigned int qlen;
 
+    /* How many entries for each line in iffq. */
+    unsigned int line_entries;
+
     /* Max consumer batch. */
     unsigned int batch;
 
@@ -716,7 +719,8 @@ run_test(struct global *g)
             exit(EXIT_FAILURE);
         }
     } else if (!strcmp(g->test_type, "iffq")) {
-        g->fq = iffq_create(g->qlen, /*line_size=*/64);
+        g->fq = iffq_create(g->qlen,
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
         if (!g->fq) {
             exit(EXIT_FAILURE);
         }
@@ -763,6 +767,7 @@ usage(const char *progname)
            "    [-n NUM_PACKETS (in millions)]\n"
            "    [-b MAX_BATCH]\n"
            "    [-l QUEUE_LENGTH]\n"
+           "    [-L LINE_ENTRIES (iffq)]\n"
            "    [-c PRODUCER_CORE_ID]\n"
            "    [-c CONSUMER_CORE_ID]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
@@ -778,14 +783,15 @@ main(int argc, char **argv)
     int opt;
 
     memset(g, 0, sizeof(*g));
-    g->num_packets = 10LL * 1000000LL;
-    g->qlen        = 256;
-    g->batch       = 32;
-    g->p_core      = -1;
-    g->c_core      = -1;
-    g->test_type   = "msql";
+    g->num_packets  = 10LL * 1000000LL;
+    g->qlen         = 256;
+    g->batch        = 32;
+    g->line_entries = 8;
+    g->p_core       = -1;
+    g->c_core       = -1;
+    g->test_type    = "msql";
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -809,8 +815,20 @@ main(int argc, char **argv)
 
         case 'l':
             g->qlen = atoi(optarg);
-            if (g->qlen < 2) {
-                printf("    Invalid queue length '%s'\n", optarg);
+            if (g->qlen < 2 || !is_power_of_two(g->qlen)) {
+                printf(
+                    "    Invalid queue length '%s' (must be a power of two)\n",
+                    optarg);
+                return -1;
+            }
+            break;
+
+        case 'L':
+            g->line_entries = atoi(optarg);
+            if (g->line_entries < 8 || !is_power_of_two(g->line_entries)) {
+                printf(
+                    "    Invalid line entries '%s' (must be a power of two)\n",
+                    optarg);
                 return -1;
             }
             break;
