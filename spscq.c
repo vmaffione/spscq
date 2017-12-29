@@ -1,3 +1,6 @@
+/*
+ * 2017 Vincenzo Maffione (Universita' di Pisa)
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,6 +117,11 @@ struct global {
 
     /* Affinity for producer and consumer. */
     int p_core, c_core;
+
+    /* Emulated per-packet load for the producer and consumer side,
+     * in nanoseconds and ticks. */
+    int prod_spin_ns, cons_spin_ns;
+    uint64_t prod_spin_ticks, cons_spin_ticks;
 
     const char *test_type;
 
@@ -714,6 +722,9 @@ run_test(struct global *g)
         exit(EXIT_FAILURE);
     }
 
+    g->prod_spin_ticks = ns2tsc(g->prod_spin_ns);
+    g->cons_spin_ticks = ns2tsc(g->cons_spin_ns);
+
     if (!strcmp(g->test_type, "msql") || !strcmp(g->test_type, "msq")) {
         g->mq = msq_create(g->qlen, g->batch);
         if (!g->mq) {
@@ -771,6 +782,8 @@ usage(const char *progname)
            "    [-L LINE_ENTRIES (iffq)]\n"
            "    [-c PRODUCER_CORE_ID]\n"
            "    [-c CONSUMER_CORE_ID]\n"
+           "    [-P PRODUCER_SPIN_NS]\n"
+           "    [-C CONSUMER_SPIN_NS]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "\n",
            progname);
@@ -791,8 +804,10 @@ main(int argc, char **argv)
     g->p_core       = -1;
     g->c_core       = -1;
     g->test_type    = "msql";
+    g->prod_spin_ns = 0;
+    g->cons_spin_ns = 0;
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -812,7 +827,7 @@ main(int argc, char **argv)
         case 'b':
             g->batch = atoi(optarg);
             if (g->batch < 1) {
-                printf("    Invalid receiver batch '%s'\n", optarg);
+                printf("    Invalid batch '%s'\n", optarg);
                 return -1;
             }
             break;
@@ -849,6 +864,22 @@ main(int argc, char **argv)
 
         case 't':
             g->test_type = optarg;
+            break;
+
+        case 'P':
+            g->prod_spin_ns = atoi(optarg);
+            if (g->prod_spin_ns < 0) {
+                printf("    Invalid producer spin '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'C':
+            g->cons_spin_ns = atoi(optarg);
+            if (g->cons_spin_ns < 0) {
+                printf("    Invalid consumer spin '%s'\n", optarg);
+                return -1;
+            }
             break;
 
         default:
