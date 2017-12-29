@@ -77,7 +77,7 @@ struct msq;
 
 struct global {
     /* Test length as a number of packets. */
-    long int num_packets;
+    long long int num_packets;
 
     /* Length of the SPSC queue. */
     unsigned int qlen;
@@ -238,7 +238,7 @@ static void *
 msq_legacy_producer(void *opaque)
 {
     struct global *g       = (struct global *)opaque;
-    long int left          = g->num_packets;
+    long long int left     = g->num_packets;
     unsigned int pool_mask = g->mq->qmask;
     struct mbuf *pool      = g->pool;
     struct msq *mq         = g->mq;
@@ -267,10 +267,10 @@ msq_legacy_producer(void *opaque)
 static void *
 msq_legacy_consumer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    long int left    = g->num_packets;
-    struct msq *mq   = g->mq;
-    unsigned int sum = 0;
+    struct global *g   = (struct global *)opaque;
+    long long int left = g->num_packets;
+    struct msq *mq     = g->mq;
+    unsigned int sum   = 0;
     struct mbuf *m;
 
     runon("C", g->c_core);
@@ -297,7 +297,7 @@ static void *
 msq_producer(void *opaque)
 {
     struct global *g       = (struct global *)opaque;
-    long int left          = g->num_packets;
+    long long int left     = g->num_packets;
     unsigned int pool_mask = g->mq->qmask;
     unsigned int batch     = g->batch;
     struct mbuf *pool      = g->pool;
@@ -341,7 +341,7 @@ static void *
 msq_consumer(void *opaque)
 {
     struct global *g   = (struct global *)opaque;
-    long int left      = g->num_packets;
+    long long int left = g->num_packets;
     unsigned int batch = g->batch;
     struct msq *mq     = g->mq;
     unsigned int sum   = 0;
@@ -584,7 +584,7 @@ static void *
 iffq_producer(void *opaque)
 {
     struct global *g       = (struct global *)opaque;
-    long int left          = g->num_packets;
+    long long int left     = g->num_packets;
     unsigned int pool_mask = g->qlen - 1;
     struct mbuf *pool      = g->pool;
     struct iffq *fq        = g->fq;
@@ -616,10 +616,10 @@ iffq_producer(void *opaque)
 static void *
 iffq_consumer(void *opaque)
 {
-    struct global *g = (struct global *)opaque;
-    long int left    = g->num_packets;
-    struct iffq *fq  = g->fq;
-    unsigned int sum = 0;
+    struct global *g   = (struct global *)opaque;
+    long long int left = g->num_packets;
+    struct iffq *fq    = g->fq;
+    unsigned int sum   = 0;
     struct mbuf *m;
 
     runon("C", g->c_core);
@@ -737,7 +737,7 @@ main(int argc, char **argv)
     int opt;
 
     memset(g, 0, sizeof(*g));
-    g->num_packets = 10 * 1000000;
+    g->num_packets = 10LL * 1000000LL;
     g->qlen        = 256;
     g->batch       = 32;
     g->p_core      = -1;
@@ -751,7 +751,7 @@ main(int argc, char **argv)
             return 0;
 
         case 'n':
-            g->num_packets = atoi(optarg) * 1000000;
+            g->num_packets = atoi(optarg) * 1000000LL;
             if (g->num_packets < 0) {
                 printf("    Invalid number of packets '%s'\n", optarg);
                 return -1;
