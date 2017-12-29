@@ -461,7 +461,8 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
     unsigned long entries_per_line;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
-        entries * sizeof(uintptr_t) <= 2 * line_size || line_size < sizeof(uintptr_t)) {
+        entries * sizeof(uintptr_t) <= 2 * line_size ||
+        line_size < sizeof(uintptr_t)) {
         printf("Error: invalid entries/linesize parameters\n");
         return -EINVAL;
     }
@@ -783,7 +784,7 @@ main(int argc, char **argv)
     int opt;
 
     memset(g, 0, sizeof(*g));
-    g->num_packets  = 10LL * 1000000LL;
+    g->num_packets  = 50LL * 1000000LL; /* 50 millions */
     g->qlen         = 256;
     g->batch        = 32;
     g->line_entries = 8;
@@ -802,6 +803,9 @@ main(int argc, char **argv)
             if (g->num_packets < 0) {
                 printf("    Invalid number of packets '%s'\n", optarg);
                 return -1;
+            }
+            if (g->num_packets == 0) {
+                g->num_packets = (1ULL << 63) - 1;
             }
             break;
 
