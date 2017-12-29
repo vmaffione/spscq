@@ -10,7 +10,7 @@
 #include "mlib.h"
 
 #undef QDEBUG /* dump queue state at each operation */
-#undef RATE  /* periodically print rate estimates */
+#undef RATE   /* periodically print rate estimates */
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
@@ -264,12 +264,12 @@ msq_free(struct msq *mq)
 static void *
 msq_legacy_producer(void *opaque)
 {
-    struct global *g       = (struct global *)opaque;
-    long long int left     = g->num_packets;
-    unsigned int pool_mask = g->mq->qmask;
-    struct mbuf *pool      = g->pool;
-    struct msq *mq         = g->mq;
-    unsigned int pool_idx  = 0;
+    struct global *const g       = (struct global *)opaque;
+    long long int left           = g->num_packets;
+    const unsigned int pool_mask = g->mq->qmask;
+    struct mbuf *const pool      = g->pool;
+    struct msq *const mq         = g->mq;
+    unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
 
@@ -294,10 +294,10 @@ msq_legacy_producer(void *opaque)
 static void *
 msq_legacy_consumer(void *opaque)
 {
-    struct global *g   = (struct global *)opaque;
-    long long int left = g->num_packets;
-    struct msq *mq     = g->mq;
-    unsigned int sum   = 0;
+    struct global *const g = (struct global *)opaque;
+    long long int left     = g->num_packets;
+    struct msq *const mq   = g->mq;
+    unsigned int sum       = 0;
     struct mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -329,13 +329,13 @@ msq_legacy_consumer(void *opaque)
 static void *
 msq_producer(void *opaque)
 {
-    struct global *g       = (struct global *)opaque;
-    long long int left     = g->num_packets;
-    unsigned int pool_mask = g->mq->qmask;
-    unsigned int batch     = g->batch;
-    struct mbuf *pool      = g->pool;
-    struct msq *mq         = g->mq;
-    unsigned int pool_idx  = 0;
+    struct global *const g       = (struct global *)opaque;
+    long long int left           = g->num_packets;
+    const unsigned int pool_mask = g->mq->qmask;
+    const unsigned int batch     = g->batch;
+    struct mbuf *const pool      = g->pool;
+    struct msq *const mq         = g->mq;
+    unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
 
@@ -373,11 +373,11 @@ msq_producer(void *opaque)
 static void *
 msq_consumer(void *opaque)
 {
-    struct global *g   = (struct global *)opaque;
-    long long int left = g->num_packets;
-    unsigned int batch = g->batch;
-    struct msq *mq     = g->mq;
-    unsigned int sum   = 0;
+    struct global *const g   = (struct global *)opaque;
+    long long int left       = g->num_packets;
+    const unsigned int batch = g->batch;
+    struct msq *const mq     = g->mq;
+    unsigned int sum         = 0;
     struct mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -623,12 +623,12 @@ iffq_prefetch(struct iffq *fq)
 static void *
 iffq_producer(void *opaque)
 {
-    struct global *g       = (struct global *)opaque;
-    long long int left     = g->num_packets;
-    unsigned int pool_mask = g->qlen - 1;
-    struct mbuf *pool      = g->pool;
-    struct iffq *fq        = g->fq;
-    unsigned int pool_idx  = 0;
+    struct global *const g       = (struct global *)opaque;
+    long long int left           = g->num_packets;
+    const unsigned int pool_mask = g->qlen - 1;
+    struct mbuf *const pool      = g->pool;
+    struct iffq *const fq        = g->fq;
+    unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
     (void)iffq_empty;
@@ -656,10 +656,10 @@ iffq_producer(void *opaque)
 static void *
 iffq_consumer(void *opaque)
 {
-    struct global *g   = (struct global *)opaque;
-    long long int left = g->num_packets;
-    struct iffq *fq    = g->fq;
-    unsigned int sum   = 0;
+    struct global *const g = (struct global *)opaque;
+    long long int left     = g->num_packets;
+    struct iffq *const fq  = g->fq;
+    unsigned int sum       = 0;
     struct mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
