@@ -112,7 +112,7 @@ struct global {
     /* How many entries for each line in iffq. */
     unsigned int line_entries;
 
-    /* Max consumer batch. */
+    /* Max batch for producer and consumer operation. */
     unsigned int batch;
 
     /* Affinity for producer and consumer. */
@@ -733,12 +733,16 @@ run_test(struct global *g)
     double mpps;
 
     if (!strcmp(g->test_type, "msql")) {
+        /* Multi-section queue (Lamport-like) with legacy operation,
+         * i.e. no batching. */
         prod_func = msq_legacy_producer;
         cons_func = msq_legacy_consumer;
     } else if (!strcmp(g->test_type, "msq")) {
+        /* Multi-section queue (Lamport-like) with batching operation. */
         prod_func = msq_producer;
         cons_func = msq_consumer;
     } else if (!strcmp(g->test_type, "iffq")) {
+        /* Improved fast-forward queue (PSPAT). */
         prod_func = iffq_producer;
         cons_func = iffq_consumer;
     } else {
