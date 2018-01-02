@@ -13,7 +13,7 @@
 #include "mlib.h"
 
 #undef QDEBUG /* dump queue state at each operation */
-#undef RATE   /* periodically print rate estimates */
+#define RATE  /* periodically print rate estimates */
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
@@ -796,21 +796,26 @@ run_test(struct global *g)
     return 0;
 }
 
+#define DFLT_N 50
+#define DFLT_BATCH 32
+#define DFLT_QLEN 256
+#define DFLT_LINE_ENTRIES 8
+
 static void
 usage(const char *progname)
 {
     printf("%s [-h]\n"
-           "    [-n NUM_PACKETS (in millions)]\n"
-           "    [-b MAX_BATCH]\n"
-           "    [-l QUEUE_LENGTH]\n"
-           "    [-L LINE_ENTRIES (iffq)]\n"
-           "    [-c PRODUCER_CORE_ID]\n"
-           "    [-c CONSUMER_CORE_ID]\n"
-           "    [-P PRODUCER_SPIN_NS]\n"
-           "    [-C CONSUMER_SPIN_NS]\n"
+           "    [-n NUM_PACKETS (in millions) = %d]\n"
+           "    [-b MAX_BATCH = %d]\n"
+           "    [-l QUEUE_LENGTH = %d]\n"
+           "    [-L LINE_ENTRIES (iffq) = %d]\n"
+           "    [-c PRODUCER_CORE_ID = -1]\n"
+           "    [-c CONSUMER_CORE_ID = -1]\n"
+           "    [-P PRODUCER_SPIN_NS = 0]\n"
+           "    [-C CONSUMER_SPIN_NS = 0]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "\n",
-           progname);
+           progname, DFLT_N, DFLT_BATCH, DFLT_QLEN, DFLT_LINE_ENTRIES);
 }
 
 int
@@ -821,10 +826,10 @@ main(int argc, char **argv)
     int opt;
 
     memset(g, 0, sizeof(*g));
-    g->num_packets  = 50LL * 1000000LL; /* 50 millions */
-    g->qlen         = 256;
-    g->batch        = 32;
-    g->line_entries = 8;
+    g->num_packets  = DFLT_N * 1000000LL; /* 50 millions */
+    g->batch        = DFLT_BATCH;
+    g->qlen         = DFLT_QLEN;
+    g->line_entries = DFLT_LINE_ENTRIES;
     g->p_core       = -1;
     g->c_core       = -1;
     g->test_type    = "msql";
