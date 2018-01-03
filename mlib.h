@@ -15,13 +15,13 @@ rdtsc(void)
     return (uint64_t)lo | ((uint64_t)hi << 32);
 }
 
-#define barrier() asm volatile("" ::: "memory")
+#define compiler_barrier() asm volatile("" ::: "memory")
 
 static inline void
 tsc_sleep_till(uint64_t when)
 {
     while (rdtsc() < when)
-        barrier();
+        compiler_barrier();
 }
 
 /* Prepend this to a struct field to make it aligned. */

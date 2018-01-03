@@ -205,6 +205,11 @@ msq_write_local(struct msq *mq, struct mbuf *m)
 static inline void
 msq_write_publish(struct msq *mq)
 {
+    /* Here we need a StoreStore barrier to prevent previous stores to the
+     * queue slot and mbuf content to be reordered after the store to
+     * mq->write. On x86 a compiler barrier suffices, because stores have
+     * release semantic (preventing StoreStore and LoadStore reordering). */
+    compiler_barrier();
     mq->write = mq->write_priv;
 }
 
@@ -223,7 +228,16 @@ msq_write(struct msq *mq, struct mbuf *m)
 static inline unsigned int
 msq_rspace(struct msq *mq)
 {
-    return mq->write - mq->read_priv;
+    unsigned int space;
+
+    space = mq->write - mq->read_priv;
+    /* Here we need a LoadLoad barrier to prevent upcoming loads to the queue
+     * slot and mbuf content to be reordered before the load of mq->write. On
+     * x86 a compiler barrier suffices, because loads have acquire semantic
+     * (preventing LoadLoad and LoadStore reordering). */
+    compiler_barrier();
+
+    return space;
 }
 
 /* No boundary checks, to be called after msq_rspace(). */
@@ -246,7 +260,7 @@ msq_read(struct msq *mq)
 {
     struct mbuf *m;
 
-    if (mq->read_priv == mq->write) {
+    if (msq_rspace(mq) == 0) {
         return NULL; /* no space */
     }
     m = msq_read_local(mq);
@@ -565,6 +579,8 @@ static inline int
 iffq_insert(struct iffq *fq, struct mbuf *m)
 {
     volatile uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
+    uintptr_t value =
+        (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
 
     if (unlikely(fq->prod_write == fq->prod_check)) {
         /* Leave a cache line empty. */
@@ -576,7 +592,10 @@ iffq_insert(struct iffq *fq, struct mbuf *m)
 #if 0
     assert((((uintptr_t)m) & 0x1) == 0);
 #endif
-    *h = (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
+    /* Here we need a StoreStore barrier, to prevent writes to the
+     * mbufs to be reordered after the write to the queue slot. */
+    compiler_barrier();
+    *h = value;
     fq->prod_write++;
     return 0;
 }
@@ -618,6 +637,10 @@ iffq_extract(struct iffq *fq)
         return NULL;
 
     fq->cons_read++;
+
+    /* Here we need a LoadLoad barrier, to prevent reads from the
+     * mbufs to be reordered before the read to the queue slot. */
+    compiler_barrier();
 
     return (struct mbuf *)(v & ~0x1);
 }
