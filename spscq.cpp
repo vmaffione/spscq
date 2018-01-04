@@ -14,7 +14,6 @@
 
 #undef QDEBUG /* dump queue state at each operation */
 #define RATE  /* periodically print rate estimates */
-#undef TOUCH_MBUFS
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
@@ -91,7 +90,7 @@ struct Mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
-#ifdef TOUCH_MBUFS
+static Mbuf gm;
 #define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
     ({                                                                         \
         Mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
@@ -101,19 +100,10 @@ struct Mbuf {
 
 #define mbuf_put(m_, sum_) sum_ += m_->len
 
-#else  /* !TOUCH_MBUFS */
-
-static Mbuf gm;
-#define mbuf_get(pool_, pool_idx_, pool_mask_) \
-    ({      \
-        (void)pool_;\
-        (void)pool_idx_;\
-        (void)pool_mask_;\
-        &gm; \
-    })
-#define mbuf_put(m_, sum_)
-
-#endif /* !TOUCH_MBUFS */
+enum class MbufMode {
+    NoAccess = 0,
+    OneAccess,
+};
 
 typedef void *(*pc_function_t)(void *);
 struct Msq;
@@ -300,6 +290,7 @@ msq_free(Msq *mq)
     free(mq);
 }
 
+template<MbufMode kMbufMode>
 static void *
 msq_legacy_producer(void *opaque)
 {
@@ -315,7 +306,12 @@ msq_legacy_producer(void *opaque)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+        Mbuf *m;
+        if (kMbufMode == MbufMode::NoAccess) {
+            m = &gm;
+        } else {
+            m = mbuf_get(pool, pool_idx, pool_mask);
+        }
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
@@ -334,6 +330,7 @@ msq_legacy_producer(void *opaque)
     return NULL;
 }
 
+template<MbufMode kMbufMode>
 static void *
 msq_legacy_consumer(void *opaque)
 {
@@ -356,7 +353,9 @@ msq_legacy_consumer(void *opaque)
         m = msq_read(mq);
         if (m) {
             --left;
+            if (kMbufMode == MbufMode::OneAccess) {
             mbuf_put(m, sum);
+            }
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
@@ -373,6 +372,7 @@ msq_legacy_consumer(void *opaque)
     return NULL;
 }
 
+template<MbufMode kMbufMode>
 static void *
 msq_producer(void *opaque)
 {
@@ -406,7 +406,12 @@ msq_producer(void *opaque)
 #endif
             left -= avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+                Mbuf *m;
+                if (kMbufMode == MbufMode::NoAccess) {
+                    m = &gm;
+                } else {
+                    mbuf_get(pool, pool_idx, pool_mask);
+                }
                 msq_write_local(mq, m);
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
@@ -421,6 +426,7 @@ msq_producer(void *opaque)
     return NULL;
 }
 
+template<MbufMode kMbufMode>
 static void *
 msq_consumer(void *opaque)
 {
@@ -450,8 +456,9 @@ msq_consumer(void *opaque)
             left -= avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
-                mbuf_put(m, sum);
-                (void)m;
+                if (kMbufMode == MbufMode::OneAccess) {
+                    mbuf_put(m, sum);
+                }
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
@@ -685,7 +692,8 @@ iffq_prefetch(Iffq *fq)
     __builtin_prefetch((void *)fq->q[fq->cons_read & fq->entry_mask]);
 }
 
-static void *
+template<MbufMode kMbufMode>
+void *
 iffq_producer(void *opaque)
 {
     struct global *const g       = (struct global *)opaque;
@@ -703,7 +711,12 @@ iffq_producer(void *opaque)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+        Mbuf *m;
+        if (kMbufMode == MbufMode::NoAccess) {
+            m = &gm;
+        } else {
+            m = mbuf_get(pool, pool_idx, pool_mask);
+        }
 #ifdef QDEBUG
         iffq_dump("P", fq);
 #endif
@@ -722,6 +735,7 @@ iffq_producer(void *opaque)
     return NULL;
 }
 
+template<MbufMode kMbufMode>
 static void *
 iffq_consumer(void *opaque)
 {
@@ -745,7 +759,9 @@ iffq_consumer(void *opaque)
         m = iffq_extract(fq);
         if (m) {
             --left;
-            mbuf_put(m, sum);
+            if (kMbufMode == MbufMode::OneAccess) {
+                mbuf_put(m, sum);
+            }
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
@@ -776,16 +792,16 @@ run_test(struct global *g)
     if (!strcmp(g->test_type, "msql")) {
         /* Multi-section queue (Lamport-like) with legacy operation,
          * i.e. no batching. */
-        prod_func = msq_legacy_producer;
-        cons_func = msq_legacy_consumer;
+        prod_func = msq_legacy_producer<MbufMode::NoAccess>;
+        cons_func = msq_legacy_consumer<MbufMode::NoAccess>;
     } else if (!strcmp(g->test_type, "msq")) {
         /* Multi-section queue (Lamport-like) with batching operation. */
-        prod_func = msq_producer;
-        cons_func = msq_consumer;
+        prod_func = msq_producer<MbufMode::NoAccess>;
+        cons_func = msq_consumer<MbufMode::NoAccess>;
     } else if (!strcmp(g->test_type, "iffq")) {
         /* Improved fast-forward queue (PSPAT). */
-        prod_func = iffq_producer;
-        cons_func = iffq_consumer;
+        prod_func = iffq_producer<MbufMode::NoAccess>;
+        cons_func = iffq_consumer<MbufMode::NoAccess>;
     } else {
         printf("Error: unknown test type '%s'\n", g->test_type);
         exit(EXIT_FAILURE);
