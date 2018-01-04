@@ -106,6 +106,7 @@ struct Mbuf {
 
 struct Msq;
 struct Iffq;
+struct Ffq;
 
 struct Global {
     static constexpr int DFLT_N            = 50;
@@ -144,8 +145,9 @@ struct Global {
     /* The lamport-like queue. */
     Msq *mq = nullptr;
 
-    /* The ff-like queue. */
-    Iffq *fq = nullptr;
+    /* The ff-like queues. */
+    Iffq *iffq = nullptr;
+    Ffq *ffq   = nullptr;
 
     /* A pool of preallocated mbufs. */
     Mbuf *pool = nullptr;
@@ -339,6 +341,7 @@ msql_producer(Global *const g)
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
+    assert(mq);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -372,6 +375,7 @@ msql_consumer(Global *const g)
     RATE_HEADER(g);
 #endif
 
+    assert(mq);
     runon("C", g->c_core);
 
     while (left > 0) {
@@ -406,6 +410,7 @@ msq_producer(Global *const g)
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
+    assert(mq);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -453,6 +458,7 @@ msq_consumer(Global *const g)
     RATE_HEADER(g);
 #endif
 
+    assert(mq);
     runon("C", g->c_core);
 
     while (left > 0) {
@@ -486,26 +492,155 @@ msq_consumer(Global *const g)
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 /*
+ * FastForward queue.
+ */
+struct Ffq {
+    /* Shared read-only fields. */
+    CACHELINE_ALIGNED
+    unsigned int qlen;
+    unsigned int qmask;
+
+    /* Producer fields. */
+    CACHELINE_ALIGNED
+    unsigned long prod_write;
+
+    /* Consumer fields. */
+    CACHELINE_ALIGNED
+    unsigned long cons_read;
+
+    /* The queue. */
+    CACHELINE_ALIGNED
+    volatile uintptr_t q[0];
+};
+
+static Ffq *
+ffq_create(int qlen)
+{
+    Ffq *ffq =
+        static_cast<Ffq *>(szalloc(sizeof(*ffq) + qlen * sizeof(ffq->q[0])));
+
+    if (qlen < 2 || !is_power_of_two(qlen)) {
+        printf("Error: queue length %d is not a power of two\n", qlen);
+        return NULL;
+    }
+
+    ffq->qlen  = qlen;
+    ffq->qmask = qlen - 1;
+
+    return ffq;
+}
+
+static inline int
+ffq_write(Ffq *ffq, Mbuf *m)
+{
+    volatile uintptr_t *qslot = &ffq->q[ffq->prod_write & ffq->qmask];
+
+    if (*qslot != 0) {
+        return -1; /* no space */
+    }
+    *qslot = reinterpret_cast<uintptr_t>(m);
+    ffq->prod_write++;
+
+    return 0;
+}
+
+static inline Mbuf *
+ffq_read(Ffq *ffq)
+{
+    volatile uintptr_t *qslot = &ffq->q[ffq->cons_read & ffq->qmask];
+    Mbuf *m                   = reinterpret_cast<Mbuf *>(*qslot);
+
+    if (m != nullptr) {
+        *qslot = 0;
+        ffq->cons_read++;
+    }
+
+    return m;
+}
+
+template <MbufMode kMbufMode>
+static void
+ffq_producer(Global *const g)
+{
+    const uint64_t spin          = g->prod_spin_ticks;
+    long long int left           = g->num_packets;
+    const unsigned int pool_mask = g->ffq->qmask;
+    Ffq *const ffq               = g->ffq;
+    unsigned int pool_idx        = 0;
+
+    assert(ffq);
+    runon("P", g->p_core);
+
+    clock_gettime(CLOCK_MONOTONIC, &g->begin);
+    while (left > 0) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        if (ffq_write(ffq, m) == 0) {
+            --left;
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
+        } else {
+            pool_idx--;
+        }
+    }
+}
+
+template <MbufMode kMbufMode>
+static void
+ffq_consumer(Global *const g)
+{
+    const uint64_t spin = g->cons_spin_ticks;
+    long long int left  = g->num_packets;
+    Ffq *const ffq      = g->ffq;
+    unsigned int sum    = 0;
+    Mbuf *m;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
+
+    assert(ffq);
+    runon("C", g->c_core);
+
+    while (left > 0) {
+        m = ffq_read(ffq);
+        if (m) {
+            --left;
+            mbuf_put<kMbufMode>(m, &sum);
+            if (spin) {
+                tsc_sleep_till(rdtsc() + spin);
+            }
+        }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
+    }
+    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    printf("[C] sum = %x\n", sum);
+}
+
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+/*
  * Improved FastForward queue, used by pspat.
  */
 struct Iffq {
-    /* shared (constant) fields */
+    /* Shared (constant) fields. */
     unsigned long entry_mask;
     unsigned long seqbit_shift;
     unsigned long line_entries;
     unsigned long line_mask;
 
-    /* producer fields */
+    /* Producer fields. */
     CACHELINE_ALIGNED
     unsigned long prod_write;
     unsigned long prod_check;
 
-    /* consumer fields */
+    /* Consumer fields. */
     CACHELINE_ALIGNED
     unsigned long cons_clear;
     unsigned long cons_read;
 
-    /* the queue */
+    /* The queue. */
     CACHELINE_ALIGNED
     volatile uintptr_t q[0];
 };
@@ -594,10 +729,10 @@ iffq_free(Iffq *m)
 }
 
 void
-iffq_dump(const char *prefix, Iffq *fq)
+iffq_dump(const char *prefix, Iffq *iffq)
 {
-    printf("[%s]: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
-           fq->cons_read, fq->prod_write, fq->prod_check);
+    printf("[%s]: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, iffq->cons_clear,
+           iffq->cons_read, iffq->prod_write, iffq->prod_check);
 }
 
 /**
@@ -608,18 +743,18 @@ iffq_dump(const char *prefix, Iffq *fq)
  * Returns 0 on success, -ENOBUFS on failure.
  */
 static inline int
-iffq_insert(Iffq *fq, Mbuf *m)
+iffq_insert(Iffq *iffq, Mbuf *m)
 {
-    volatile uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
+    volatile uintptr_t *h = &iffq->q[iffq->prod_write & iffq->entry_mask];
     uintptr_t value =
-        (uintptr_t)m | ((fq->prod_write >> fq->seqbit_shift) & 0x1);
+        (uintptr_t)m | ((iffq->prod_write >> iffq->seqbit_shift) & 0x1);
 
-    if (unlikely(fq->prod_write == fq->prod_check)) {
+    if (unlikely(iffq->prod_write == iffq->prod_check)) {
         /* Leave a cache line empty. */
-        if (fq->q[(fq->prod_check + fq->line_entries) & fq->entry_mask])
+        if (iffq->q[(iffq->prod_check + iffq->line_entries) & iffq->entry_mask])
             return -ENOBUFS;
-        fq->prod_check += fq->line_entries;
-        //__builtin_prefetch(h + fq->line_entries);
+        iffq->prod_check += iffq->line_entries;
+        //__builtin_prefetch(h + iffq->line_entries);
     }
 #if 0
     assert((((uintptr_t)m) & 0x1) == 0);
@@ -628,14 +763,14 @@ iffq_insert(Iffq *fq, Mbuf *m)
      * mbufs to be reordered after the write to the queue slot. */
     compiler_barrier();
     *h = value;
-    fq->prod_write++;
+    iffq->prod_write++;
     return 0;
 }
 
 static inline int
-__iffq_empty(Iffq *fq, unsigned long i, uintptr_t v)
+__iffq_empty(Iffq *iffq, unsigned long i, uintptr_t v)
 {
-    return (!v) || ((v ^ (i >> fq->seqbit_shift)) & 0x1);
+    return (!v) || ((v ^ (i >> iffq->seqbit_shift)) & 0x1);
 }
 
 /**
@@ -654,21 +789,21 @@ iffq_empty(Iffq *m)
 
 /**
  * iffq_extract - extract a value
- * @fq: the mailbox where to extract from
+ * @iffq: the mailbox where to extract from
  *
  * Returns the extracted value, NULL if the mailbox
  * is empty. It does not free up any entry, use
  * iffq_clear for that
  */
 static inline Mbuf *
-iffq_extract(Iffq *fq)
+iffq_extract(Iffq *iffq)
 {
-    uintptr_t v = fq->q[fq->cons_read & fq->entry_mask];
+    uintptr_t v = iffq->q[iffq->cons_read & iffq->entry_mask];
 
-    if (__iffq_empty(fq, fq->cons_read, v))
+    if (__iffq_empty(iffq, iffq->cons_read, v))
         return NULL;
 
-    fq->cons_read++;
+    iffq->cons_read++;
 
     /* Here we need a LoadLoad barrier, to prevent reads from the
      * mbufs to be reordered before the read to the queue slot. */
@@ -679,24 +814,24 @@ iffq_extract(Iffq *fq)
 
 /**
  * iffq_clear - clear the previously extracted entries
- * @fq: the mailbox to be cleared
+ * @iffq: the mailbox to be cleared
  *
  */
 static inline void
-iffq_clear(Iffq *fq)
+iffq_clear(Iffq *iffq)
 {
-    unsigned long s = fq->cons_read & fq->line_mask;
+    unsigned long s = iffq->cons_read & iffq->line_mask;
 
-    for (; (fq->cons_clear /* & fq->line_mask */) != s;
-         fq->cons_clear += fq->line_entries) {
-        fq->q[fq->cons_clear & fq->entry_mask] = 0;
+    for (; (iffq->cons_clear /* & iffq->line_mask */) != s;
+         iffq->cons_clear += iffq->line_entries) {
+        iffq->q[iffq->cons_clear & iffq->entry_mask] = 0;
     }
 }
 
 static inline void
-iffq_prefetch(Iffq *fq)
+iffq_prefetch(Iffq *iffq)
 {
-    __builtin_prefetch((void *)fq->q[fq->cons_read & fq->entry_mask]);
+    __builtin_prefetch((void *)iffq->q[iffq->cons_read & iffq->entry_mask]);
 }
 
 template <MbufMode kMbufMode>
@@ -706,21 +841,22 @@ iffq_producer(Global *const g)
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
-    Iffq *const fq               = g->fq;
+    Iffq *const iffq             = g->iffq;
     unsigned int pool_idx        = 0;
 
+    assert(iffq);
     runon("P", g->p_core);
     (void)iffq_empty;
     (void)iffq_prefetch;
-    iffq_dump("P", fq);
+    iffq_dump("P", iffq);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
-        iffq_dump("P", fq);
+        iffq_dump("P", iffq);
 #endif
-        if (iffq_insert(fq, m) == 0) {
+        if (iffq_insert(iffq, m) == 0) {
             --left;
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -729,7 +865,7 @@ iffq_producer(Global *const g)
             pool_idx--;
         }
     }
-    iffq_dump("P", fq);
+    iffq_dump("P", iffq);
 }
 
 template <MbufMode kMbufMode>
@@ -738,35 +874,36 @@ iffq_consumer(Global *const g)
 {
     const uint64_t spin = g->cons_spin_ticks;
     long long int left  = g->num_packets;
-    Iffq *const fq      = g->fq;
+    Iffq *const iffq    = g->iffq;
     unsigned int sum    = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
 
+    assert(iffq);
     runon("C", g->c_core);
-    iffq_dump("C", fq);
+    iffq_dump("C", iffq);
 
     while (left > 0) {
 #ifdef QDEBUG
-        iffq_dump("C", fq);
+        iffq_dump("C", iffq);
 #endif
-        m = iffq_extract(fq);
+        m = iffq_extract(iffq);
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
-            iffq_clear(fq);
+            iffq_clear(iffq);
         }
 #ifdef RATE
         RATE_BODY(left);
 #endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
-    iffq_dump("C", fq);
+    iffq_dump("C", iffq);
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -803,6 +940,8 @@ run_test(Global *g)
     MATRIX_ADD(msql);
     /* Multi-section queue (Lamport-like) with batching operation. */
     MATRIX_ADD(msq);
+    /* Original fast-forward queue. */
+    MATRIX_ADD(ffq);
     /* Improved fast-forward queue (PSPAT). */
     MATRIX_ADD(iffq);
 
@@ -821,9 +960,15 @@ run_test(Global *g)
             exit(EXIT_FAILURE);
         }
     } else if (g->test_type == "iffq") {
-        g->fq = iffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
-        if (!g->fq) {
+        g->iffq =
+            iffq_create(g->qlen,
+                        /*line_size=*/g->line_entries * sizeof(uintptr_t));
+        if (!g->iffq) {
+            exit(EXIT_FAILURE);
+        }
+    } else if (g->test_type == "ffq") {
+        g->ffq = ffq_create(g->qlen);
+        if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
     } else {
@@ -866,7 +1011,12 @@ run_test(Global *g)
     printf("Throughput %3.3f Mpps\n", mpps);
 
     free(g->pool);
-    msq_free(g->mq);
+    if (g->mq) {
+        msq_free(g->mq);
+    }
+    if (g->iffq) {
+        iffq_free(g->iffq);
+    }
 
     return 0;
 }
