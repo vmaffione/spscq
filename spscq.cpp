@@ -2,17 +2,19 @@
  * 2017 Vincenzo Maffione (Universita' di Pisa)
  */
 #include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <unistd.h>
-#include <time.h>
-#include <errno.h>
+#include <ctime>
+#include <cerrno>
 #include <assert.h>
-#include <string.h>
-#include <errno.h>
+#include <cstring>
 #include <thread>
 #include <map>
+#include <random>
+#include <algorithm>
+#include <iostream>
 
 #include "mlib.h"
 
@@ -92,6 +94,7 @@ ilog2(unsigned long int x)
 enum class MbufMode {
     NoAccess = 0,
     OneAccess,
+    ScatteredAccess,
 };
 
 struct Mbuf {
@@ -101,34 +104,8 @@ struct Mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
-static Mbuf gm;
-
-template <MbufMode kMbufMode>
-static inline Mbuf *
-mbuf_get(Mbuf *const pool, unsigned int *pool_idx, const unsigned int pool_mask)
-{
-    if (kMbufMode == MbufMode::NoAccess) {
-        return &gm;
-    } else {
-        Mbuf *m = &pool[*pool_idx & pool_mask];
-        m->len  = (*pool_idx)++;
-        return m;
-    }
-}
-
-template <MbufMode kMbufMode>
-static inline void
-mbuf_put(Mbuf *const m, unsigned int *sum)
-{
-    if (kMbufMode == MbufMode::OneAccess) {
-        *sum += m->len;
-    }
-}
-
-struct Global;
 struct Msq;
 struct Iffq;
-typedef void (*pc_function_t)(Global *const);
 
 struct Global {
     static constexpr int DFLT_N            = 50;
@@ -172,7 +149,39 @@ struct Global {
 
     /* A pool of preallocated mbufs. */
     Mbuf *pool = nullptr;
+
+    /* Indirect pool of mbufs, used in MbufMode::ScatteredAccess. */
+    Mbuf **spool = nullptr;
 };
+
+static Mbuf gm;
+
+template <MbufMode kMbufMode>
+static inline Mbuf *
+mbuf_get(Global *const g, unsigned int *pool_idx, const unsigned int pool_mask)
+{
+    if (kMbufMode == MbufMode::NoAccess) {
+        return &gm;
+    } else {
+        Mbuf *m;
+        if (kMbufMode == MbufMode::OneAccess) {
+            m = &g->pool[*pool_idx & pool_mask];
+        } else { /* MbufMode::ScatteredAccess */
+            m = g->spool[*pool_idx & pool_mask];
+        }
+        m->len = (*pool_idx)++;
+        return m;
+    }
+}
+
+template <MbufMode kMbufMode>
+static inline void
+mbuf_put(Mbuf *const m, unsigned int *sum)
+{
+    if (kMbufMode != MbufMode::NoAccess) {
+        *sum += m->len;
+    }
+}
 
 /*
  * Multi-section queue, based on the Lamport classic queue.
@@ -327,7 +336,6 @@ msql_producer(Global *const g)
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
-    Mbuf *const pool             = g->pool;
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
@@ -335,7 +343,7 @@ msql_producer(Global *const g)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
@@ -395,7 +403,6 @@ msq_producer(Global *const g)
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     const unsigned int batch     = g->batch;
-    Mbuf *const pool             = g->pool;
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
@@ -420,7 +427,7 @@ msq_producer(Global *const g)
 #endif
             left -= avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
+                Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 msq_write_local(mq, m);
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
@@ -699,7 +706,6 @@ iffq_producer(Global *const g)
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
-    Mbuf *const pool             = g->pool;
     Iffq *const fq               = g->fq;
     unsigned int pool_idx        = 0;
 
@@ -710,7 +716,7 @@ iffq_producer(Global *const g)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
         iffq_dump("P", fq);
 #endif
@@ -765,6 +771,8 @@ iffq_consumer(Global *const g)
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
+typedef void (*pc_function_t)(Global *const);
+
 static int
 run_test(Global *g)
 {
@@ -818,7 +826,31 @@ run_test(Global *g)
     } else {
         assert(0);
     }
+
+    /* Allocate mbuf pool. */
     g->pool = static_cast<Mbuf *>(szalloc(g->qlen * sizeof(g->pool[0])));
+
+    if (g->mbuf_mode == MbufMode::ScatteredAccess) {
+        /* Prepare support for scattered mbufs. First create a vector
+         * of qlen elements, containing a random permutation of
+         * [0..qlen[. */
+        std::vector<int> v(g->qlen);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        for (size_t i = 0; i < v.size(); i++) {
+            v[i] = i;
+        }
+        std::shuffle(v.begin(), v.end(), gen);
+
+        /* Then allocate and initialize g->spool, whose slots points at the
+         * mbufs in the pool following the random pattern. */
+        g->spool =
+            static_cast<Mbuf **>(szalloc(v.size() * sizeof(g->spool[0])));
+        for (size_t i = 0; i < v.size(); i++) {
+            g->spool[i] = g->pool + v[i];
+        }
+    }
 
     std::thread pth(funcs.first, g);
     std::thread cth(funcs.second, g);
@@ -938,7 +970,15 @@ main(int argc, char **argv)
             break;
 
         case 'M':
-            g->mbuf_mode = MbufMode::OneAccess;
+            switch (g->mbuf_mode) {
+            case MbufMode::NoAccess:
+                g->mbuf_mode = MbufMode::OneAccess;
+                break;
+            case MbufMode::OneAccess:
+            case MbufMode::ScatteredAccess:
+                g->mbuf_mode = MbufMode::ScatteredAccess;
+                break;
+            }
             break;
 
         default:
