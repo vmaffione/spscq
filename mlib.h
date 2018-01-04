@@ -29,7 +29,7 @@ tsc_sleep_till(uint64_t when)
 }
 
 /* Prepend this to a struct field to make it aligned. */
-#define CACHE_SIZE  64
+#define CACHE_SIZE 64
 #define CACHELINE_ALIGNED __attribute__((aligned(CACHE_SIZE)))
 
 void runon(const char *prefix, int cpuid);

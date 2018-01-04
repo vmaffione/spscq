@@ -6,11 +6,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <pthread.h>
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
+#include <thread>
 
 #include "mlib.h"
 
@@ -109,9 +109,10 @@ enum class MbufMode {
     OneAccess,
 };
 
-typedef void *(*pc_function_t)(void *);
+struct Global;
 struct Msq;
 struct Iffq;
+typedef void (*pc_function_t)(Global *const);
 
 struct Global {
     static constexpr int DFLT_N = 50;
@@ -302,10 +303,9 @@ msq_free(Msq *mq)
 }
 
 template<MbufMode kMbufMode>
-static void *
-msq_legacy_producer(void *opaque)
+static void
+msq_legacy_producer(Global *const g)
 {
-    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
@@ -336,16 +336,12 @@ msq_legacy_producer(void *opaque)
         }
     }
     msq_dump("P", mq);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 
 template<MbufMode kMbufMode>
-static void *
-msq_legacy_consumer(void *opaque)
+static void
+msq_legacy_consumer(Global *const g)
 {
-    Global *const g = (Global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     Msq *const mq   = g->mq;
@@ -378,16 +374,12 @@ msq_legacy_consumer(void *opaque)
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
     printf("[C] sum = %x\n", sum);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 
 template<MbufMode kMbufMode>
-static void *
-msq_producer(void *opaque)
+static void
+msq_producer(Global *const g)
 {
-    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
@@ -432,16 +424,12 @@ msq_producer(void *opaque)
         }
     }
     msq_dump("P", mq);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 
 template<MbufMode kMbufMode>
-static void *
-msq_consumer(void *opaque)
+static void
+msq_consumer(Global *const g)
 {
-    Global *const g   = (Global *)opaque;
     const uint64_t spin      = g->cons_spin_ticks;
     long long int left       = g->num_packets;
     const unsigned int batch = g->batch;
@@ -483,9 +471,6 @@ msq_consumer(void *opaque)
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
     printf("[C] sum = %x\n", sum);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -704,10 +689,9 @@ iffq_prefetch(Iffq *fq)
 }
 
 template<MbufMode kMbufMode>
-void *
-iffq_producer(void *opaque)
+static void
+iffq_producer(Global *const g)
 {
-    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
@@ -741,16 +725,12 @@ iffq_producer(void *opaque)
         }
     }
     iffq_dump("P", fq);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 
 template<MbufMode kMbufMode>
-static void *
-iffq_consumer(void *opaque)
+static void
+iffq_consumer(Global *const g)
 {
-    Global *const g = (Global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     Iffq *const fq  = g->fq;
@@ -785,9 +765,6 @@ iffq_consumer(void *opaque)
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     iffq_dump("C", fq);
     printf("[C] sum = %x\n", sum);
-
-    pthread_exit(NULL);
-    return NULL;
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -797,7 +774,6 @@ run_test(Global *g)
     pc_function_t prod_func = NULL;
     pc_function_t cons_func = NULL;
     unsigned long int ndiff;
-    pthread_t pth, cth;
     double mpps;
 
     if (!strcmp(g->test_type, "msql")) {
@@ -852,25 +828,10 @@ run_test(Global *g)
     }
     g->pool = static_cast<Mbuf *>(malloc(g->qlen * sizeof(g->pool[0])));
 
-    if (pthread_create(&pth, NULL, prod_func, g)) {
-        perror("pthread_create(producer)");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_create(&cth, NULL, cons_func, g)) {
-        perror("pthread_create(consumer)");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_join(pth, NULL)) {
-        perror("pthread_join(producer)");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_join(cth, NULL)) {
-        perror("pthread_join(consumer)");
-        exit(EXIT_FAILURE);
-    }
+    std::thread pth(prod_func, g);
+    std::thread cth(cons_func, g);
+    pth.join();
+    cth.join();
 
     ndiff = (g->end.tv_sec - g->begin.tv_sec) * ONEBILLION +
             (g->end.tv_nsec - g->begin.tv_nsec);
