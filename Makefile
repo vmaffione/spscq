@@ -14,4 +14,4 @@ clean:
 	-rm -rf *.o $(PROGS)
 
 format:
-	clang-format -i -style=file $(shell git ls-files *.c *.h)
+	clang-format -i -style=file $(shell git ls-files *.c *.h *.cpp *.hpp)

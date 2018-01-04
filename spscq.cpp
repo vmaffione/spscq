@@ -99,8 +99,8 @@ struct Mbuf {
 static Mbuf gm;
 #define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
     ({                                                                         \
-        Mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
-        m->len         = pool_idx_++;                                          \
+        Mbuf *m = &pool[pool_idx_ & pool_mask_];                               \
+        m->len  = pool_idx_++;                                                 \
         m;                                                                     \
     })
 
@@ -117,13 +117,14 @@ struct Iffq;
 typedef void (*pc_function_t)(Global *const);
 
 struct Global {
-    static constexpr int DFLT_N = 50;
-    static constexpr int DFLT_BATCH  = 32;
-    static constexpr int DFLT_QLEN  = 256;
+    static constexpr int DFLT_N            = 50;
+    static constexpr int DFLT_BATCH        = 32;
+    static constexpr int DFLT_QLEN         = 256;
     static constexpr int DFLT_LINE_ENTRIES = 8;
 
     /* Test length as a number of packets. */
-    long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */;
+    long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */
+    ;
 
     /* Length of the SPSC queue. */
     unsigned int qlen = DFLT_QLEN;
@@ -195,7 +196,8 @@ struct Msq {
 static Msq *
 msq_create(int qlen, int batch)
 {
-    Msq *mq = static_cast<Msq *>(szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0])));
+    Msq *mq =
+        static_cast<Msq *>(szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0])));
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
@@ -304,15 +306,15 @@ msq_free(Msq *mq)
     free(mq);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 msql_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
-    Mbuf *const pool      = g->pool;
-    Msq *const mq         = g->mq;
+    Mbuf *const pool             = g->pool;
+    Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -340,14 +342,14 @@ msql_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 msql_consumer(Global *const g)
 {
-    const uint64_t spin    = g->cons_spin_ticks;
-    long long int left     = g->num_packets;
-    Msq *const mq   = g->mq;
-    unsigned int sum       = 0;
+    const uint64_t spin = g->cons_spin_ticks;
+    long long int left  = g->num_packets;
+    Msq *const mq       = g->mq;
+    unsigned int sum    = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -363,7 +365,7 @@ msql_consumer(Global *const g)
         if (m) {
             --left;
             if (kMbufMode == MbufMode::OneAccess) {
-            mbuf_put(m, sum);
+                mbuf_put(m, sum);
             }
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -378,7 +380,7 @@ msql_consumer(Global *const g)
     printf("[C] sum = %x\n", sum);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 msq_producer(Global *const g)
 {
@@ -386,8 +388,8 @@ msq_producer(Global *const g)
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     const unsigned int batch     = g->batch;
-    Mbuf *const pool      = g->pool;
-    Msq *const mq         = g->mq;
+    Mbuf *const pool             = g->pool;
+    Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -428,14 +430,14 @@ msq_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 msq_consumer(Global *const g)
 {
     const uint64_t spin      = g->cons_spin_ticks;
     long long int left       = g->num_packets;
     const unsigned int batch = g->batch;
-    Msq *const mq     = g->mq;
+    Msq *const mq            = g->mq;
     unsigned int sum         = 0;
     Mbuf *m;
 #ifdef RATE
@@ -560,7 +562,7 @@ iffq_create(unsigned long entries, unsigned long line_size)
     Iffq *m;
     int err;
 
-    m = static_cast<Iffq*>(szalloc(iffq_size(entries)));
+    m = static_cast<Iffq *>(szalloc(iffq_size(entries)));
     if (m == NULL) {
         return NULL;
     }
@@ -690,15 +692,15 @@ iffq_prefetch(Iffq *fq)
     __builtin_prefetch((void *)fq->q[fq->cons_read & fq->entry_mask]);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 iffq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
-    Mbuf *const pool      = g->pool;
-    Iffq *const fq        = g->fq;
+    Mbuf *const pool             = g->pool;
+    Iffq *const fq               = g->fq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -729,14 +731,14 @@ iffq_producer(Global *const g)
     iffq_dump("P", fq);
 }
 
-template<MbufMode kMbufMode>
+template <MbufMode kMbufMode>
 static void
 iffq_consumer(Global *const g)
 {
-    const uint64_t spin    = g->cons_spin_ticks;
-    long long int left     = g->num_packets;
-    Iffq *const fq  = g->fq;
-    unsigned int sum       = 0;
+    const uint64_t spin = g->cons_spin_ticks;
+    long long int left  = g->num_packets;
+    Iffq *const fq      = g->fq;
+    unsigned int sum    = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -773,20 +775,24 @@ iffq_consumer(Global *const g)
 static int
 run_test(Global *g)
 {
-    std::map<std::string, std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>> matrix;
+    std::map<std::string,
+             std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>>
+        matrix;
     std::pair<pc_function_t, pc_function_t> funcs;
     unsigned long int ndiff;
     double mpps;
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
-#define MATRIX_ADD(qname) \
-    do {    \
-    matrix[STRFY(qname)][MbufMode::NoAccess] = std::make_pair(qname##_producer<MbufMode::NoAccess>, \
-                                                        qname##_consumer<MbufMode::NoAccess>);\
-    matrix[STRFY(qname)][MbufMode::OneAccess] = std::make_pair(qname##_producer<MbufMode::OneAccess>, \
-                                                         qname##_consumer<MbufMode::OneAccess>); \
-    } while(0)
+#define MATRIX_ADD(qname)                                                      \
+    do {                                                                       \
+        matrix[STRFY(qname)][MbufMode::NoAccess] =                             \
+            std::make_pair(qname##_producer<MbufMode::NoAccess>,               \
+                           qname##_consumer<MbufMode::NoAccess>);              \
+        matrix[STRFY(qname)][MbufMode::OneAccess] =                            \
+            std::make_pair(qname##_producer<MbufMode::OneAccess>,              \
+                           qname##_consumer<MbufMode::OneAccess>);             \
+    } while (0)
 
     /* Multi-section queue (Lamport-like) with legacy operation,
      * i.e. no batching. */
@@ -852,7 +858,8 @@ usage(const char *progname)
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "    [-M (access mbuf content)]\n"
            "\n",
-           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
+           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN,
+           Global::DFLT_LINE_ENTRIES);
 }
 
 int
