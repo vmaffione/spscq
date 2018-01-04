@@ -3,7 +3,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
+#include <string>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -11,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <thread>
+#include <map>
 
 #include "mlib.h"
 
@@ -140,7 +142,7 @@ struct Global {
     int prod_spin_ns = 0, cons_spin_ns = 0;
     uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
 
-    const char *test_type = "msql";
+    std::string test_type = "msql";
 
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
@@ -771,53 +773,37 @@ iffq_consumer(Global *const g)
 static int
 run_test(Global *g)
 {
-    pc_function_t prod_func = NULL;
-    pc_function_t cons_func = NULL;
+    std::map<std::string, std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>> matrix;
+    std::pair<pc_function_t, pc_function_t> funcs;
     unsigned long int ndiff;
     double mpps;
 
-    if (!strcmp(g->test_type, "msql")) {
-        /* Multi-section queue (Lamport-like) with legacy operation,
-         * i.e. no batching. */
-        if (g->mbuf_mode == MbufMode::NoAccess) {
-            prod_func = msq_legacy_producer<MbufMode::NoAccess>;
-            cons_func = msq_legacy_consumer<MbufMode::NoAccess>;
-        } else {
-            prod_func = msq_legacy_producer<MbufMode::OneAccess>;
-            cons_func = msq_legacy_consumer<MbufMode::OneAccess>;
-        }
-    } else if (!strcmp(g->test_type, "msq")) {
+    /* Multi-section queue (Lamport-like) with legacy operation,
+     * i.e. no batching. */
+    matrix["msql"][MbufMode::NoAccess] = std::make_pair(msq_legacy_producer<MbufMode::NoAccess>, msq_legacy_consumer<MbufMode::NoAccess>);
+    matrix["msql"][MbufMode::OneAccess] = std::make_pair(msq_legacy_producer<MbufMode::OneAccess>, msq_legacy_consumer<MbufMode::OneAccess>);
         /* Multi-section queue (Lamport-like) with batching operation. */
-        if (g->mbuf_mode == MbufMode::NoAccess) {
-        prod_func = msq_producer<MbufMode::NoAccess>;
-        cons_func = msq_consumer<MbufMode::NoAccess>;
-        } else {
-        prod_func = msq_producer<MbufMode::OneAccess>;
-        cons_func = msq_consumer<MbufMode::OneAccess>;
-        }
-    } else if (!strcmp(g->test_type, "iffq")) {
+    matrix["msq"][MbufMode::NoAccess] = std::make_pair(msq_producer<MbufMode::NoAccess>, msq_consumer<MbufMode::NoAccess>);
+    matrix["msq"][MbufMode::OneAccess] = std::make_pair(msq_producer<MbufMode::OneAccess>, msq_consumer<MbufMode::OneAccess>);
         /* Improved fast-forward queue (PSPAT). */
-        if (g->mbuf_mode == MbufMode::NoAccess) {
-        prod_func = iffq_producer<MbufMode::NoAccess>;
-        cons_func = iffq_consumer<MbufMode::NoAccess>;
-        } else {
-        prod_func = iffq_producer<MbufMode::OneAccess>;
-        cons_func = iffq_consumer<MbufMode::OneAccess>;
-        }
-    } else {
-        printf("Error: unknown test type '%s'\n", g->test_type);
+    matrix["iffq"][MbufMode::NoAccess] = std::make_pair(iffq_producer<MbufMode::NoAccess>, iffq_consumer<MbufMode::NoAccess>);
+    matrix["iffq"][MbufMode::OneAccess] = std::make_pair(iffq_producer<MbufMode::OneAccess>, iffq_consumer<MbufMode::OneAccess>);
+
+    if (matrix.count(g->test_type) == 0) {
+        printf("Error: unknown test type '%s'\n", g->test_type.c_str());
         exit(EXIT_FAILURE);
     }
+    funcs = matrix[g->test_type][g->mbuf_mode];
 
     g->prod_spin_ticks = ns2tsc(g->prod_spin_ns);
     g->cons_spin_ticks = ns2tsc(g->cons_spin_ns);
 
-    if (!strcmp(g->test_type, "msql") || !strcmp(g->test_type, "msq")) {
+    if (g->test_type == "msql" || g->test_type == "msq") {
         g->mq = msq_create(g->qlen, g->batch);
         if (!g->mq) {
             exit(EXIT_FAILURE);
         }
-    } else if (!strcmp(g->test_type, "iffq")) {
+    } else if (g->test_type == "iffq") {
         g->fq = iffq_create(g->qlen,
                             /*line_size=*/g->line_entries * sizeof(uintptr_t));
         if (!g->fq) {
@@ -828,8 +814,8 @@ run_test(Global *g)
     }
     g->pool = static_cast<Mbuf *>(malloc(g->qlen * sizeof(g->pool[0])));
 
-    std::thread pth(prod_func, g);
-    std::thread cth(cons_func, g);
+    std::thread pth(funcs.first, g);
+    std::thread cth(funcs.second, g);
     pth.join();
     cth.join();
 
@@ -925,7 +911,7 @@ main(int argc, char **argv)
         }
 
         case 't':
-            g->test_type = optarg;
+            g->test_type = std::string(optarg);
             break;
 
         case 'P':
