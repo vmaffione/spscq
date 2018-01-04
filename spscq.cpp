@@ -110,10 +110,10 @@ struct Msq;
 struct Iffq;
 
 struct Global {
-static constexpr int DFLT_N = 50;
-static constexpr int DFLT_BATCH  = 32;
-static constexpr int DFLT_QLEN  = 256;
-static constexpr int DFLT_LINE_ENTRIES = 8;
+    static constexpr int DFLT_N = 50;
+    static constexpr int DFLT_BATCH  = 32;
+    static constexpr int DFLT_QLEN  = 256;
+    static constexpr int DFLT_LINE_ENTRIES = 8;
 
     /* Test length as a number of packets. */
     long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */;
@@ -136,6 +136,8 @@ static constexpr int DFLT_LINE_ENTRIES = 8;
     uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
 
     const char *test_type = "msql";
+
+    MbufMode mbuf_mode = MbufMode::NoAccess;
 
     /* Timestamp to compute experiment statistics. */
     struct timespec begin, end;
@@ -415,7 +417,7 @@ msq_producer(void *opaque)
                 if (kMbufMode == MbufMode::NoAccess) {
                     m = &gm;
                 } else {
-                    mbuf_get(pool, pool_idx, pool_mask);
+                    m = mbuf_get(pool, pool_idx, pool_mask);
                 }
                 msq_write_local(mq, m);
                 if (spin) {
@@ -797,16 +799,31 @@ run_test(Global *g)
     if (!strcmp(g->test_type, "msql")) {
         /* Multi-section queue (Lamport-like) with legacy operation,
          * i.e. no batching. */
-        prod_func = msq_legacy_producer<MbufMode::NoAccess>;
-        cons_func = msq_legacy_consumer<MbufMode::NoAccess>;
+        if (g->mbuf_mode == MbufMode::NoAccess) {
+            prod_func = msq_legacy_producer<MbufMode::NoAccess>;
+            cons_func = msq_legacy_consumer<MbufMode::NoAccess>;
+        } else {
+            prod_func = msq_legacy_producer<MbufMode::OneAccess>;
+            cons_func = msq_legacy_consumer<MbufMode::OneAccess>;
+        }
     } else if (!strcmp(g->test_type, "msq")) {
         /* Multi-section queue (Lamport-like) with batching operation. */
+        if (g->mbuf_mode == MbufMode::NoAccess) {
         prod_func = msq_producer<MbufMode::NoAccess>;
         cons_func = msq_consumer<MbufMode::NoAccess>;
+        } else {
+        prod_func = msq_producer<MbufMode::OneAccess>;
+        cons_func = msq_consumer<MbufMode::OneAccess>;
+        }
     } else if (!strcmp(g->test_type, "iffq")) {
         /* Improved fast-forward queue (PSPAT). */
+        if (g->mbuf_mode == MbufMode::NoAccess) {
         prod_func = iffq_producer<MbufMode::NoAccess>;
         cons_func = iffq_consumer<MbufMode::NoAccess>;
+        } else {
+        prod_func = iffq_producer<MbufMode::OneAccess>;
+        cons_func = iffq_consumer<MbufMode::OneAccess>;
+        }
     } else {
         printf("Error: unknown test type '%s'\n", g->test_type);
         exit(EXIT_FAILURE);
@@ -875,6 +892,7 @@ usage(const char *progname)
            "    [-P PRODUCER_SPIN_NS = 0]\n"
            "    [-C CONSUMER_SPIN_NS = 0]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
+           "    [-M (access mbuf content)]\n"
            "\n",
            progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
 }
@@ -886,7 +904,7 @@ main(int argc, char **argv)
     Global *g = &_g;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:M")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -959,6 +977,10 @@ main(int argc, char **argv)
                 printf("    Invalid consumer spin '%s'\n", optarg);
                 return -1;
             }
+            break;
+
+        case 'M':
+            g->mbuf_mode = MbufMode::OneAccess;
             break;
 
         default:

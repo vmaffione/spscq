@@ -4,7 +4,7 @@ PROGS=spscq
 CFLAGS=-Wall -Werror -g
 CXXFLAGS=$(CFLAGS) -std=c++11
 CFLAGS+=-O2
-LDFLAGS=-lpthread
+LDFLAGS=-lpthread -std=c++11 #-lstdc++
 
 all: $(PROGS)
 
