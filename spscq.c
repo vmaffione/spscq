@@ -14,6 +14,7 @@
 
 #undef QDEBUG /* dump queue state at each operation */
 #define RATE  /* periodically print rate estimates */
+#undef TOUCH_MBUFS
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
@@ -90,6 +91,7 @@ struct mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
+#if TOUCH_MBUFS
 #define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
     ({                                                                         \
         struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
@@ -98,6 +100,20 @@ struct mbuf {
     })
 
 #define mbuf_put(m_, sum_) sum_ += m_->len
+
+#else  /* !TOUCH_MBUFS */
+
+static struct mbuf gm;
+#define mbuf_get(pool_, pool_idx_, pool_mask_) \
+    ({      \
+        (void)pool_;\
+        (void)pool_idx_;\
+        (void)pool_mask_;\
+        &gm; \
+    })
+#define mbuf_put(m_, sum_)
+
+#endif /* !TOUCH_MBUFS */
 
 typedef void *(*pc_function_t)(void *);
 struct msq;
