@@ -91,7 +91,7 @@ struct mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
-#if TOUCH_MBUFS
+#ifdef TOUCH_MBUFS
 #define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
     ({                                                                         \
         struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
@@ -116,7 +116,8 @@ static struct mbuf gm;
 #endif /* !TOUCH_MBUFS */
 
 typedef void *(*pc_function_t)(void *);
-struct msq;
+struct Msq;
+struct Iffq;
 
 struct global {
     /* Test length as a number of packets. */
@@ -145,10 +146,10 @@ struct global {
     struct timespec begin, end;
 
     /* The lamport-like queue. */
-    struct msq *mq;
+    Msq *mq;
 
     /* The ff-like queue. */
-    struct iffq *fq;
+    Iffq *fq;
 
     /* A pool of preallocated mbufs. */
     struct mbuf *pool;
@@ -159,7 +160,7 @@ struct global {
  * All indices are free running.
  */
 typedef struct mbuf *msq_entry_t; /* trick to use volatile */
-struct msq {
+struct Msq {
     /* Producer private data. */
     CACHELINE_ALIGNED
     unsigned int write_priv;
@@ -187,10 +188,10 @@ struct msq {
     volatile msq_entry_t q[0];
 };
 
-static struct msq *
+static Msq *
 msq_create(int qlen, int batch)
 {
-    struct msq *mq = static_cast<struct msq *>(szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0])));
+    Msq *mq = static_cast<Msq *>(szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0])));
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
@@ -205,21 +206,21 @@ msq_create(int qlen, int batch)
 }
 
 static inline unsigned int
-msq_wspace(struct msq *mq)
+msq_wspace(Msq *mq)
 {
     return (mq->read - 1 - mq->write_priv) & mq->qmask;
 }
 
 /* No boundary checks, to be called after msq_wspace(). */
 static inline void
-msq_write_local(struct msq *mq, struct mbuf *m)
+msq_write_local(Msq *mq, struct mbuf *m)
 {
     mq->q[mq->write_priv & mq->qmask] = m;
     mq->write_priv++;
 }
 
 static inline void
-msq_write_publish(struct msq *mq)
+msq_write_publish(Msq *mq)
 {
     /* Here we need a StoreStore barrier to prevent previous stores to the
      * queue slot and mbuf content to be reordered after the store to
@@ -230,7 +231,7 @@ msq_write_publish(struct msq *mq)
 }
 
 static inline int
-msq_write(struct msq *mq, struct mbuf *m)
+msq_write(Msq *mq, struct mbuf *m)
 {
     if (msq_wspace(mq) == 0) {
         return -1; /* no space */
@@ -242,7 +243,7 @@ msq_write(struct msq *mq, struct mbuf *m)
 }
 
 static inline unsigned int
-msq_rspace(struct msq *mq)
+msq_rspace(Msq *mq)
 {
     unsigned int space;
 
@@ -258,7 +259,7 @@ msq_rspace(struct msq *mq)
 
 /* No boundary checks, to be called after msq_rspace(). */
 static inline struct mbuf *
-msq_read_local(struct msq *mq)
+msq_read_local(Msq *mq)
 {
     struct mbuf *m = mq->q[mq->read_priv & mq->qmask];
     mq->read_priv++;
@@ -266,13 +267,13 @@ msq_read_local(struct msq *mq)
 }
 
 static inline void
-msq_read_publish(struct msq *mq)
+msq_read_publish(Msq *mq)
 {
     mq->read = mq->read_priv;
 }
 
 static inline struct mbuf *
-msq_read(struct msq *mq)
+msq_read(Msq *mq)
 {
     struct mbuf *m;
 
@@ -286,14 +287,14 @@ msq_read(struct msq *mq)
 }
 
 static void
-msq_dump(const char *prefix, struct msq *mq)
+msq_dump(const char *prefix, Msq *mq)
 {
     printf("[%s] r %u rspace %u w %u wspace %u\n", prefix, mq->read & mq->qmask,
            msq_rspace(mq), mq->write & mq->qmask, msq_wspace(mq));
 }
 
 static void
-msq_free(struct msq *mq)
+msq_free(Msq *mq)
 {
     memset(mq, 0, sizeof(*mq));
     free(mq);
@@ -307,7 +308,7 @@ msq_legacy_producer(void *opaque)
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     struct mbuf *const pool      = g->pool;
-    struct msq *const mq         = g->mq;
+    Msq *const mq         = g->mq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -339,7 +340,7 @@ msq_legacy_consumer(void *opaque)
     struct global *const g = (struct global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
-    struct msq *const mq   = g->mq;
+    Msq *const mq   = g->mq;
     unsigned int sum       = 0;
     struct mbuf *m;
 #ifdef RATE
@@ -381,7 +382,7 @@ msq_producer(void *opaque)
     const unsigned int pool_mask = g->mq->qmask;
     const unsigned int batch     = g->batch;
     struct mbuf *const pool      = g->pool;
-    struct msq *const mq         = g->mq;
+    Msq *const mq         = g->mq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -427,7 +428,7 @@ msq_consumer(void *opaque)
     const uint64_t spin      = g->cons_spin_ticks;
     long long int left       = g->num_packets;
     const unsigned int batch = g->batch;
-    struct msq *const mq     = g->mq;
+    Msq *const mq     = g->mq;
     unsigned int sum         = 0;
     struct mbuf *m;
 #ifdef RATE
@@ -473,7 +474,7 @@ msq_consumer(void *opaque)
 /*
  * Improved FastForward queue, used by pspat.
  */
-struct iffq {
+struct Iffq {
     /* shared (constant) fields */
     unsigned long entry_mask;
     unsigned long seqbit_shift;
@@ -498,7 +499,7 @@ struct iffq {
 static inline size_t
 iffq_size(unsigned long entries)
 {
-    return roundup(sizeof(struct iffq) + entries * sizeof(uintptr_t), 64);
+    return roundup(sizeof(Iffq) + entries * sizeof(uintptr_t), 64);
 }
 
 /**
@@ -511,7 +512,7 @@ iffq_size(unsigned long entries)
  * Returns 0 on success, -errno on failure.
  */
 int
-iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
+iffq_init(Iffq *m, unsigned long entries, unsigned long line_size)
 {
     unsigned long entries_per_line;
 
@@ -548,13 +549,13 @@ iffq_init(struct iffq *m, unsigned long entries, unsigned long line_size)
  *
  * Both entries and line_size must be a power of 2.
  */
-struct iffq *
+Iffq *
 iffq_create(unsigned long entries, unsigned long line_size)
 {
-    struct iffq *m;
+    Iffq *m;
     int err;
 
-    m = static_cast<struct iffq*>(szalloc(iffq_size(entries)));
+    m = static_cast<Iffq*>(szalloc(iffq_size(entries)));
     if (m == NULL) {
         return NULL;
     }
@@ -573,13 +574,13 @@ iffq_create(unsigned long entries, unsigned long line_size)
  * @m: the mailbox to be deleted
  */
 void
-iffq_free(struct iffq *m)
+iffq_free(Iffq *m)
 {
     free(m);
 }
 
 void
-iffq_dump(const char *prefix, struct iffq *fq)
+iffq_dump(const char *prefix, Iffq *fq)
 {
     printf("[%s]: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, fq->cons_clear,
            fq->cons_read, fq->prod_write, fq->prod_check);
@@ -593,7 +594,7 @@ iffq_dump(const char *prefix, struct iffq *fq)
  * Returns 0 on success, -ENOBUFS on failure.
  */
 static inline int
-iffq_insert(struct iffq *fq, struct mbuf *m)
+iffq_insert(Iffq *fq, struct mbuf *m)
 {
     volatile uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
     uintptr_t value =
@@ -618,7 +619,7 @@ iffq_insert(struct iffq *fq, struct mbuf *m)
 }
 
 static inline int
-__iffq_empty(struct iffq *fq, unsigned long i, uintptr_t v)
+__iffq_empty(Iffq *fq, unsigned long i, uintptr_t v)
 {
     return (!v) || ((v ^ (i >> fq->seqbit_shift)) & 0x1);
 }
@@ -630,7 +631,7 @@ __iffq_empty(struct iffq *fq, unsigned long i, uintptr_t v)
  * Returns non-zero if the mailbox is empty
  */
 static inline int
-iffq_empty(struct iffq *m)
+iffq_empty(Iffq *m)
 {
     uintptr_t v = m->q[m->cons_read & m->entry_mask];
 
@@ -646,7 +647,7 @@ iffq_empty(struct iffq *m)
  * iffq_clear for that
  */
 static inline struct mbuf *
-iffq_extract(struct iffq *fq)
+iffq_extract(Iffq *fq)
 {
     uintptr_t v = fq->q[fq->cons_read & fq->entry_mask];
 
@@ -668,7 +669,7 @@ iffq_extract(struct iffq *fq)
  *
  */
 static inline void
-iffq_clear(struct iffq *fq)
+iffq_clear(Iffq *fq)
 {
     unsigned long s = fq->cons_read & fq->line_mask;
 
@@ -679,7 +680,7 @@ iffq_clear(struct iffq *fq)
 }
 
 static inline void
-iffq_prefetch(struct iffq *fq)
+iffq_prefetch(Iffq *fq)
 {
     __builtin_prefetch((void *)fq->q[fq->cons_read & fq->entry_mask]);
 }
@@ -692,7 +693,7 @@ iffq_producer(void *opaque)
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
     struct mbuf *const pool      = g->pool;
-    struct iffq *const fq        = g->fq;
+    Iffq *const fq        = g->fq;
     unsigned int pool_idx        = 0;
 
     runon("P", g->p_core);
@@ -727,7 +728,7 @@ iffq_consumer(void *opaque)
     struct global *const g = (struct global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
-    struct iffq *const fq  = g->fq;
+    Iffq *const fq  = g->fq;
     unsigned int sum       = 0;
     struct mbuf *m;
 #ifdef RATE

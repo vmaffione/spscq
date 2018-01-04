@@ -2,7 +2,7 @@ CC=clang
 CXX=clang++
 PROGS=spscq
 CFLAGS=-Wall -Werror -g
-CXXFLAGS=$(CFLAGS)
+CXXFLAGS=$(CFLAGS) -std=c++11
 CFLAGS+=-O2
 LDFLAGS=-lpthread
 
