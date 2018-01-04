@@ -793,6 +793,9 @@ run_test(Global *g)
         matrix[STRFY(qname)][MbufMode::OneAccess] =                            \
             std::make_pair(qname##_producer<MbufMode::OneAccess>,              \
                            qname##_consumer<MbufMode::OneAccess>);             \
+        matrix[STRFY(qname)][MbufMode::ScatteredAccess] =                      \
+            std::make_pair(qname##_producer<MbufMode::ScatteredAccess>,        \
+                           qname##_consumer<MbufMode::ScatteredAccess>);       \
     } while (0)
 
     /* Multi-section queue (Lamport-like) with legacy operation,
