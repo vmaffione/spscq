@@ -84,7 +84,7 @@ ilog2(unsigned long int x)
         rate_last_ = now;                                                      \
     }
 
-struct mbuf {
+struct Mbuf {
     unsigned int len;
     unsigned int __padding[7];
 #define MBUF_LEN_MAX 1500
@@ -94,7 +94,7 @@ struct mbuf {
 #ifdef TOUCH_MBUFS
 #define mbuf_get(pool_, pool_idx_, pool_mask_)                                 \
     ({                                                                         \
-        struct mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
+        Mbuf *m = &pool[pool_idx_ & pool_mask_];                        \
         m->len         = pool_idx_++;                                          \
         m;                                                                     \
     })
@@ -103,7 +103,7 @@ struct mbuf {
 
 #else  /* !TOUCH_MBUFS */
 
-static struct mbuf gm;
+static Mbuf gm;
 #define mbuf_get(pool_, pool_idx_, pool_mask_) \
     ({      \
         (void)pool_;\
@@ -152,14 +152,14 @@ struct global {
     Iffq *fq;
 
     /* A pool of preallocated mbufs. */
-    struct mbuf *pool;
+    Mbuf *pool;
 };
 
 /*
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
  */
-typedef struct mbuf *msq_entry_t; /* trick to use volatile */
+typedef Mbuf *msq_entry_t; /* trick to use volatile */
 struct Msq {
     /* Producer private data. */
     CACHELINE_ALIGNED
@@ -213,7 +213,7 @@ msq_wspace(Msq *mq)
 
 /* No boundary checks, to be called after msq_wspace(). */
 static inline void
-msq_write_local(Msq *mq, struct mbuf *m)
+msq_write_local(Msq *mq, Mbuf *m)
 {
     mq->q[mq->write_priv & mq->qmask] = m;
     mq->write_priv++;
@@ -231,7 +231,7 @@ msq_write_publish(Msq *mq)
 }
 
 static inline int
-msq_write(Msq *mq, struct mbuf *m)
+msq_write(Msq *mq, Mbuf *m)
 {
     if (msq_wspace(mq) == 0) {
         return -1; /* no space */
@@ -258,10 +258,10 @@ msq_rspace(Msq *mq)
 }
 
 /* No boundary checks, to be called after msq_rspace(). */
-static inline struct mbuf *
+static inline Mbuf *
 msq_read_local(Msq *mq)
 {
-    struct mbuf *m = mq->q[mq->read_priv & mq->qmask];
+    Mbuf *m = mq->q[mq->read_priv & mq->qmask];
     mq->read_priv++;
     return m;
 }
@@ -272,10 +272,10 @@ msq_read_publish(Msq *mq)
     mq->read = mq->read_priv;
 }
 
-static inline struct mbuf *
+static inline Mbuf *
 msq_read(Msq *mq)
 {
-    struct mbuf *m;
+    Mbuf *m;
 
     if (msq_rspace(mq) == 0) {
         return NULL; /* no space */
@@ -307,7 +307,7 @@ msq_legacy_producer(void *opaque)
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
-    struct mbuf *const pool      = g->pool;
+    Mbuf *const pool      = g->pool;
     Msq *const mq         = g->mq;
     unsigned int pool_idx        = 0;
 
@@ -315,7 +315,7 @@ msq_legacy_producer(void *opaque)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+        Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
@@ -342,7 +342,7 @@ msq_legacy_consumer(void *opaque)
     long long int left     = g->num_packets;
     Msq *const mq   = g->mq;
     unsigned int sum       = 0;
-    struct mbuf *m;
+    Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -381,7 +381,7 @@ msq_producer(void *opaque)
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
     const unsigned int batch     = g->batch;
-    struct mbuf *const pool      = g->pool;
+    Mbuf *const pool      = g->pool;
     Msq *const mq         = g->mq;
     unsigned int pool_idx        = 0;
 
@@ -406,7 +406,7 @@ msq_producer(void *opaque)
 #endif
             left -= avail;
             for (; avail > 0; avail--) {
-                struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+                Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
                 msq_write_local(mq, m);
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
@@ -430,7 +430,7 @@ msq_consumer(void *opaque)
     const unsigned int batch = g->batch;
     Msq *const mq     = g->mq;
     unsigned int sum         = 0;
-    struct mbuf *m;
+    Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -594,7 +594,7 @@ iffq_dump(const char *prefix, Iffq *fq)
  * Returns 0 on success, -ENOBUFS on failure.
  */
 static inline int
-iffq_insert(Iffq *fq, struct mbuf *m)
+iffq_insert(Iffq *fq, Mbuf *m)
 {
     volatile uintptr_t *h = &fq->q[fq->prod_write & fq->entry_mask];
     uintptr_t value =
@@ -646,7 +646,7 @@ iffq_empty(Iffq *m)
  * is empty. It does not free up any entry, use
  * iffq_clear for that
  */
-static inline struct mbuf *
+static inline Mbuf *
 iffq_extract(Iffq *fq)
 {
     uintptr_t v = fq->q[fq->cons_read & fq->entry_mask];
@@ -660,7 +660,7 @@ iffq_extract(Iffq *fq)
      * mbufs to be reordered before the read to the queue slot. */
     compiler_barrier();
 
-    return (struct mbuf *)(v & ~0x1);
+    return (Mbuf *)(v & ~0x1);
 }
 
 /**
@@ -692,7 +692,7 @@ iffq_producer(void *opaque)
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
-    struct mbuf *const pool      = g->pool;
+    Mbuf *const pool      = g->pool;
     Iffq *const fq        = g->fq;
     unsigned int pool_idx        = 0;
 
@@ -703,7 +703,7 @@ iffq_producer(void *opaque)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        struct mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
+        Mbuf *m = mbuf_get(pool, pool_idx, pool_mask);
 #ifdef QDEBUG
         iffq_dump("P", fq);
 #endif
@@ -730,7 +730,7 @@ iffq_consumer(void *opaque)
     long long int left     = g->num_packets;
     Iffq *const fq  = g->fq;
     unsigned int sum       = 0;
-    struct mbuf *m;
+    Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -808,7 +808,7 @@ run_test(struct global *g)
     } else {
         assert(0);
     }
-    g->pool = static_cast<struct mbuf *>(malloc(g->qlen * sizeof(g->pool[0])));
+    g->pool = static_cast<Mbuf *>(malloc(g->qlen * sizeof(g->pool[0])));
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
         perror("pthread_create(producer)");
