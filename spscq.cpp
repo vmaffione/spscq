@@ -109,40 +109,45 @@ typedef void *(*pc_function_t)(void *);
 struct Msq;
 struct Iffq;
 
-struct global {
+struct Global {
+static constexpr int DFLT_N = 50;
+static constexpr int DFLT_BATCH  = 32;
+static constexpr int DFLT_QLEN  = 256;
+static constexpr int DFLT_LINE_ENTRIES = 8;
+
     /* Test length as a number of packets. */
-    long long int num_packets;
+    long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */;
 
     /* Length of the SPSC queue. */
-    unsigned int qlen;
+    unsigned int qlen = DFLT_QLEN;
 
     /* How many entries for each line in iffq. */
-    unsigned int line_entries;
+    unsigned int line_entries = DFLT_LINE_ENTRIES;
 
     /* Max batch for producer and consumer operation. */
-    unsigned int batch;
+    unsigned int batch = DFLT_BATCH;
 
     /* Affinity for producer and consumer. */
-    int p_core, c_core;
+    int p_core = -1, c_core = -1;
 
     /* Emulated per-packet load for the producer and consumer side,
      * in nanoseconds and ticks. */
-    int prod_spin_ns, cons_spin_ns;
-    uint64_t prod_spin_ticks, cons_spin_ticks;
+    int prod_spin_ns = 0, cons_spin_ns = 0;
+    uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
 
-    const char *test_type;
+    const char *test_type = "msql";
 
     /* Timestamp to compute experiment statistics. */
     struct timespec begin, end;
 
     /* The lamport-like queue. */
-    Msq *mq;
+    Msq *mq = nullptr;
 
     /* The ff-like queue. */
-    Iffq *fq;
+    Iffq *fq = nullptr;
 
     /* A pool of preallocated mbufs. */
-    Mbuf *pool;
+    Mbuf *pool = nullptr;
 };
 
 /*
@@ -294,7 +299,7 @@ template<MbufMode kMbufMode>
 static void *
 msq_legacy_producer(void *opaque)
 {
-    struct global *const g       = (struct global *)opaque;
+    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
@@ -334,7 +339,7 @@ template<MbufMode kMbufMode>
 static void *
 msq_legacy_consumer(void *opaque)
 {
-    struct global *const g = (struct global *)opaque;
+    Global *const g = (Global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     Msq *const mq   = g->mq;
@@ -376,7 +381,7 @@ template<MbufMode kMbufMode>
 static void *
 msq_producer(void *opaque)
 {
-    struct global *const g       = (struct global *)opaque;
+    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->mq->qmask;
@@ -430,7 +435,7 @@ template<MbufMode kMbufMode>
 static void *
 msq_consumer(void *opaque)
 {
-    struct global *const g   = (struct global *)opaque;
+    Global *const g   = (Global *)opaque;
     const uint64_t spin      = g->cons_spin_ticks;
     long long int left       = g->num_packets;
     const unsigned int batch = g->batch;
@@ -696,7 +701,7 @@ template<MbufMode kMbufMode>
 void *
 iffq_producer(void *opaque)
 {
-    struct global *const g       = (struct global *)opaque;
+    Global *const g       = (Global *)opaque;
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
@@ -739,7 +744,7 @@ template<MbufMode kMbufMode>
 static void *
 iffq_consumer(void *opaque)
 {
-    struct global *const g = (struct global *)opaque;
+    Global *const g = (Global *)opaque;
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
     Iffq *const fq  = g->fq;
@@ -781,7 +786,7 @@ iffq_consumer(void *opaque)
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 static int
-run_test(struct global *g)
+run_test(Global *g)
 {
     pc_function_t prod_func = NULL;
     pc_function_t cons_func = NULL;
@@ -857,11 +862,6 @@ run_test(struct global *g)
     return 0;
 }
 
-#define DFLT_N 50
-#define DFLT_BATCH 32
-#define DFLT_QLEN 256
-#define DFLT_LINE_ENTRIES 8
-
 static void
 usage(const char *progname)
 {
@@ -876,26 +876,15 @@ usage(const char *progname)
            "    [-C CONSUMER_SPIN_NS = 0]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "\n",
-           progname, DFLT_N, DFLT_BATCH, DFLT_QLEN, DFLT_LINE_ENTRIES);
+           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
 }
 
 int
 main(int argc, char **argv)
 {
-    struct global _g;
-    struct global *g = &_g;
+    Global _g;
+    Global *g = &_g;
     int opt;
-
-    memset(g, 0, sizeof(*g));
-    g->num_packets  = DFLT_N * 1000000LL; /* 50 millions */
-    g->batch        = DFLT_BATCH;
-    g->qlen         = DFLT_QLEN;
-    g->line_entries = DFLT_LINE_ENTRIES;
-    g->p_core       = -1;
-    g->c_core       = -1;
-    g->test_type    = "msql";
-    g->prod_spin_ns = 0;
-    g->cons_spin_ns = 0;
 
     while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:")) != -1) {
         switch (opt) {
