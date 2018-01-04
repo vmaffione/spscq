@@ -306,7 +306,7 @@ msq_free(Msq *mq)
 
 template<MbufMode kMbufMode>
 static void
-msq_legacy_producer(Global *const g)
+msql_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_ticks;
     long long int left           = g->num_packets;
@@ -342,7 +342,7 @@ msq_legacy_producer(Global *const g)
 
 template<MbufMode kMbufMode>
 static void
-msq_legacy_consumer(Global *const g)
+msql_consumer(Global *const g)
 {
     const uint64_t spin    = g->cons_spin_ticks;
     long long int left     = g->num_packets;
@@ -778,16 +778,23 @@ run_test(Global *g)
     unsigned long int ndiff;
     double mpps;
 
+#define __STRFY(x) #x
+#define STRFY(x) __STRFY(x)
+#define MATRIX_ADD(qname) \
+    do {    \
+    matrix[STRFY(qname)][MbufMode::NoAccess] = std::make_pair(qname##_producer<MbufMode::NoAccess>, \
+                                                        qname##_consumer<MbufMode::NoAccess>);\
+    matrix[STRFY(qname)][MbufMode::OneAccess] = std::make_pair(qname##_producer<MbufMode::OneAccess>, \
+                                                         qname##_consumer<MbufMode::OneAccess>); \
+    } while(0)
+
     /* Multi-section queue (Lamport-like) with legacy operation,
      * i.e. no batching. */
-    matrix["msql"][MbufMode::NoAccess] = std::make_pair(msq_legacy_producer<MbufMode::NoAccess>, msq_legacy_consumer<MbufMode::NoAccess>);
-    matrix["msql"][MbufMode::OneAccess] = std::make_pair(msq_legacy_producer<MbufMode::OneAccess>, msq_legacy_consumer<MbufMode::OneAccess>);
-        /* Multi-section queue (Lamport-like) with batching operation. */
-    matrix["msq"][MbufMode::NoAccess] = std::make_pair(msq_producer<MbufMode::NoAccess>, msq_consumer<MbufMode::NoAccess>);
-    matrix["msq"][MbufMode::OneAccess] = std::make_pair(msq_producer<MbufMode::OneAccess>, msq_consumer<MbufMode::OneAccess>);
-        /* Improved fast-forward queue (PSPAT). */
-    matrix["iffq"][MbufMode::NoAccess] = std::make_pair(iffq_producer<MbufMode::NoAccess>, iffq_consumer<MbufMode::NoAccess>);
-    matrix["iffq"][MbufMode::OneAccess] = std::make_pair(iffq_producer<MbufMode::OneAccess>, iffq_consumer<MbufMode::OneAccess>);
+    MATRIX_ADD(msql);
+    /* Multi-section queue (Lamport-like) with batching operation. */
+    MATRIX_ADD(msq);
+    /* Improved fast-forward queue (PSPAT). */
+    MATRIX_ADD(iffq);
 
     if (matrix.count(g->test_type) == 0) {
         printf("Error: unknown test type '%s'\n", g->test_type.c_str());
