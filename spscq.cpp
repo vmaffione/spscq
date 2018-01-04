@@ -93,7 +93,7 @@ ilog2(unsigned long int x)
 
 enum class MbufMode {
     NoAccess = 0,
-    OneAccess,
+    LinearAccess,
     ScatteredAccess,
 };
 
@@ -166,7 +166,7 @@ mbuf_get(Global *const g, unsigned int *pool_idx, const unsigned int pool_mask)
         return &gm;
     } else {
         Mbuf *m;
-        if (kMbufMode == MbufMode::OneAccess) {
+        if (kMbufMode == MbufMode::LinearAccess) {
             m = &g->pool[*pool_idx & pool_mask];
         } else { /* MbufMode::ScatteredAccess */
             m = g->spool[*pool_idx & pool_mask];
@@ -927,9 +927,9 @@ run_test(Global *g)
         matrix[STRFY(qname)][MbufMode::NoAccess] =                             \
             std::make_pair(qname##_producer<MbufMode::NoAccess>,               \
                            qname##_consumer<MbufMode::NoAccess>);              \
-        matrix[STRFY(qname)][MbufMode::OneAccess] =                            \
-            std::make_pair(qname##_producer<MbufMode::OneAccess>,              \
-                           qname##_consumer<MbufMode::OneAccess>);             \
+        matrix[STRFY(qname)][MbufMode::LinearAccess] =                            \
+            std::make_pair(qname##_producer<MbufMode::LinearAccess>,              \
+                           qname##_consumer<MbufMode::LinearAccess>);             \
         matrix[STRFY(qname)][MbufMode::ScatteredAccess] =                      \
             std::make_pair(qname##_producer<MbufMode::ScatteredAccess>,        \
                            qname##_consumer<MbufMode::ScatteredAccess>);       \
@@ -1125,9 +1125,9 @@ main(int argc, char **argv)
         case 'M':
             switch (g->mbuf_mode) {
             case MbufMode::NoAccess:
-                g->mbuf_mode = MbufMode::OneAccess;
+                g->mbuf_mode = MbufMode::LinearAccess;
                 break;
-            case MbufMode::OneAccess:
+            case MbufMode::LinearAccess:
             case MbufMode::ScatteredAccess:
                 g->mbuf_mode = MbufMode::ScatteredAccess;
                 break;
