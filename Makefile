@@ -1,6 +1,8 @@
 CC=clang
+CXX=clang++
 PROGS=spscq
 CFLAGS=-Wall -Werror -g
+CXXFLAGS=$(CFLAGS)
 CFLAGS+=-O2
 LDFLAGS=-lpthread
 

@@ -1,6 +1,10 @@
 #ifndef __MLIB_H__
 #define __MLIB_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 void tsc_init(void);
@@ -28,5 +32,9 @@ tsc_sleep_till(uint64_t when)
 #define CACHELINE_ALIGNED __attribute__((aligned(64)))
 
 void runon(const char *prefix, int cpuid);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MLIB_H__ */

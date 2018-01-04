@@ -190,7 +190,7 @@ struct msq {
 static struct msq *
 msq_create(int qlen, int batch)
 {
-    struct msq *mq = szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0]));
+    struct msq *mq = static_cast<struct msq *>(szalloc(sizeof(*mq) + qlen * sizeof(mq->q[0])));
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
@@ -450,6 +450,7 @@ msq_consumer(void *opaque)
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
                 mbuf_put(m, sum);
+                (void)m;
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
@@ -553,7 +554,7 @@ iffq_create(unsigned long entries, unsigned long line_size)
     struct iffq *m;
     int err;
 
-    m = szalloc(iffq_size(entries));
+    m = static_cast<struct iffq*>(szalloc(iffq_size(entries)));
     if (m == NULL) {
         return NULL;
     }
@@ -806,7 +807,7 @@ run_test(struct global *g)
     } else {
         assert(0);
     }
-    g->pool = malloc(g->qlen * sizeof(g->pool[0]));
+    g->pool = static_cast<struct mbuf *>(malloc(g->qlen * sizeof(g->pool[0])));
 
     if (pthread_create(&pth, NULL, prod_func, g)) {
         perror("pthread_create(producer)");
