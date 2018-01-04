@@ -9,6 +9,8 @@
 #include <pthread.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
+#include <errno.h>
 
 #include "mlib.h"
 
@@ -22,8 +24,10 @@
 static void *
 szalloc(size_t size)
 {
-    void *p = malloc(size);
-    if (!p) {
+    void *p;
+    int ret = posix_memalign(&p, CACHE_SIZE, size);
+    if (ret) {
+        printf("allocation failure: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
     memset(p, 0, size);
