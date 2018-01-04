@@ -89,6 +89,11 @@ ilog2(unsigned long int x)
         rate_last_ = now;                                                      \
     }
 
+enum class MbufMode {
+    NoAccess = 0,
+    OneAccess,
+};
+
 struct Mbuf {
     unsigned int len;
     unsigned int __padding[7];
@@ -97,24 +102,28 @@ struct Mbuf {
 };
 
 static Mbuf gm;
+
+template <MbufMode kMbufMode>
 static inline Mbuf *
 mbuf_get(Mbuf *const pool, unsigned int *pool_idx, const unsigned int pool_mask)
 {
-    Mbuf *m = &pool[*pool_idx & pool_mask];
-    m->len  = (*pool_idx)++;
-    return m;
+    if (kMbufMode == MbufMode::NoAccess) {
+        return &gm;
+    } else {
+        Mbuf *m = &pool[*pool_idx & pool_mask];
+        m->len  = (*pool_idx)++;
+        return m;
+    }
 }
 
+template <MbufMode kMbufMode>
 static inline void
 mbuf_put(Mbuf *const m, unsigned int *sum)
 {
-    *sum += m->len;
+    if (kMbufMode == MbufMode::OneAccess) {
+        *sum += m->len;
+    }
 }
-
-enum class MbufMode {
-    NoAccess = 0,
-    OneAccess,
-};
 
 struct Global;
 struct Msq;
@@ -326,12 +335,7 @@ msql_producer(Global *const g)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m;
-        if (kMbufMode == MbufMode::NoAccess) {
-            m = &gm;
-        } else {
-            m = mbuf_get(pool, &pool_idx, pool_mask);
-        }
+        Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
 #ifdef QDEBUG
         msq_dump("P", mq);
 #endif
@@ -369,9 +373,7 @@ msql_consumer(Global *const g)
         m = msq_read(mq);
         if (m) {
             --left;
-            if (kMbufMode == MbufMode::OneAccess) {
-                mbuf_put(m, &sum);
-            }
+            mbuf_put<kMbufMode>(m, &sum);
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
@@ -418,12 +420,7 @@ msq_producer(Global *const g)
 #endif
             left -= avail;
             for (; avail > 0; avail--) {
-                Mbuf *m;
-                if (kMbufMode == MbufMode::NoAccess) {
-                    m = &gm;
-                } else {
-                    m = mbuf_get(pool, &pool_idx, pool_mask);
-                }
+                Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
                 msq_write_local(mq, m);
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
@@ -464,9 +461,7 @@ msq_consumer(Global *const g)
             left -= avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
-                if (kMbufMode == MbufMode::OneAccess) {
-                    mbuf_put(m, &sum);
-                }
+                mbuf_put<kMbufMode>(m, &sum);
                 if (spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
@@ -715,12 +710,7 @@ iffq_producer(Global *const g)
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
-        Mbuf *m;
-        if (kMbufMode == MbufMode::NoAccess) {
-            m = &gm;
-        } else {
-            m = mbuf_get(pool, &pool_idx, pool_mask);
-        }
+        Mbuf *m = mbuf_get<kMbufMode>(pool, &pool_idx, pool_mask);
 #ifdef QDEBUG
         iffq_dump("P", fq);
 #endif
@@ -759,9 +749,7 @@ iffq_consumer(Global *const g)
         m = iffq_extract(fq);
         if (m) {
             --left;
-            if (kMbufMode == MbufMode::OneAccess) {
-                mbuf_put(m, &sum);
-            }
+            mbuf_put<kMbufMode>(m, &sum);
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
