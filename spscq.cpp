@@ -371,10 +371,11 @@ template <MbufMode kMbufMode>
 static void
 msql_consumer(Global *const g)
 {
-    const uint64_t spin = g->cons_spin_ticks;
-    long long int left  = g->num_packets;
-    Msq *const mq       = g->mq;
-    unsigned int sum    = 0;
+    const uint64_t spin       = g->cons_spin_ticks;
+    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    long long int left        = g->num_packets;
+    Msq *const mq             = g->mq;
+    unsigned int sum          = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -394,6 +395,8 @@ msql_consumer(Global *const g)
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
+        } else if (rate_limit) {
+            tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
         RATE_BODY(left);
@@ -454,11 +457,12 @@ template <MbufMode kMbufMode>
 static void
 msq_consumer(Global *const g)
 {
-    const uint64_t spin      = g->cons_spin_ticks;
-    long long int left       = g->num_packets;
-    const unsigned int batch = g->batch;
-    Msq *const mq            = g->mq;
-    unsigned int sum         = 0;
+    const uint64_t spin       = g->cons_spin_ticks;
+    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    long long int left        = g->num_packets;
+    const unsigned int batch  = g->batch;
+    Msq *const mq             = g->mq;
+    unsigned int sum          = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -486,6 +490,8 @@ msq_consumer(Global *const g)
                 }
             }
             msq_read_publish(mq);
+        } else if (rate_limit) {
+            tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
         RATE_BODY(left);
@@ -596,10 +602,11 @@ template <MbufMode kMbufMode>
 static void
 ffq_consumer(Global *const g)
 {
-    const uint64_t spin = g->cons_spin_ticks;
-    long long int left  = g->num_packets;
-    Ffq *const ffq      = g->ffq;
-    unsigned int sum    = 0;
+    const uint64_t spin       = g->cons_spin_ticks;
+    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    long long int left        = g->num_packets;
+    Ffq *const ffq            = g->ffq;
+    unsigned int sum          = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -616,6 +623,8 @@ ffq_consumer(Global *const g)
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
+        } else if (rate_limit) {
+            tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
         RATE_BODY(left);
@@ -880,10 +889,11 @@ template <MbufMode kMbufMode>
 static void
 iffq_consumer(Global *const g)
 {
-    const uint64_t spin = g->cons_spin_ticks;
-    long long int left  = g->num_packets;
-    Iffq *const iffq    = g->iffq;
-    unsigned int sum    = 0;
+    const uint64_t spin       = g->cons_spin_ticks;
+    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    long long int left        = g->num_packets;
+    Iffq *const iffq          = g->iffq;
+    unsigned int sum          = 0;
     Mbuf *m;
 #ifdef RATE
     RATE_HEADER(g);
@@ -905,6 +915,8 @@ iffq_consumer(Global *const g)
                 tsc_sleep_till(rdtsc() + spin);
             }
             iffq_clear(iffq);
+        } else if (rate_limit) {
+            tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
         RATE_BODY(left);
