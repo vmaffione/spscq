@@ -945,19 +945,27 @@ using pc_function_t = std::function<void(Global *const)>;
 static int
 run_test(Global *g)
 {
-    std::map<std::string,
-             std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>>
+    std::map<
+        std::string,
+        std::map<MbufMode, std::map<RateLimitMode,
+                                    std::pair<pc_function_t, pc_function_t>>>>
         matrix;
     std::pair<pc_function_t, pc_function_t> funcs;
     unsigned long int ndiff;
     double mpps;
 
-#define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
-    matrix[STRFY(qname)][mm] =                                                 \
-        std::make_pair(qname##_producer<mm, RateLimitMode::None>,              \
-                       qname##_consumer<mm, RateLimitMode::None>)
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
+#define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
+    do {                                                                       \
+        matrix[STRFY(qname)][mm][rl] = std::make_pair(                         \
+            qname##_producer<mm, rl>, qname##_consumer<mm, rl>);               \
+    } while (0)
+#define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
+    do {                                                                       \
+        __MATRIX_ADD_RATELIMITMODE(qname, mm, RateLimitMode::None);            \
+        __MATRIX_ADD_RATELIMITMODE(qname, mm, RateLimitMode::Limit);           \
+    } while (0)
 #define MATRIX_ADD(qname)                                                      \
     do {                                                                       \
         __MATRIX_ADD_MBUFMODE(qname, MbufMode::NoAccess);                      \
@@ -979,7 +987,9 @@ run_test(Global *g)
         printf("Error: unknown test type '%s'\n", g->test_type.c_str());
         exit(EXIT_FAILURE);
     }
-    funcs = matrix[g->test_type][g->mbuf_mode];
+    RateLimitMode rl =
+        g->cons_rate_limit_ns > 0 ? RateLimitMode::Limit : RateLimitMode::None;
+    funcs = matrix[g->test_type][g->mbuf_mode][rl];
 
     g->prod_spin_ticks       = ns2tsc(g->prod_spin_ns);
     g->cons_spin_ticks       = ns2tsc(g->cons_spin_ns);
@@ -1068,6 +1078,7 @@ usage(const char *progname)
            "    [-C CONSUMER_SPIN_NS = 0]\n"
            "    [-t TEST_TYPE (msql,msq,iffq)]\n"
            "    [-M (access mbuf content)]\n"
+           "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "\n",
            progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN,
            Global::DFLT_LINE_ENTRIES);
@@ -1080,7 +1091,7 @@ main(int argc, char **argv)
     Global *g = &_g;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:M")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1164,6 +1175,14 @@ main(int argc, char **argv)
             case MbufMode::ScatteredAccess:
                 g->mbuf_mode = MbufMode::ScatteredAccess;
                 break;
+            }
+            break;
+
+        case 'r':
+            g->cons_rate_limit_ns = atoi(optarg);
+            if (g->cons_rate_limit_ns < 0) {
+                printf("    Invalid consumer rate limit '%s'\n", optarg);
+                return -1;
             }
             break;
 
