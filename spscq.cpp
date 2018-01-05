@@ -105,6 +105,11 @@ struct Mbuf {
     char buf[MBUF_LEN_MAX];
 };
 
+enum class RateLimitMode {
+    None = 0,
+    Limit,
+};
+
 struct Msq;
 struct Iffq;
 struct Ffq;
@@ -335,7 +340,7 @@ msq_free(Msq *mq)
     free(mq);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 msql_producer(Global *const g)
 {
@@ -367,7 +372,7 @@ msql_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 msql_consumer(Global *const g)
 {
@@ -395,7 +400,7 @@ msql_consumer(Global *const g)
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
-        } else if (rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -407,7 +412,7 @@ msql_consumer(Global *const g)
     printf("[C] sum = %x\n", sum);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 msq_producer(Global *const g)
 {
@@ -453,7 +458,7 @@ msq_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 msq_consumer(Global *const g)
 {
@@ -490,7 +495,7 @@ msq_consumer(Global *const g)
                 }
             }
             msq_read_publish(mq);
-        } else if (rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -570,7 +575,7 @@ ffq_read(Ffq *ffq)
     return m;
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 ffq_producer(Global *const g)
 {
@@ -598,7 +603,7 @@ ffq_producer(Global *const g)
     }
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 ffq_consumer(Global *const g)
 {
@@ -623,7 +628,7 @@ ffq_consumer(Global *const g)
             if (spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
-        } else if (rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -850,7 +855,7 @@ iffq_prefetch(Iffq *iffq)
     __builtin_prefetch((void *)iffq->q[iffq->cons_read & iffq->entry_mask]);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 iffq_producer(Global *const g)
 {
@@ -885,7 +890,7 @@ iffq_producer(Global *const g)
     iffq_dump("P", iffq);
 }
 
-template <MbufMode kMbufMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
 static void
 iffq_consumer(Global *const g)
 {
@@ -915,7 +920,7 @@ iffq_consumer(Global *const g)
                 tsc_sleep_till(rdtsc() + spin);
             }
             iffq_clear(iffq);
-        } else if (rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -947,19 +952,17 @@ run_test(Global *g)
     unsigned long int ndiff;
     double mpps;
 
+#define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
+    matrix[STRFY(qname)][mm] =                                                 \
+        std::make_pair(qname##_producer<mm, RateLimitMode::None>,              \
+                       qname##_consumer<mm, RateLimitMode::None>)
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
 #define MATRIX_ADD(qname)                                                      \
     do {                                                                       \
-        matrix[STRFY(qname)][MbufMode::NoAccess] =                             \
-            std::make_pair(qname##_producer<MbufMode::NoAccess>,               \
-                           qname##_consumer<MbufMode::NoAccess>);              \
-        matrix[STRFY(qname)][MbufMode::LinearAccess] =                         \
-            std::make_pair(qname##_producer<MbufMode::LinearAccess>,           \
-                           qname##_consumer<MbufMode::LinearAccess>);          \
-        matrix[STRFY(qname)][MbufMode::ScatteredAccess] =                      \
-            std::make_pair(qname##_producer<MbufMode::ScatteredAccess>,        \
-                           qname##_consumer<MbufMode::ScatteredAccess>);       \
+        __MATRIX_ADD_MBUFMODE(qname, MbufMode::NoAccess);                      \
+        __MATRIX_ADD_MBUFMODE(qname, MbufMode::LinearAccess);                  \
+        __MATRIX_ADD_MBUFMODE(qname, MbufMode::ScatteredAccess);               \
     } while (0)
 
     /* Multi-section queue (Lamport-like) with legacy operation,
