@@ -15,6 +15,7 @@
 #include <random>
 #include <algorithm>
 #include <iostream>
+#include <functional>
 
 #include "mlib.h"
 
@@ -29,7 +30,7 @@ static void *
 szalloc(size_t size)
 {
     void *p;
-    int ret = posix_memalign(&p, CACHE_SIZE, size);
+    int ret = posix_memalign(&p, CACHELINE_SIZE, size);
     if (ret) {
         printf("allocation failure: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
@@ -134,6 +135,9 @@ struct Global {
      * in nanoseconds and ticks. */
     int prod_spin_ns = 0, cons_spin_ns = 0;
     uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
+
+    int cons_rate_limit_ns         = 0;
+    uint64_t cons_rate_limit_ticks = 0;
 
     std::string test_type = "msql";
 
@@ -342,6 +346,7 @@ msql_producer(Global *const g)
     unsigned int pool_idx        = 0;
 
     assert(mq);
+    assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -411,6 +416,7 @@ msq_producer(Global *const g)
     unsigned int pool_idx        = 0;
 
     assert(mq);
+    assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -551,7 +557,7 @@ ffq_read(Ffq *ffq)
     Mbuf *m                   = reinterpret_cast<Mbuf *>(*qslot);
 
     if (m != nullptr) {
-        *qslot = 0;
+        *qslot = 0; /* clear */
         ffq->cons_read++;
     }
 
@@ -569,6 +575,7 @@ ffq_producer(Global *const g)
     unsigned int pool_idx        = 0;
 
     assert(ffq);
+    assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -845,6 +852,7 @@ iffq_producer(Global *const g)
     unsigned int pool_idx        = 0;
 
     assert(iffq);
+    assert(reinterpret_cast<uintptr_t>(iffq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
     (void)iffq_empty;
     (void)iffq_prefetch;
@@ -907,8 +915,15 @@ iffq_consumer(Global *const g)
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-
-typedef void (*pc_function_t)(Global *const);
+#if 1
+using pc_function_t = void (*)(Global *const);
+#else
+/* Just using std::function makes the processing loops slower.
+ * I cannot believe it! It could be due to some differences in how
+ * code is laid out in memory...
+ */
+using pc_function_t = std::function<void(Global *const)>;
+#endif
 
 static int
 run_test(Global *g)
@@ -927,9 +942,9 @@ run_test(Global *g)
         matrix[STRFY(qname)][MbufMode::NoAccess] =                             \
             std::make_pair(qname##_producer<MbufMode::NoAccess>,               \
                            qname##_consumer<MbufMode::NoAccess>);              \
-        matrix[STRFY(qname)][MbufMode::LinearAccess] =                            \
-            std::make_pair(qname##_producer<MbufMode::LinearAccess>,              \
-                           qname##_consumer<MbufMode::LinearAccess>);             \
+        matrix[STRFY(qname)][MbufMode::LinearAccess] =                         \
+            std::make_pair(qname##_producer<MbufMode::LinearAccess>,           \
+                           qname##_consumer<MbufMode::LinearAccess>);          \
         matrix[STRFY(qname)][MbufMode::ScatteredAccess] =                      \
             std::make_pair(qname##_producer<MbufMode::ScatteredAccess>,        \
                            qname##_consumer<MbufMode::ScatteredAccess>);       \
@@ -951,9 +966,11 @@ run_test(Global *g)
     }
     funcs = matrix[g->test_type][g->mbuf_mode];
 
-    g->prod_spin_ticks = ns2tsc(g->prod_spin_ns);
-    g->cons_spin_ticks = ns2tsc(g->cons_spin_ns);
+    g->prod_spin_ticks       = ns2tsc(g->prod_spin_ns);
+    g->cons_spin_ticks       = ns2tsc(g->cons_spin_ns);
+    g->cons_rate_limit_ticks = ns2tsc(g->cons_rate_limit_ns);
 
+    // printf("probe1\n");
     if (g->test_type == "msql" || g->test_type == "msq") {
         g->mq = msq_create(g->qlen, g->batch);
         if (!g->mq) {
@@ -974,6 +991,7 @@ run_test(Global *g)
     } else {
         assert(0);
     }
+    // printf("probe2\n");
 
     /* Allocate mbuf pool. */
     g->pool = static_cast<Mbuf *>(szalloc(g->qlen * sizeof(g->pool[0])));
