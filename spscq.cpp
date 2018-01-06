@@ -52,12 +52,12 @@ roundup(unsigned int x, unsigned int y)
     return ((x + (y - 1)) / y) * y;
 }
 
-static unsigned long int
-ilog2(unsigned long int x)
+static unsigned int
+ilog2(unsigned int x)
 {
-    unsigned long int probe = 0x00000001U;
-    unsigned long int ret   = 0;
-    unsigned long int c;
+    unsigned int probe = 0x00000001U;
+    unsigned int ret   = 0;
+    unsigned int c;
 
     assert(x != 0);
 
@@ -562,20 +562,20 @@ msq_consumer(Global *const g)
  */
 struct Iffq {
     /* Shared (constant) fields. */
-    unsigned long entry_mask;
-    unsigned long seqbit_shift;
-    unsigned long line_entries;
-    unsigned long line_mask;
+    unsigned int entry_mask;
+    unsigned int seqbit_shift;
+    unsigned int line_entries;
+    unsigned int line_mask;
 
     /* Producer fields. */
     CACHELINE_ALIGNED
-    unsigned long prod_write;
-    unsigned long prod_check;
+    unsigned int prod_write;
+    unsigned int prod_check;
 
     /* Consumer fields. */
     CACHELINE_ALIGNED
-    unsigned long cons_clear;
-    unsigned long cons_read;
+    unsigned int cons_clear;
+    unsigned int cons_read;
 
     /* The queue. */
     CACHELINE_ALIGNED
@@ -681,7 +681,7 @@ ffq_consumer(Global *const g)
  * Improved FastForward queue, used by pspat.
  */
 static inline size_t
-iffq_size(unsigned long entries)
+iffq_size(unsigned int entries)
 {
     return roundup(sizeof(Iffq) + entries * sizeof(uintptr_t), 64);
 }
@@ -696,9 +696,9 @@ iffq_size(unsigned long entries)
  * Returns 0 on success, -errno on failure.
  */
 int
-iffq_init(Iffq *m, unsigned long entries, unsigned long line_size)
+iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
 {
-    unsigned long entries_per_line;
+    unsigned int entries_per_line;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
         entries * sizeof(uintptr_t) <= 2 * line_size ||
@@ -714,8 +714,8 @@ iffq_init(Iffq *m, unsigned long entries, unsigned long line_size)
     m->entry_mask   = entries - 1;
     m->seqbit_shift = ilog2(entries);
 
-    printf("iffq: line_entries %lu line_mask %lx entry_mask %lx seqbit_shift "
-           "%lu\n",
+    printf("iffq: line_entries %u line_mask %x entry_mask %x seqbit_shift "
+           "%u\n",
            m->line_entries, m->line_mask, m->entry_mask, m->seqbit_shift);
 
     m->cons_clear = 0;
@@ -734,7 +734,7 @@ iffq_init(Iffq *m, unsigned long entries, unsigned long line_size)
  * Both entries and line_size must be a power of 2.
  */
 Iffq *
-iffq_create(unsigned long entries, unsigned long line_size)
+iffq_create(unsigned int entries, unsigned int line_size)
 {
     Iffq *ffq;
     int err;
@@ -774,7 +774,7 @@ iffq_free(Iffq *m)
 void
 iffq_dump(const char *prefix, Iffq *ffq)
 {
-    printf("[%s]: cc %lu, cr %lu, pw %lu, pc %lu\n", prefix, ffq->cons_clear,
+    printf("[%s]: cc %u, cr %u, pw %u, pc %u\n", prefix, ffq->cons_clear,
            ffq->cons_read, ffq->prod_write, ffq->prod_check);
 }
 
@@ -811,7 +811,7 @@ iffq_insert(Iffq *ffq, Mbuf *m)
 }
 
 static inline int
-__iffq_empty(Iffq *ffq, unsigned long i, uintptr_t v)
+__iffq_empty(Iffq *ffq, unsigned int i, uintptr_t v)
 {
     return (!v) || ((v ^ (i >> ffq->seqbit_shift)) & 0x1);
 }
@@ -863,7 +863,7 @@ iffq_extract(Iffq *ffq)
 static inline void
 iffq_clear(Iffq *ffq)
 {
-    unsigned long s = ffq->cons_read & ffq->line_mask;
+    unsigned int s = ffq->cons_read & ffq->line_mask;
 
     for (; (ffq->cons_clear /* & ffq->line_mask */) != s;
          ffq->cons_clear += ffq->line_entries) {
