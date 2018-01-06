@@ -414,7 +414,7 @@ msql_producer(Global *const g)
 #endif
         if (msq_write(msq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -450,7 +450,7 @@ msql_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
@@ -499,7 +499,7 @@ msq_producer(Global *const g)
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 msq_write_local(msq, m);
-                if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
@@ -542,7 +542,7 @@ msq_consumer(Global *const g)
             for (; avail > 0; avail--) {
                 m = msq_read_local(msq);
                 mbuf_put<kMbufMode>(m, &sum);
-                if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
@@ -631,7 +631,7 @@ ffq_producer(Global *const g)
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -664,7 +664,7 @@ ffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
@@ -901,7 +901,7 @@ iffq_producer(Global *const g)
 #endif
         if (iffq_insert(ffq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -937,7 +937,7 @@ iffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
             iffq_clear(ffq);
@@ -975,9 +975,8 @@ run_test(Global *g)
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
 #define __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, eo)                       \
-    matrix[STRFY(qname)][mm][rl][eo] =                                         \
-        std::make_pair(qname##_producer<mm, rl, EmulatedOverhead::None>,       \
-                       qname##_consumer<mm, rl, eo>)
+    matrix[STRFY(qname)][mm][rl][eo] = std::make_pair(                         \
+        qname##_producer<mm, rl, eo>, qname##_consumer<mm, rl, eo>)
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
     do {                                                                       \
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
