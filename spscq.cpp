@@ -25,7 +25,7 @@
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
 
-/* Alloc zeroed memory, aborting on failure. */
+/* Alloc zeroed cacheline-aligned memory, aborting on failure. */
 static void *
 szalloc(size_t size)
 {
@@ -247,6 +247,8 @@ msq_create(int qlen, int batch)
     mq->qmask = qlen - 1;
     mq->batch = batch;
 
+    assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
+
     return mq;
 }
 
@@ -360,7 +362,6 @@ msql_producer(Global *const g)
 #endif
 
     assert(mq);
-    assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -381,7 +382,6 @@ msql_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
-    msq_dump("P", mq);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -415,7 +415,6 @@ msql_consumer(Global *const g)
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
-    msq_dump("C", mq);
     printf("[C] sum = %x\n", sum);
 }
 
@@ -435,7 +434,6 @@ msq_producer(Global *const g)
 #endif
 
     assert(mq);
-    assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -469,7 +467,6 @@ msq_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
-    msq_dump("P", mq);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -512,7 +509,6 @@ msq_consumer(Global *const g)
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
-    msq_dump("C", mq);
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -552,6 +548,7 @@ ffq_create(int qlen)
 
     ffq->qlen  = qlen;
     ffq->qmask = qlen - 1;
+    assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
 
     return ffq;
 }
@@ -599,7 +596,6 @@ ffq_producer(Global *const g)
 #endif
 
     assert(ffq);
-    assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
@@ -733,21 +729,23 @@ iffq_init(Iffq *m, unsigned long entries, unsigned long line_size)
 Iffq *
 iffq_create(unsigned long entries, unsigned long line_size)
 {
-    Iffq *m;
+    Iffq *iffq;
     int err;
 
-    m = static_cast<Iffq *>(szalloc(iffq_size(entries)));
-    if (m == NULL) {
+    iffq = static_cast<Iffq *>(szalloc(iffq_size(entries)));
+    if (iffq == NULL) {
         return NULL;
     }
 
-    err = iffq_init(m, entries, line_size);
+    err = iffq_init(iffq, entries, line_size);
     if (err) {
-        free(m);
+        free(iffq);
         return NULL;
     }
 
-    return m;
+    assert(reinterpret_cast<uintptr_t>(iffq) % CACHELINE_SIZE == 0);
+
+    return iffq;
 }
 
 /**
@@ -881,11 +879,9 @@ iffq_producer(Global *const g)
 #endif
 
     assert(iffq);
-    assert(reinterpret_cast<uintptr_t>(iffq) % CACHELINE_SIZE == 0);
     runon("P", g->p_core);
     (void)iffq_empty;
     (void)iffq_prefetch;
-    iffq_dump("P", iffq);
 
     clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
@@ -905,7 +901,6 @@ iffq_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
-    iffq_dump("P", iffq);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -922,7 +917,6 @@ iffq_consumer(Global *const g)
 
     assert(iffq);
     runon("C", g->c_core);
-    iffq_dump("C", iffq);
 
     while (left > 0) {
 #ifdef QDEBUG
@@ -941,7 +935,6 @@ iffq_consumer(Global *const g)
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
-    iffq_dump("C", iffq);
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -1023,6 +1016,7 @@ run_test(Global *g)
         if (!g->mq) {
             exit(EXIT_FAILURE);
         }
+        msq_dump("P", g->mq);
     } else if (g->test_type == "iffq") {
         g->iffq =
             iffq_create(g->qlen,
@@ -1030,6 +1024,7 @@ run_test(Global *g)
         if (!g->iffq) {
             exit(EXIT_FAILURE);
         }
+        iffq_dump("P", g->iffq);
     } else if (g->test_type == "ffq") {
         g->ffq = ffq_create(g->qlen);
         if (!g->ffq) {
@@ -1077,10 +1072,18 @@ run_test(Global *g)
 
     free(g->pool);
     if (g->mq) {
+        msq_dump("P", g->mq);
         msq_free(g->mq);
+        g->mq = nullptr;
     }
     if (g->iffq) {
+        iffq_dump("P", g->iffq);
         iffq_free(g->iffq);
+        g->iffq = nullptr;
+    }
+    if (g->ffq) {
+        free(g->ffq);
+        g->ffq = nullptr;
     }
 
     return 0;
