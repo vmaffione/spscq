@@ -110,6 +110,11 @@ enum class RateLimitMode {
     Limit,
 };
 
+enum class EmulatedOverhead {
+    None = 0,
+    Spin,
+};
+
 struct Msq;
 struct Iffq;
 struct Ffq;
@@ -340,7 +345,8 @@ msq_free(Msq *mq)
     free(mq);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 msql_producer(Global *const g)
 {
@@ -362,7 +368,7 @@ msql_producer(Global *const g)
 #endif
         if (msq_write(mq, m) == 0) {
             --left;
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -372,7 +378,8 @@ msql_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 msql_consumer(Global *const g)
 {
@@ -397,10 +404,10 @@ msql_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
-        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -412,7 +419,8 @@ msql_consumer(Global *const g)
     printf("[C] sum = %x\n", sum);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 msq_producer(Global *const g)
 {
@@ -448,7 +456,7 @@ msq_producer(Global *const g)
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 msq_write_local(mq, m);
-                if (spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
@@ -458,7 +466,8 @@ msq_producer(Global *const g)
     msq_dump("P", mq);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 msq_consumer(Global *const g)
 {
@@ -490,12 +499,12 @@ msq_consumer(Global *const g)
             for (; avail > 0; avail--) {
                 m = msq_read_local(mq);
                 mbuf_put<kMbufMode>(m, &sum);
-                if (spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
             msq_read_publish(mq);
-        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -575,7 +584,8 @@ ffq_read(Ffq *ffq)
     return m;
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 ffq_producer(Global *const g)
 {
@@ -594,7 +604,7 @@ ffq_producer(Global *const g)
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
             --left;
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -603,7 +613,8 @@ ffq_producer(Global *const g)
     }
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 ffq_consumer(Global *const g)
 {
@@ -625,10 +636,10 @@ ffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
-        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -855,7 +866,8 @@ iffq_prefetch(Iffq *iffq)
     __builtin_prefetch((void *)iffq->q[iffq->cons_read & iffq->entry_mask]);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 iffq_producer(Global *const g)
 {
@@ -880,7 +892,7 @@ iffq_producer(Global *const g)
 #endif
         if (iffq_insert(iffq, m) == 0) {
             --left;
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -890,7 +902,8 @@ iffq_producer(Global *const g)
     iffq_dump("P", iffq);
 }
 
-template <MbufMode kMbufMode, RateLimitMode kRateLimitMode>
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
 static void
 iffq_consumer(Global *const g)
 {
@@ -916,11 +929,11 @@ iffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::Spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
             iffq_clear(iffq);
-        } else if (kRateLimitMode == RateLimitMode::Limit && rate_limit) {
+        } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
 #ifdef RATE
@@ -947,8 +960,10 @@ run_test(Global *g)
 {
     std::map<
         std::string,
-        std::map<MbufMode, std::map<RateLimitMode,
-                                    std::pair<pc_function_t, pc_function_t>>>>
+        std::map<MbufMode,
+                 std::map<RateLimitMode,
+                          std::map<EmulatedOverhead,
+                                   std::pair<pc_function_t, pc_function_t>>>>>
         matrix;
     std::pair<pc_function_t, pc_function_t> funcs;
     unsigned long int ndiff;
@@ -956,10 +971,14 @@ run_test(Global *g)
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
+#define __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, eo)                       \
+    matrix[STRFY(qname)][mm][rl][eo] =                                         \
+        std::make_pair(qname##_producer<mm, rl, EmulatedOverhead::None>,       \
+                       qname##_consumer<mm, rl, eo>)
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
     do {                                                                       \
-        matrix[STRFY(qname)][mm][rl] = std::make_pair(                         \
-            qname##_producer<mm, rl>, qname##_consumer<mm, rl>);               \
+        __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
+        __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::Spin);  \
     } while (0)
 #define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
     do {                                                                       \
@@ -989,7 +1008,10 @@ run_test(Global *g)
     }
     RateLimitMode rl =
         g->cons_rate_limit_ns > 0 ? RateLimitMode::Limit : RateLimitMode::None;
-    funcs = matrix[g->test_type][g->mbuf_mode][rl];
+    EmulatedOverhead eo = (g->prod_spin_ns > 0 || g->cons_spin_ns)
+                              ? EmulatedOverhead::Spin
+                              : EmulatedOverhead::None;
+    funcs = matrix[g->test_type][g->mbuf_mode][rl][eo];
 
     g->prod_spin_ticks       = ns2tsc(g->prod_spin_ns);
     g->cons_spin_ticks       = ns2tsc(g->cons_spin_ns);
