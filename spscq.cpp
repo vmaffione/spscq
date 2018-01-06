@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iostream>
 #include <functional>
+#include <chrono>
 
 #include "mlib.h"
 
@@ -75,18 +76,18 @@ ilog2(unsigned long int x)
 /* Ugly but useful macros for online rate estimation. */
 #define RATE_HEADER(g_)                                                        \
     long long int thresh_ = g_->num_packets - HUNDREDMILLIONS;                 \
-    struct timespec rate_last_;                                                \
-    clock_gettime(CLOCK_MONOTONIC, &rate_last_);
+    std::chrono::system_clock::time_point rate_last_ =                         \
+        std::chrono::system_clock::now();
 
 #define RATE_BODY(left_)                                                       \
     if (unlikely(left_ < thresh_)) {                                           \
-        unsigned long long int ndiff;                                          \
-        struct timespec now;                                                   \
+        std::chrono::system_clock::time_point now =                            \
+            std::chrono::system_clock::now();                                  \
         double mpps;                                                           \
-        clock_gettime(CLOCK_MONOTONIC, &now);                                  \
-        ndiff = (now.tv_sec - rate_last_.tv_sec) * ONEBILLION +                \
-                (now.tv_nsec - rate_last_.tv_nsec);                            \
-        mpps = HUNDREDMILLIONS * 1000.0 / ndiff;                               \
+        mpps = HUNDREDMILLIONS * 1000.0 /                                      \
+               std::chrono::duration_cast<std::chrono::nanoseconds>(           \
+                   now - rate_last_)                                           \
+                   .count();                                                   \
         printf("%3.3f Mpps\n", mpps);                                          \
         thresh_ -= HUNDREDMILLIONS;                                            \
         rate_last_ = now;                                                      \
@@ -153,7 +154,7 @@ struct Global {
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
     /* Timestamp to compute experiment statistics. */
-    struct timespec begin, end;
+    std::chrono::system_clock::time_point begin, end;
 
     /* The lamport-like queue. */
     Msq *msq = nullptr;
@@ -177,7 +178,7 @@ void
 Global::producer_header()
 {
     runon("P", p_core);
-    clock_gettime(CLOCK_MONOTONIC, &begin);
+    begin = std::chrono::system_clock::now();
 }
 
 void
@@ -194,7 +195,7 @@ Global::consumer_header()
 void
 Global::consumer_footer()
 {
-    clock_gettime(CLOCK_MONOTONIC, &end);
+    end = std::chrono::system_clock::now();
 }
 
 static Mbuf gm;
@@ -948,7 +949,6 @@ run_test(Global *g)
                                    std::pair<pc_function_t, pc_function_t>>>>>
         matrix;
     std::pair<pc_function_t, pc_function_t> funcs;
-    unsigned long int ndiff;
     double mpps;
 
 #define __STRFY(x) #x
@@ -1050,9 +1050,10 @@ run_test(Global *g)
     pth.join();
     cth.join();
 
-    ndiff = (g->end.tv_sec - g->begin.tv_sec) * ONEBILLION +
-            (g->end.tv_nsec - g->begin.tv_nsec);
-    mpps = g->num_packets * 1000.0 / ndiff;
+    mpps =
+        g->num_packets * 1000.0 /
+        std::chrono::duration_cast<std::chrono::nanoseconds>(g->end - g->begin)
+            .count();
     printf("Throughput %3.3f Mpps\n", mpps);
 
     free(g->pool);
