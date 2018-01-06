@@ -1,5 +1,7 @@
-CC=clang
-CXX=clang++
+CC=gcc
+CXX=g++
+#CC=clang
+#CXX=clang++
 PROGS=spscq
 CFLAGS=-Wall -Werror -g
 CXXFLAGS=$(CFLAGS) -std=c++11

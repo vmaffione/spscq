@@ -1082,7 +1082,7 @@ usage(const char *progname)
            "    [-c CONSUMER_CORE_ID = -1]\n"
            "    [-P PRODUCER_SPIN_NS = 0]\n"
            "    [-C CONSUMER_SPIN_NS = 0]\n"
-           "    [-t TEST_TYPE (msql,msq,iffq)]\n"
+           "    [-t TEST_TYPE (msql,msq,ffq,iffq)]\n"
            "    [-M (access mbuf content)]\n"
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "\n",
