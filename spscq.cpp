@@ -355,6 +355,9 @@ msql_producer(Global *const g)
     const unsigned int pool_mask = g->mq->qmask;
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     assert(mq);
     assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
@@ -374,6 +377,9 @@ msql_producer(Global *const g)
         } else {
             pool_idx--;
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     msq_dump("P", mq);
 }
@@ -389,9 +395,6 @@ msql_consumer(Global *const g)
     Msq *const mq             = g->mq;
     unsigned int sum          = 0;
     Mbuf *m;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
 
     assert(mq);
     runon("C", g->c_core);
@@ -410,9 +413,6 @@ msql_consumer(Global *const g)
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
@@ -430,6 +430,9 @@ msq_producer(Global *const g)
     const unsigned int batch     = g->batch;
     Msq *const mq                = g->mq;
     unsigned int pool_idx        = 0;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     assert(mq);
     assert(reinterpret_cast<uintptr_t>(mq) % CACHELINE_SIZE == 0);
@@ -462,6 +465,9 @@ msq_producer(Global *const g)
             }
             msq_write_publish(mq);
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     msq_dump("P", mq);
 }
@@ -478,9 +484,6 @@ msq_consumer(Global *const g)
     Msq *const mq             = g->mq;
     unsigned int sum          = 0;
     Mbuf *m;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
 
     assert(mq);
     runon("C", g->c_core);
@@ -507,9 +510,6 @@ msq_consumer(Global *const g)
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     msq_dump("C", mq);
@@ -594,6 +594,9 @@ ffq_producer(Global *const g)
     const unsigned int pool_mask = g->ffq->qmask;
     Ffq *const ffq               = g->ffq;
     unsigned int pool_idx        = 0;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     assert(ffq);
     assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
@@ -610,6 +613,9 @@ ffq_producer(Global *const g)
         } else {
             pool_idx--;
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
 }
 
@@ -624,9 +630,6 @@ ffq_consumer(Global *const g)
     Ffq *const ffq            = g->ffq;
     unsigned int sum          = 0;
     Mbuf *m;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
 
     assert(ffq);
     runon("C", g->c_core);
@@ -642,9 +645,6 @@ ffq_consumer(Global *const g)
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     printf("[C] sum = %x\n", sum);
@@ -876,6 +876,9 @@ iffq_producer(Global *const g)
     const unsigned int pool_mask = g->qlen - 1;
     Iffq *const iffq             = g->iffq;
     unsigned int pool_idx        = 0;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
 
     assert(iffq);
     assert(reinterpret_cast<uintptr_t>(iffq) % CACHELINE_SIZE == 0);
@@ -898,6 +901,9 @@ iffq_producer(Global *const g)
         } else {
             pool_idx--;
         }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
     }
     iffq_dump("P", iffq);
 }
@@ -913,9 +919,6 @@ iffq_consumer(Global *const g)
     Iffq *const iffq          = g->iffq;
     unsigned int sum          = 0;
     Mbuf *m;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
 
     assert(iffq);
     runon("C", g->c_core);
@@ -936,9 +939,6 @@ iffq_consumer(Global *const g)
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
     }
     clock_gettime(CLOCK_MONOTONIC, &g->end);
     iffq_dump("C", iffq);
