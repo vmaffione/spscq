@@ -590,6 +590,7 @@ ffq_write(Iffq *ffq, Mbuf *m)
     if (*qslot != 0) {
         return -1; /* no space */
     }
+    compiler_barrier();
     *qslot = reinterpret_cast<uintptr_t>(m);
     ffq->prod_write++;
 
@@ -606,6 +607,8 @@ ffq_read(Iffq *ffq)
         *qslot = 0; /* clear */
         ffq->cons_read++;
     }
+
+    compiler_barrier();
 
     return m;
 }
