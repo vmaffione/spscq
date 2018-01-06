@@ -168,7 +168,36 @@ struct Global {
 
     /* Indirect pool of mbufs, used in MbufMode::ScatteredAccess. */
     Mbuf **spool = nullptr;
+
+    void producer_header();
+    void producer_footer();
+    void consumer_header();
+    void consumer_footer();
 };
+
+void
+Global::producer_header()
+{
+    runon("P", p_core);
+    clock_gettime(CLOCK_MONOTONIC, &begin);
+}
+
+void
+Global::producer_footer()
+{
+}
+
+void
+Global::consumer_header()
+{
+    runon("C", c_core);
+}
+
+void
+Global::consumer_footer()
+{
+    clock_gettime(CLOCK_MONOTONIC, &end);
+}
 
 static Mbuf gm;
 
@@ -363,9 +392,7 @@ msql_producer(Global *const g)
 #endif
 
     assert(msq);
-    runon("P", g->p_core);
-
-    clock_gettime(CLOCK_MONOTONIC, &g->begin);
+    g->producer_header();
     while (left > 0) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
@@ -383,6 +410,7 @@ msql_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
+    g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -398,7 +426,7 @@ msql_consumer(Global *const g)
     Mbuf *m;
 
     assert(msq);
-    runon("C", g->c_core);
+    g->consumer_header();
 
     while (left > 0) {
 #ifdef QDEBUG
@@ -415,7 +443,7 @@ msql_consumer(Global *const g)
             tsc_sleep_till(rdtsc() + rate_limit);
         }
     }
-    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
 
@@ -435,9 +463,8 @@ msq_producer(Global *const g)
 #endif
 
     assert(msq);
-    runon("P", g->p_core);
+    g->producer_header();
 
-    clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
         unsigned int avail = msq_wspace(msq);
 
@@ -468,6 +495,7 @@ msq_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
+    g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -484,7 +512,7 @@ msq_consumer(Global *const g)
     Mbuf *m;
 
     assert(msq);
-    runon("C", g->c_core);
+    g->consumer_header();
 
     while (left > 0) {
         unsigned int avail = msq_rspace(msq);
@@ -509,7 +537,7 @@ msq_consumer(Global *const g)
             tsc_sleep_till(rdtsc() + rate_limit);
         }
     }
-    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -597,9 +625,8 @@ ffq_producer(Global *const g)
 #endif
 
     assert(ffq);
-    runon("P", g->p_core);
+    g->producer_header();
 
-    clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
@@ -614,6 +641,7 @@ ffq_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
+    g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -629,7 +657,7 @@ ffq_consumer(Global *const g)
     Mbuf *m;
 
     assert(ffq);
-    runon("C", g->c_core);
+    g->consumer_header();
 
     while (left > 0) {
         m = ffq_read(ffq);
@@ -643,7 +671,7 @@ ffq_consumer(Global *const g)
             tsc_sleep_till(rdtsc() + rate_limit);
         }
     }
-    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
 
@@ -880,11 +908,8 @@ iffq_producer(Global *const g)
 #endif
 
     assert(iffq);
-    runon("P", g->p_core);
-    (void)iffq_empty;
-    (void)iffq_prefetch;
+    g->producer_header();
 
-    clock_gettime(CLOCK_MONOTONIC, &g->begin);
     while (left > 0) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
@@ -902,6 +927,7 @@ iffq_producer(Global *const g)
         RATE_BODY(left);
 #endif
     }
+    g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -917,7 +943,7 @@ iffq_consumer(Global *const g)
     Mbuf *m;
 
     assert(iffq);
-    runon("C", g->c_core);
+    g->consumer_header();
 
     while (left > 0) {
 #ifdef QDEBUG
@@ -935,7 +961,7 @@ iffq_consumer(Global *const g)
             tsc_sleep_till(rdtsc() + rate_limit);
         }
     }
-    clock_gettime(CLOCK_MONOTONIC, &g->end);
+    g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -1019,6 +1045,8 @@ run_test(Global *g)
         }
         msq_dump("P", g->msq);
     } else if (g->test_type == "iffq") {
+        (void)iffq_empty;
+        (void)iffq_prefetch;
         g->iffq =
             iffq_create(g->qlen,
                         /*line_size=*/g->line_entries * sizeof(uintptr_t));
