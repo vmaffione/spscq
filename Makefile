@@ -1,12 +1,10 @@
-CC=gcc
-CXX=g++
-#CC=clang
-#CXX=clang++
+CC=g++
+#CC=clang++
 PROGS=spscq
 CFLAGS=-Wall -Werror -g
 CXXFLAGS=$(CFLAGS) -std=c++11
 CFLAGS+=-O2
-LDFLAGS=-lpthread -std=c++11 -lstdc++ -g
+LDFLAGS=-lpthread -std=c++11 -g
 
 all: $(PROGS)
 
