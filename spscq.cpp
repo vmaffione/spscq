@@ -276,6 +276,21 @@ msq_create(int qlen, int batch)
     msq->batch = batch;
 
     assert(reinterpret_cast<uintptr_t>(msq) % CACHELINE_SIZE == 0);
+    assert((reinterpret_cast<uintptr_t>(&msq->write)) -
+               (reinterpret_cast<uintptr_t>(&msq->write_priv)) ==
+           CACHELINE_SIZE);
+    assert((reinterpret_cast<uintptr_t>(&msq->read_priv)) -
+               (reinterpret_cast<uintptr_t>(&msq->write)) ==
+           CACHELINE_SIZE);
+    assert((reinterpret_cast<uintptr_t>(&msq->read)) -
+               (reinterpret_cast<uintptr_t>(&msq->read_priv)) ==
+           CACHELINE_SIZE);
+    assert((reinterpret_cast<uintptr_t>(&msq->qlen)) -
+               (reinterpret_cast<uintptr_t>(&msq->read)) ==
+           CACHELINE_SIZE);
+    assert((reinterpret_cast<uintptr_t>(&msq->q[0])) -
+               (reinterpret_cast<uintptr_t>(&msq->qlen)) ==
+           CACHELINE_SIZE);
 
     return msq;
 }
@@ -736,6 +751,12 @@ iffq_create(unsigned long entries, unsigned long line_size)
     }
 
     assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
+    assert((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
+               (reinterpret_cast<uintptr_t>(&ffq->prod_write)) ==
+           CACHELINE_SIZE);
+    assert((reinterpret_cast<uintptr_t>(&ffq->q[0])) -
+               (reinterpret_cast<uintptr_t>(&ffq->cons_clear)) ==
+           CACHELINE_SIZE);
 
     return ffq;
 }
