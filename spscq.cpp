@@ -127,7 +127,6 @@ struct Global {
 
     /* Test length as a number of packets. */
     long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */
-    ;
 
     /* Length of the SPSC queue. */
     unsigned int qlen = DFLT_QLEN;
