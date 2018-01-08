@@ -113,7 +113,8 @@ enum class RateLimitMode {
 
 enum class EmulatedOverhead {
     None = 0,
-    Spin,
+    SpinTSC,
+    SpinCycles,
 };
 
 struct Msq;
@@ -390,6 +391,15 @@ msq_free(Msq *msq)
     free(msq);
 }
 
+static inline void
+spin_cycles(uint64_t spin)
+{
+    uint64_t j;
+    for (j = 0; j < spin; j++) {
+        compiler_barrier();
+    }
+}
+
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
@@ -413,8 +423,11 @@ msql_producer(Global *const g)
 #endif
         if (msq_write(msq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles &&
+                       spin) {
+                spin_cycles(spin);
             }
         } else {
             pool_idx--;
@@ -449,7 +462,7 @@ msql_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
@@ -498,7 +511,7 @@ msq_producer(Global *const g)
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 msq_write_local(msq, m);
-                if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
@@ -541,7 +554,7 @@ msq_consumer(Global *const g)
             for (; avail > 0; avail--) {
                 m = msq_read_local(msq);
                 mbuf_put<kMbufMode>(m, &sum);
-                if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+                if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 }
             }
@@ -633,7 +646,7 @@ ffq_producer(Global *const g)
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -666,7 +679,7 @@ ffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
@@ -903,7 +916,7 @@ iffq_producer(Global *const g)
 #endif
         if (iffq_insert(ffq, m) == 0) {
             --left;
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
         } else {
@@ -939,7 +952,7 @@ iffq_consumer(Global *const g)
         if (m) {
             --left;
             mbuf_put<kMbufMode>(m, &sum);
-            if (kEmulatedOverhead == EmulatedOverhead::Spin && spin) {
+            if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             }
             iffq_clear(ffq);
@@ -982,7 +995,8 @@ run_test(Global *g)
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
     do {                                                                       \
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
-        __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::Spin);  \
+        __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl,                           \
+                                      EmulatedOverhead::SpinTSC);              \
     } while (0)
 #define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
     do {                                                                       \
@@ -1013,7 +1027,7 @@ run_test(Global *g)
     RateLimitMode rl =
         g->cons_rate_limit_ns > 0 ? RateLimitMode::Limit : RateLimitMode::None;
     EmulatedOverhead eo = (g->prod_spin_ns > 0 || g->cons_spin_ns)
-                              ? EmulatedOverhead::Spin
+                              ? EmulatedOverhead::SpinTSC
                               : EmulatedOverhead::None;
     funcs = matrix[g->test_type][g->mbuf_mode][rl][eo];
 
