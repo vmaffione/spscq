@@ -123,7 +123,7 @@ struct Global {
     static constexpr int DFLT_N            = 50;
     static constexpr int DFLT_BATCH        = 32;
     static constexpr int DFLT_QLEN         = 256;
-    static constexpr int DFLT_LINE_ENTRIES = 8;
+    static constexpr int DFLT_LINE_ENTRIES = 32;
 
     /* Test length as a number of packets. */
     long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */
