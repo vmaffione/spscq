@@ -144,10 +144,11 @@ struct Global {
     /* Emulated per-packet load for the producer and consumer side,
      * in nanoseconds and ticks. */
     int prod_spin_ns = 0, cons_spin_ns = 0;
-    uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
+    uint64_t prod_spin_cycles = 0, cons_spin_cycles = 0;
+    int spin_tsc = 0;
 
-    int cons_rate_limit_ns         = 0;
-    uint64_t cons_rate_limit_ticks = 0;
+    int cons_rate_limit_ns          = 0;
+    uint64_t cons_rate_limit_cycles = 0;
 
     std::string test_type = "msql";
 
@@ -405,7 +406,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msql_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
+    const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->msq->qmask;
     Msq *const msq               = g->msq;
@@ -425,8 +426,7 @@ msql_producer(Global *const g)
             --left;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
-            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles &&
-                       spin) {
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
         } else {
@@ -444,8 +444,8 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msql_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_ticks;
-    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    const uint64_t spin       = g->cons_spin_cycles;
+    const uint64_t rate_limit = g->cons_rate_limit_cycles;
     long long int left        = g->num_packets;
     Msq *const msq            = g->msq;
     unsigned int sum          = 0;
@@ -464,6 +464,8 @@ msql_consumer(Global *const g)
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
@@ -478,7 +480,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
+    const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->msq->qmask;
     const unsigned int batch     = g->batch;
@@ -513,6 +515,8 @@ msq_producer(Global *const g)
                 msq_write_local(msq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
+                } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                    spin_cycles(spin);
                 }
             }
             msq_write_publish(msq);
@@ -529,8 +533,8 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_ticks;
-    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    const uint64_t spin       = g->cons_spin_cycles;
+    const uint64_t rate_limit = g->cons_rate_limit_cycles;
     long long int left        = g->num_packets;
     const unsigned int batch  = g->batch;
     Msq *const msq            = g->msq;
@@ -556,6 +560,8 @@ msq_consumer(Global *const g)
                 mbuf_put<kMbufMode>(m, &sum);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
+                } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                    spin_cycles(spin);
                 }
             }
             msq_read_publish(msq);
@@ -630,7 +636,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
+    const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->ffq->entry_mask;
     Iffq *const ffq              = g->ffq;
@@ -648,6 +654,8 @@ ffq_producer(Global *const g)
             --left;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
             }
         } else {
             pool_idx--;
@@ -664,8 +672,8 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_ticks;
-    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    const uint64_t spin       = g->cons_spin_cycles;
+    const uint64_t rate_limit = g->cons_rate_limit_cycles;
     long long int left        = g->num_packets;
     Iffq *const ffq           = g->ffq;
     unsigned int sum          = 0;
@@ -681,6 +689,8 @@ ffq_consumer(Global *const g)
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
             }
         } else if (kRateLimitMode == RateLimitMode::Limit) {
             tsc_sleep_till(rdtsc() + rate_limit);
@@ -897,7 +907,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
+    const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
     Iffq *const ffq              = g->ffq;
@@ -918,6 +928,8 @@ iffq_producer(Global *const g)
             --left;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
             }
         } else {
             pool_idx--;
@@ -934,8 +946,8 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_ticks;
-    const uint64_t rate_limit = g->cons_rate_limit_ticks;
+    const uint64_t spin       = g->cons_spin_cycles;
+    const uint64_t rate_limit = g->cons_rate_limit_cycles;
     long long int left        = g->num_packets;
     Iffq *const ffq           = g->ffq;
     unsigned int sum          = 0;
@@ -954,6 +966,8 @@ iffq_consumer(Global *const g)
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
+            } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
             }
             iffq_clear(ffq);
         } else if (kRateLimitMode == RateLimitMode::Limit) {
@@ -984,7 +998,11 @@ run_test(Global *g)
                           std::map<EmulatedOverhead,
                                    std::pair<pc_function_t, pc_function_t>>>>>
         matrix;
+    std::function<uint64_t(uint64_t x)> tf =
+        g->spin_tsc ? ns2tsc : [](uint64_t x) { return x; };
     std::pair<pc_function_t, pc_function_t> funcs;
+    std::thread pth;
+    std::thread cth;
     double mpps;
 
 #define __STRFY(x) #x
@@ -997,6 +1015,8 @@ run_test(Global *g)
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl,                           \
                                       EmulatedOverhead::SpinTSC);              \
+        __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl,                           \
+                                      EmulatedOverhead::SpinCycles);           \
     } while (0)
 #define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
     do {                                                                       \
@@ -1026,16 +1046,16 @@ run_test(Global *g)
     }
     RateLimitMode rl =
         g->cons_rate_limit_ns > 0 ? RateLimitMode::Limit : RateLimitMode::None;
-    EmulatedOverhead eo = (g->prod_spin_ns > 0 || g->cons_spin_ns)
-                              ? EmulatedOverhead::SpinTSC
-                              : EmulatedOverhead::None;
+    EmulatedOverhead eo = (g->prod_spin_ns == 0 && g->cons_spin_ns == 0)
+                              ? EmulatedOverhead::None
+                              : (g->spin_tsc ? EmulatedOverhead::SpinTSC
+                                             : EmulatedOverhead::SpinCycles);
     funcs = matrix[g->test_type][g->mbuf_mode][rl][eo];
 
-    g->prod_spin_ticks       = ns2tsc(g->prod_spin_ns);
-    g->cons_spin_ticks       = ns2tsc(g->cons_spin_ns);
-    g->cons_rate_limit_ticks = ns2tsc(g->cons_rate_limit_ns);
+    g->prod_spin_cycles       = tf(g->prod_spin_ns);
+    g->cons_spin_cycles       = tf(g->cons_spin_ns);
+    g->cons_rate_limit_cycles = tf(g->cons_rate_limit_ns);
 
-    // printf("probe1\n");
     if (g->test_type == "msql" || g->test_type == "msq") {
         g->msq = msq_create(g->qlen, g->batch);
         if (!g->msq) {
@@ -1054,7 +1074,6 @@ run_test(Global *g)
     } else {
         assert(0);
     }
-    // printf("probe2\n");
 
     /* Allocate mbuf pool. */
     g->pool = static_cast<Mbuf *>(szalloc(g->qlen * sizeof(g->pool[0])));
@@ -1081,8 +1100,8 @@ run_test(Global *g)
         }
     }
 
-    std::thread pth(funcs.first, g);
-    std::thread cth(funcs.second, g);
+    pth = std::thread(funcs.first, g);
+    cth = std::thread(funcs.second, g);
     pth.join();
     cth.join();
 
@@ -1134,7 +1153,7 @@ main(int argc, char **argv)
     Global *g = &_g;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:T")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1207,6 +1226,10 @@ main(int argc, char **argv)
                 printf("    Invalid consumer spin '%s'\n", optarg);
                 return -1;
             }
+            break;
+
+        case 'T':
+            g->spin_tsc = 1;
             break;
 
         case 'M':
