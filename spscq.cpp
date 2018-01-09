@@ -17,6 +17,7 @@
 #include <iostream>
 #include <functional>
 #include <chrono>
+#include <signal.h>
 
 #include "mlib.h"
 
@@ -25,6 +26,15 @@
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
+
+static int stop = 0;
+
+static void
+sigint_handler(int signum)
+{
+    stop = 1;
+    exit(EXIT_SUCCESS);
+}
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
 static void *
@@ -1221,7 +1231,17 @@ main(int argc, char **argv)
 {
     Global _g;
     Global *g = &_g;
-    int opt;
+    int opt, ret;
+    struct sigaction sa;
+
+    sa.sa_handler = sigint_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    ret         = sigaction(SIGINT, &sa, NULL);
+    if (ret) {
+        perror("sigaction(SIGINT)");
+        exit(EXIT_FAILURE);
+    }
 
     while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:T")) != -1) {
         switch (opt) {
