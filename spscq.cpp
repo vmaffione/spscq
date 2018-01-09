@@ -127,7 +127,7 @@ enum class EmulatedOverhead {
     SpinCycles,
 };
 
-struct Msq;
+struct Blq;
 struct Iffq;
 
 struct Global {
@@ -160,7 +160,7 @@ struct Global {
     int cons_rate_limit_ns          = 0;
     uint64_t cons_rate_limit_cycles = 0;
 
-    std::string test_type = "msql";
+    std::string test_type = "lq";
 
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
@@ -171,7 +171,7 @@ struct Global {
     long long int consumer_batches = 0;
 
     /* The lamport-like queue. */
-    Msq *msq = nullptr;
+    Blq *blq = nullptr;
 
     /* The ff-like queue. */
     Iffq *ffq = nullptr;
@@ -255,8 +255,8 @@ mbuf_put(Mbuf *const m, unsigned int *sum)
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
  */
-typedef Mbuf *msq_entry_t; /* trick to use volatile */
-struct Msq {
+typedef Mbuf *blq_entry_t; /* trick to use volatile */
+struct Blq {
     /* Producer private data. */
     CACHELINE_ALIGNED
     unsigned int write_priv;
@@ -281,89 +281,89 @@ struct Msq {
 
     /* The queue. */
     CACHELINE_ALIGNED
-    volatile msq_entry_t q[0];
+    volatile blq_entry_t q[0];
 };
 
-static Msq *
-msq_create(int qlen, int batch)
+static Blq *
+blq_create(int qlen, int batch)
 {
-    Msq *msq =
-        static_cast<Msq *>(szalloc(sizeof(*msq) + qlen * sizeof(msq->q[0])));
+    Blq *blq =
+        static_cast<Blq *>(szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0])));
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
         return NULL;
     }
 
-    msq->qlen  = qlen;
-    msq->qmask = qlen - 1;
-    msq->batch = batch;
+    blq->qlen  = qlen;
+    blq->qmask = qlen - 1;
+    blq->batch = batch;
 
-    assert(reinterpret_cast<uintptr_t>(msq) % CACHELINE_SIZE == 0);
-    assert((reinterpret_cast<uintptr_t>(&msq->write)) -
-               (reinterpret_cast<uintptr_t>(&msq->write_priv)) ==
+    assert(reinterpret_cast<uintptr_t>(blq) % CACHELINE_SIZE == 0);
+    assert((reinterpret_cast<uintptr_t>(&blq->write)) -
+               (reinterpret_cast<uintptr_t>(&blq->write_priv)) ==
            CACHELINE_SIZE);
-    assert((reinterpret_cast<uintptr_t>(&msq->read_priv)) -
-               (reinterpret_cast<uintptr_t>(&msq->write)) ==
+    assert((reinterpret_cast<uintptr_t>(&blq->read_priv)) -
+               (reinterpret_cast<uintptr_t>(&blq->write)) ==
            CACHELINE_SIZE);
-    assert((reinterpret_cast<uintptr_t>(&msq->read)) -
-               (reinterpret_cast<uintptr_t>(&msq->read_priv)) ==
+    assert((reinterpret_cast<uintptr_t>(&blq->read)) -
+               (reinterpret_cast<uintptr_t>(&blq->read_priv)) ==
            CACHELINE_SIZE);
-    assert((reinterpret_cast<uintptr_t>(&msq->qlen)) -
-               (reinterpret_cast<uintptr_t>(&msq->read)) ==
+    assert((reinterpret_cast<uintptr_t>(&blq->qlen)) -
+               (reinterpret_cast<uintptr_t>(&blq->read)) ==
            CACHELINE_SIZE);
-    assert((reinterpret_cast<uintptr_t>(&msq->q[0])) -
-               (reinterpret_cast<uintptr_t>(&msq->qlen)) ==
+    assert((reinterpret_cast<uintptr_t>(&blq->q[0])) -
+               (reinterpret_cast<uintptr_t>(&blq->qlen)) ==
            CACHELINE_SIZE);
 
-    return msq;
+    return blq;
 }
 
 static inline unsigned int
-msq_wspace(Msq *msq)
+blq_wspace(Blq *blq)
 {
-    return (msq->read - 1 - msq->write_priv) & msq->qmask;
+    return (blq->read - 1 - blq->write_priv) & blq->qmask;
 }
 
-/* No boundary checks, to be called after msq_wspace(). */
+/* No boundary checks, to be called after blq_wspace(). */
 static inline void
-msq_write_local(Msq *msq, Mbuf *m)
+blq_write_local(Blq *blq, Mbuf *m)
 {
-    msq->q[msq->write_priv & msq->qmask] = m;
-    msq->write_priv++;
+    blq->q[blq->write_priv & blq->qmask] = m;
+    blq->write_priv++;
 }
 
 static inline void
-msq_write_publish(Msq *msq)
+blq_write_publish(Blq *blq)
 {
     /* Here we need a StoreStore barrier to prevent previous stores to the
      * queue slot and mbuf content to be reordered after the store to
-     * msq->write. On x86 a compiler barrier suffices, because stores have
+     * blq->write. On x86 a compiler barrier suffices, because stores have
      * release semantic (preventing StoreStore and LoadStore reordering). */
     compiler_barrier();
-    msq->write = msq->write_priv;
+    blq->write = blq->write_priv;
 }
 
 static inline int
-msq_write(Msq *msq, Mbuf *m)
+blq_write(Blq *blq, Mbuf *m)
 {
-    if (msq_wspace(msq) == 0) {
+    if (blq_wspace(blq) == 0) {
         return -1; /* no space */
     }
-    msq_write_local(msq, m);
-    msq_write_publish(msq);
+    blq_write_local(blq, m);
+    blq_write_publish(blq);
 
     return 0;
 }
 
 static inline unsigned int
-msq_rspace(Msq *msq)
+blq_rspace(Blq *blq)
 {
     unsigned int space;
 
-    space = msq->write - msq->read_priv;
+    space = blq->write - blq->read_priv;
     /* Here we need a LoadLoad barrier to prevent upcoming loads to the queue
-     * slot and mbuf content to be reordered before the load of msq->write. On
+     * slot and mbuf content to be reordered before the load of blq->write. On
      * x86 a compiler barrier suffices, because loads have acquire semantic
      * (preventing LoadLoad and LoadStore reordering). */
     compiler_barrier();
@@ -371,48 +371,48 @@ msq_rspace(Msq *msq)
     return space;
 }
 
-/* No boundary checks, to be called after msq_rspace(). */
+/* No boundary checks, to be called after blq_rspace(). */
 static inline Mbuf *
-msq_read_local(Msq *msq)
+blq_read_local(Blq *blq)
 {
-    Mbuf *m = msq->q[msq->read_priv & msq->qmask];
-    msq->read_priv++;
+    Mbuf *m = blq->q[blq->read_priv & blq->qmask];
+    blq->read_priv++;
     return m;
 }
 
 static inline void
-msq_read_publish(Msq *msq)
+blq_read_publish(Blq *blq)
 {
-    msq->read = msq->read_priv;
+    blq->read = blq->read_priv;
 }
 
 static inline Mbuf *
-msq_read(Msq *msq)
+blq_read(Blq *blq)
 {
     Mbuf *m;
 
-    if (msq_rspace(msq) == 0) {
+    if (blq_rspace(blq) == 0) {
         return NULL; /* no space */
     }
-    m = msq_read_local(msq);
-    msq_read_publish(msq);
+    m = blq_read_local(blq);
+    blq_read_publish(blq);
 
     return m;
 }
 
 static void
-msq_dump(const char *prefix, Msq *msq)
+blq_dump(const char *prefix, Blq *blq)
 {
     printf("[%s] r %u rspace %u w %u wspace %u\n", prefix,
-           msq->read & msq->qmask, msq_rspace(msq), msq->write & msq->qmask,
-           msq_wspace(msq));
+           blq->read & blq->qmask, blq_rspace(blq), blq->write & blq->qmask,
+           blq_wspace(blq));
 }
 
 static void
-msq_free(Msq *msq)
+blq_free(Blq *blq)
 {
-    memset(msq, 0, sizeof(*msq));
-    free(msq);
+    memset(blq, 0, sizeof(*blq));
+    free(blq);
 }
 
 static inline void
@@ -427,12 +427,12 @@ spin_cycles(uint64_t spin)
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
-msql_producer(Global *const g)
+lq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
-    const unsigned int pool_mask = g->msq->qmask;
-    Msq *const msq               = g->msq;
+    const unsigned int pool_mask = g->blq->qmask;
+    Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
@@ -440,14 +440,14 @@ msql_producer(Global *const g)
     RATE_HEADER(g);
 #endif
 
-    assert(msq);
+    assert(blq);
     g->producer_header();
     while (left > 0) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
-        msq_dump("P", msq);
+        blq_dump("P", blq);
 #endif
-        if (msq_write(msq, m) == 0) {
+        if (blq_write(blq, m) == 0) {
             --left;
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
@@ -471,25 +471,25 @@ msql_producer(Global *const g)
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
-msql_consumer(Global *const g)
+lq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
-    Msq *const msq             = g->msq;
+    Blq *const blq             = g->blq;
     unsigned int sum           = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(msq);
+    assert(blq);
     g->consumer_header();
 
     while (left > 0) {
 #ifdef QDEBUG
-        msq_dump("C", msq);
+        blq_dump("C", blq);
 #endif
-        m = msq_read(msq);
+        m = blq_read(blq);
         if (m) {
             --left;
             ++batch_packets;
@@ -515,13 +515,13 @@ msql_consumer(Global *const g)
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
-msq_producer(Global *const g)
+blq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
-    const unsigned int pool_mask = g->msq->qmask;
+    const unsigned int pool_mask = g->blq->qmask;
     const unsigned int batch     = g->batch;
-    Msq *const msq               = g->msq;
+    Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
@@ -529,14 +529,14 @@ msq_producer(Global *const g)
     RATE_HEADER(g);
 #endif
 
-    assert(msq);
+    assert(blq);
     g->producer_header();
 
     while (left > 0) {
-        unsigned int avail = msq_wspace(msq);
+        unsigned int avail = blq_wspace(blq);
 
 #ifdef QDEBUG
-        msq_dump("P", msq);
+        blq_dump("P", blq);
 #endif
         if (avail) {
             if (avail > batch) {
@@ -552,14 +552,14 @@ msq_producer(Global *const g)
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-                msq_write_local(msq, m);
+                blq_write_local(blq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_cycles(spin);
                 }
             }
-            msq_write_publish(msq);
+            blq_write_publish(blq);
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
@@ -575,26 +575,26 @@ msq_producer(Global *const g)
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
-msq_consumer(Global *const g)
+blq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
     const unsigned int batch   = g->batch;
-    Msq *const msq             = g->msq;
+    Blq *const blq             = g->blq;
     unsigned int sum           = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(msq);
+    assert(blq);
     g->consumer_header();
 
     while (left > 0) {
-        unsigned int avail = msq_rspace(msq);
+        unsigned int avail = blq_rspace(blq);
 
 #ifdef QDEBUG
-        msq_dump("C", msq);
+        blq_dump("C", blq);
 #endif
         if (avail) {
             if (avail > batch) {
@@ -603,7 +603,7 @@ msq_consumer(Global *const g)
             left -= avail;
             batch_packets += avail;
             for (; avail > 0; avail--) {
-                m = msq_read_local(msq);
+                m = blq_read_local(blq);
                 mbuf_put<kMbufMode>(m, &sum);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
@@ -611,7 +611,7 @@ msq_consumer(Global *const g)
                     spin_cycles(spin);
                 }
             }
-            msq_read_publish(msq);
+            blq_read_publish(blq);
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
@@ -1112,9 +1112,9 @@ run_test(Global *g)
 
     /* Multi-section queue (Lamport-like) with legacy operation,
      * i.e. no batching. */
-    MATRIX_ADD(msql);
+    MATRIX_ADD(lq);
     /* Multi-section queue (Lamport-like) with batching operation. */
-    MATRIX_ADD(msq);
+    MATRIX_ADD(blq);
     /* Original fast-forward queue. */
     MATRIX_ADD(ffq);
     /* Improved fast-forward queue (PSPAT). */
@@ -1136,12 +1136,12 @@ run_test(Global *g)
     g->cons_spin_cycles       = tf(g->cons_spin_ns);
     g->cons_rate_limit_cycles = tf(g->cons_rate_limit_ns);
 
-    if (g->test_type == "msql" || g->test_type == "msq") {
-        g->msq = msq_create(g->qlen, g->batch);
-        if (!g->msq) {
+    if (g->test_type == "lq" || g->test_type == "blq") {
+        g->blq = blq_create(g->qlen, g->batch);
+        if (!g->blq) {
             exit(EXIT_FAILURE);
         }
-        msq_dump("P", g->msq);
+        blq_dump("P", g->blq);
     } else if (g->test_type == "iffq" || g->test_type == "ffq") {
         (void)iffq_empty;
         (void)iffq_prefetch;
@@ -1192,10 +1192,10 @@ run_test(Global *g)
     printf("Throughput %3.3f Mpps\n", mpps);
 
     free(g->pool);
-    if (g->msq) {
-        msq_dump("P", g->msq);
-        msq_free(g->msq);
-        g->msq = nullptr;
+    if (g->blq) {
+        blq_dump("P", g->blq);
+        blq_free(g->blq);
+        g->blq = nullptr;
     }
     if (g->ffq) {
         iffq_dump("P", g->ffq);
@@ -1218,7 +1218,7 @@ usage(const char *progname)
            "    [-c CONSUMER_CORE_ID = -1]\n"
            "    [-P PRODUCER_SPIN_NS = 0]\n"
            "    [-C CONSUMER_SPIN_NS = 0]\n"
-           "    [-t TEST_TYPE (msql,msq,ffq,iffq)]\n"
+           "    [-t TEST_TYPE (lq,blq,ffq,iffq)]\n"
            "    [-M (access mbuf content)]\n"
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "\n",
