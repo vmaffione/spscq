@@ -157,6 +157,9 @@ struct Global {
     /* Timestamp to compute experiment statistics. */
     std::chrono::system_clock::time_point begin, end;
 
+    long long int producer_batches = 0;
+    long long int consumer_batches = 0;
+
     /* The lamport-like queue. */
     Msq *msq = nullptr;
 
@@ -185,6 +188,11 @@ Global::producer_header()
 void
 Global::producer_footer()
 {
+    if (producer_batches) {
+        printf("[P] avg batch = %.3f\n",
+               static_cast<double>(num_packets) /
+                   static_cast<double>(producer_batches));
+    }
 }
 
 void
@@ -197,6 +205,11 @@ void
 Global::consumer_footer()
 {
     end = std::chrono::system_clock::now();
+    if (consumer_batches) {
+        printf("[C] avg batch = %.3f\n",
+               static_cast<double>(num_packets) /
+                   static_cast<double>(consumer_batches));
+    }
 }
 
 static Mbuf gm;
@@ -411,6 +424,8 @@ msql_producer(Global *const g)
     const unsigned int pool_mask = g->msq->qmask;
     Msq *const msq               = g->msq;
     unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -424,18 +439,22 @@ msql_producer(Global *const g)
 #endif
         if (msq_write(msq, m) == 0) {
             --left;
+            ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
         } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
             pool_idx--;
         }
 #ifdef RATE
         RATE_BODY(left);
 #endif
     }
+    g->producer_batches = batches;
     g->producer_footer();
 }
 
@@ -444,11 +463,13 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msql_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_cycles;
-    const uint64_t rate_limit = g->cons_rate_limit_cycles;
-    long long int left        = g->num_packets;
-    Msq *const msq            = g->msq;
-    unsigned int sum          = 0;
+    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t rate_limit  = g->cons_rate_limit_cycles;
+    long long int left         = g->num_packets;
+    Msq *const msq             = g->msq;
+    unsigned int sum           = 0;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
     Mbuf *m;
 
     assert(msq);
@@ -461,16 +482,22 @@ msql_consumer(Global *const g)
         m = msq_read(msq);
         if (m) {
             --left;
+            ++batch_packets;
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
-        } else if (kRateLimitMode == RateLimitMode::Limit) {
-            tsc_sleep_till(rdtsc() + rate_limit);
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            if (kRateLimitMode == RateLimitMode::Limit) {
+                tsc_sleep_till(rdtsc() + rate_limit);
+            }
         }
     }
+    g->consumer_batches = batches;
     g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
@@ -486,6 +513,8 @@ msq_producer(Global *const g)
     const unsigned int batch     = g->batch;
     Msq *const msq               = g->msq;
     unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -510,6 +539,7 @@ msq_producer(Global *const g)
             }
 #endif
             left -= avail;
+            batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 msq_write_local(msq, m);
@@ -520,11 +550,15 @@ msq_producer(Global *const g)
                 }
             }
             msq_write_publish(msq);
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
         }
 #ifdef RATE
         RATE_BODY(left);
 #endif
     }
+    g->producer_batches = batches;
     g->producer_footer();
 }
 
@@ -533,12 +567,14 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 msq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_cycles;
-    const uint64_t rate_limit = g->cons_rate_limit_cycles;
-    long long int left        = g->num_packets;
-    const unsigned int batch  = g->batch;
-    Msq *const msq            = g->msq;
-    unsigned int sum          = 0;
+    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t rate_limit  = g->cons_rate_limit_cycles;
+    long long int left         = g->num_packets;
+    const unsigned int batch   = g->batch;
+    Msq *const msq             = g->msq;
+    unsigned int sum           = 0;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
     Mbuf *m;
 
     assert(msq);
@@ -555,6 +591,7 @@ msq_consumer(Global *const g)
                 avail = batch;
             }
             left -= avail;
+            batch_packets += avail;
             for (; avail > 0; avail--) {
                 m = msq_read_local(msq);
                 mbuf_put<kMbufMode>(m, &sum);
@@ -565,10 +602,15 @@ msq_consumer(Global *const g)
                 }
             }
             msq_read_publish(msq);
-        } else if (kRateLimitMode == RateLimitMode::Limit) {
-            tsc_sleep_till(rdtsc() + rate_limit);
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            if (kRateLimitMode == RateLimitMode::Limit) {
+                tsc_sleep_till(rdtsc() + rate_limit);
+            }
         }
     }
+    g->consumer_batches = batches;
     g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
@@ -641,6 +683,8 @@ ffq_producer(Global *const g)
     const unsigned int pool_mask = g->ffq->entry_mask;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -652,18 +696,22 @@ ffq_producer(Global *const g)
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
             --left;
+            ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
         } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
             pool_idx--;
         }
 #ifdef RATE
         RATE_BODY(left);
 #endif
     }
+    g->producer_batches = batches;
     g->producer_footer();
 }
 
@@ -672,11 +720,13 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_cycles;
-    const uint64_t rate_limit = g->cons_rate_limit_cycles;
-    long long int left        = g->num_packets;
-    Iffq *const ffq           = g->ffq;
-    unsigned int sum          = 0;
+    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t rate_limit  = g->cons_rate_limit_cycles;
+    long long int left         = g->num_packets;
+    Iffq *const ffq            = g->ffq;
+    unsigned int sum           = 0;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
     Mbuf *m;
 
     assert(ffq);
@@ -686,16 +736,22 @@ ffq_consumer(Global *const g)
         m = ffq_read(ffq);
         if (m) {
             --left;
+            ++batch_packets;
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
-        } else if (kRateLimitMode == RateLimitMode::Limit) {
-            tsc_sleep_till(rdtsc() + rate_limit);
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            if (kRateLimitMode == RateLimitMode::Limit) {
+                tsc_sleep_till(rdtsc() + rate_limit);
+            }
         }
     }
+    g->consumer_batches = batches;
     g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
@@ -912,6 +968,8 @@ iffq_producer(Global *const g)
     const unsigned int pool_mask = g->qlen - 1;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
 #ifdef RATE
     RATE_HEADER(g);
 #endif
@@ -926,18 +984,22 @@ iffq_producer(Global *const g)
 #endif
         if (iffq_insert(ffq, m) == 0) {
             --left;
+            ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
             }
         } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
             pool_idx--;
         }
 #ifdef RATE
         RATE_BODY(left);
 #endif
     }
+    g->producer_batches = batches;
     g->producer_footer();
 }
 
@@ -946,11 +1008,13 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_consumer(Global *const g)
 {
-    const uint64_t spin       = g->cons_spin_cycles;
-    const uint64_t rate_limit = g->cons_rate_limit_cycles;
-    long long int left        = g->num_packets;
-    Iffq *const ffq           = g->ffq;
-    unsigned int sum          = 0;
+    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t rate_limit  = g->cons_rate_limit_cycles;
+    long long int left         = g->num_packets;
+    Iffq *const ffq            = g->ffq;
+    unsigned int sum           = 0;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
     Mbuf *m;
 
     assert(ffq);
@@ -963,6 +1027,7 @@ iffq_consumer(Global *const g)
         m = iffq_extract(ffq);
         if (m) {
             --left;
+            ++batch_packets;
             mbuf_put<kMbufMode>(m, &sum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -970,10 +1035,15 @@ iffq_consumer(Global *const g)
                 spin_cycles(spin);
             }
             iffq_clear(ffq);
-        } else if (kRateLimitMode == RateLimitMode::Limit) {
-            tsc_sleep_till(rdtsc() + rate_limit);
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            if (kRateLimitMode == RateLimitMode::Limit) {
+                tsc_sleep_till(rdtsc() + rate_limit);
+            }
         }
     }
+    g->consumer_batches = batches;
     g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
