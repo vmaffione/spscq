@@ -200,7 +200,28 @@ struct Global {
     void producer_footer();
     void consumer_header();
     void consumer_footer();
+    void print_results();
 };
+
+void
+Global::print_results()
+{
+    double mpps;
+    if (producer_batches) {
+        printf("[P] avg batch = %.3f\n",
+               static_cast<double>(num_packets) /
+                   static_cast<double>(producer_batches));
+    }
+    if (consumer_batches) {
+        printf("[C] avg batch = %.3f\n",
+               static_cast<double>(num_packets) /
+                   static_cast<double>(consumer_batches));
+    }
+    mpps = num_packets * 1000.0 /
+           std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
+               .count();
+    printf("Throughput %3.3f Mpps\n", mpps);
+}
 
 void
 Global::producer_header()
@@ -212,11 +233,6 @@ Global::producer_header()
 void
 Global::producer_footer()
 {
-    if (producer_batches) {
-        printf("[P] avg batch = %.3f\n",
-               static_cast<double>(num_packets) /
-                   static_cast<double>(producer_batches));
-    }
 }
 
 void
@@ -229,11 +245,6 @@ void
 Global::consumer_footer()
 {
     end = std::chrono::system_clock::now();
-    if (consumer_batches) {
-        printf("[C] avg batch = %.3f\n",
-               static_cast<double>(num_packets) /
-                   static_cast<double>(consumer_batches));
-    }
 }
 
 static Mbuf gm;
@@ -1189,7 +1200,6 @@ run_test(Global *g)
     std::pair<pc_function_t, pc_function_t> funcs;
     std::thread pth;
     std::thread cth;
-    double mpps;
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
@@ -1301,11 +1311,7 @@ run_test(Global *g)
     pth.join();
     cth.join();
 
-    mpps =
-        g->num_packets * 1000.0 /
-        std::chrono::duration_cast<std::chrono::nanoseconds>(g->end - g->begin)
-            .count();
-    printf("Throughput %3.3f Mpps\n", mpps);
+    g->print_results();
 
     free(g->pool);
     if (g->blq) {
