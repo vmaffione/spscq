@@ -23,8 +23,7 @@
 
 #undef QDEBUG /* dump queue state at each operation */
 
-#define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
-#define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
+#define ONEBILLION (1000LL * 1000000LL) /* 1 billion */
 
 static int stop = 0;
 
@@ -84,10 +83,11 @@ ilog2(unsigned int x)
 
 struct RateLimitedStats {
     std::chrono::system_clock::time_point last;
+    long long int step   = 30ULL * 1000000ULL;
     long long int thresh = 0;
 
     RateLimitedStats(long long int th)
-        : last(std::chrono::system_clock::now()), thresh(th - HUNDREDMILLIONS)
+        : last(std::chrono::system_clock::now()), thresh(th - step)
     {
     }
 
@@ -96,13 +96,18 @@ struct RateLimitedStats {
         if (unlikely(left < thresh)) {
             std::chrono::system_clock::time_point now =
                 std::chrono::system_clock::now();
-            double mpps;
-            mpps =
-                HUNDREDMILLIONS * 1000.0 /
+            long long unsigned int ndiff =
                 std::chrono::duration_cast<std::chrono::nanoseconds>(now - last)
                     .count();
+            double mpps;
+            mpps = step * 1000.0 / ndiff;
             printf("%3.3f Mpps\n", mpps);
-            thresh -= HUNDREDMILLIONS;
+            if (ndiff < 2 * ONEBILLION) {
+                step <<= 1;
+            } else if (ndiff > 3 * ONEBILLION) {
+                step >>= 1;
+            }
+            thresh -= step;
             last = now;
         }
     }
