@@ -22,7 +22,6 @@
 #include "mlib.h"
 
 #undef QDEBUG /* dump queue state at each operation */
-#define RATE  /* periodically print rate estimates */
 
 #define HUNDREDMILLIONS (100LL * 1000000LL) /* 100 millions */
 #define ONEBILLION (1000LL * 1000000LL)     /* 1 billion */
@@ -82,6 +81,32 @@ ilog2(unsigned int x)
 
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define likely(x) __builtin_expect(!!(x), 1)
+
+struct RateLimitedStats {
+    std::chrono::system_clock::time_point last;
+    long long int thresh = 0;
+
+    RateLimitedStats(long long int th)
+        : last(std::chrono::system_clock::now()), thresh(th - HUNDREDMILLIONS)
+    {
+    }
+
+    inline void stat(long long int left)
+    {
+        if (unlikely(left < thresh)) {
+            std::chrono::system_clock::time_point now =
+                std::chrono::system_clock::now();
+            double mpps;
+            mpps =
+                HUNDREDMILLIONS * 1000.0 /
+                std::chrono::duration_cast<std::chrono::nanoseconds>(now - last)
+                    .count();
+            printf("%3.3f Mpps\n", mpps);
+            thresh -= HUNDREDMILLIONS;
+            last = now;
+        }
+    }
+};
 
 /* Ugly but useful macros for online rate estimation. */
 #define RATE_HEADER(g_)                                                        \
@@ -439,9 +464,7 @@ lq_producer(Global *const g)
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
+    RateLimitedStats rls(g->num_packets);
 
     assert(blq);
     g->producer_header();
@@ -463,9 +486,7 @@ lq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
+        rls.stat(left);
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -528,9 +549,7 @@ blq_producer(Global *const g)
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
+    RateLimitedStats rls(g->num_packets);
 
     assert(blq);
     g->producer_header();
@@ -545,12 +564,10 @@ blq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-#ifndef RATE
             /* Enable this to get a consistent 'sum' in the consumer. */
             if (unlikely(avail > left)) {
                 avail = left;
             }
-#endif
             left -= avail;
             batch_packets += avail;
             for (; avail > 0; avail--) {
@@ -567,9 +584,7 @@ blq_producer(Global *const g)
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
+        rls.stat(left);
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -704,9 +719,7 @@ ffq_producer(Global *const g)
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
+    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
@@ -726,9 +739,7 @@ ffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
+        rls.stat(left);
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -821,8 +832,8 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
     m->cons_clear = 0;
     m->cons_read  = m->line_entries;
     m->prod_write = m->prod_write_pub = m->line_entries;
-    m->prod_check = 2 * m->line_entries;
-    m->prod_cache_write = 0;
+    m->prod_check                     = 2 * m->line_entries;
+    m->prod_cache_write               = 0;
 
     return 0;
 }
@@ -853,7 +864,8 @@ iffq_create(unsigned int entries, unsigned int line_size)
 
     assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
     assert(((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
-               (reinterpret_cast<uintptr_t>(&ffq->prod_write))) % CACHELINE_SIZE ==
+            (reinterpret_cast<uintptr_t>(&ffq->prod_write))) %
+               CACHELINE_SIZE ==
            0);
     assert((reinterpret_cast<uintptr_t>(&ffq->q[0])) -
                (reinterpret_cast<uintptr_t>(&ffq->cons_clear)) ==
@@ -926,7 +938,8 @@ iffq_wspace(Iffq *ffq)
 static inline void
 iffq_insert_local(Iffq *ffq, Mbuf *m)
 {
-    ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
+    ffq->prod_cache[ffq->prod_cache_write++] =
+        (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
     ffq->prod_write++;
 }
 
@@ -937,7 +950,7 @@ iffq_insert_publish(Iffq *ffq)
     for (unsigned int i = 0; i < ffq->prod_cache_write; i++, w++) {
         ffq->q[w & ffq->entry_mask] = ffq->prod_cache[i];
     }
-    ffq->prod_write_pub = w;
+    ffq->prod_write_pub   = w;
     ffq->prod_cache_write = 0;
 }
 
@@ -1020,9 +1033,7 @@ iffq_producer(Global *const g)
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
+    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
@@ -1045,9 +1056,7 @@ iffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
+        rls.stat(left);
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -1111,9 +1120,7 @@ biffq_producer(Global *const g)
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-#ifdef RATE
-    RATE_HEADER(g);
-#endif
+    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
@@ -1129,12 +1136,10 @@ biffq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-#ifndef RATE
             /* Enable this to get a consistent 'sum' in the consumer. */
             if (unlikely(avail > left)) {
                 avail = left;
             }
-#endif
             left -= avail;
             batch_packets += avail;
             for (; avail > 0; avail--) {
@@ -1151,9 +1156,7 @@ biffq_producer(Global *const g)
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
-#ifdef RATE
-        RATE_BODY(left);
-#endif
+        rls.stat(left);
     }
     g->producer_batches = batches;
     g->producer_footer();
