@@ -108,26 +108,6 @@ struct RateLimitedStats {
     }
 };
 
-/* Ugly but useful macros for online rate estimation. */
-#define RATE_HEADER(g_)                                                        \
-    long long int thresh_ = g_->num_packets - HUNDREDMILLIONS;                 \
-    std::chrono::system_clock::time_point rate_last_ =                         \
-        std::chrono::system_clock::now();
-
-#define RATE_BODY(left_)                                                       \
-    if (unlikely(left_ < thresh_)) {                                           \
-        std::chrono::system_clock::time_point now =                            \
-            std::chrono::system_clock::now();                                  \
-        double mpps;                                                           \
-        mpps = HUNDREDMILLIONS * 1000.0 /                                      \
-               std::chrono::duration_cast<std::chrono::nanoseconds>(           \
-                   now - rate_last_)                                           \
-                   .count();                                                   \
-        printf("%3.3f Mpps\n", mpps);                                          \
-        thresh_ -= HUNDREDMILLIONS;                                            \
-        rate_last_ = now;                                                      \
-    }
-
 enum class MbufMode {
     NoAccess = 0,
     LinearAccess,
