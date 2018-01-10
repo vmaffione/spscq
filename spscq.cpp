@@ -146,7 +146,8 @@ struct Global {
     unsigned int line_entries = DFLT_LINE_ENTRIES;
 
     /* Max batch for producer and consumer operation. */
-    unsigned int batch = DFLT_BATCH;
+    unsigned int prod_batch = DFLT_BATCH;
+    unsigned int cons_batch = DFLT_BATCH;
 
     /* Affinity for producer and consumer. */
     int p_core = -1, c_core = -1;
@@ -277,7 +278,8 @@ struct Blq {
     CACHELINE_ALIGNED
     unsigned int qlen;
     unsigned int qmask;
-    unsigned int batch;
+    unsigned int prod_batch;
+    unsigned int cons_batch;
 
     /* The queue. */
     CACHELINE_ALIGNED
@@ -285,7 +287,7 @@ struct Blq {
 };
 
 static Blq *
-blq_create(int qlen, int batch)
+blq_create(int qlen, int prod_batch, int cons_batch)
 {
     Blq *blq =
         static_cast<Blq *>(szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0])));
@@ -295,9 +297,10 @@ blq_create(int qlen, int batch)
         return NULL;
     }
 
-    blq->qlen  = qlen;
-    blq->qmask = qlen - 1;
-    blq->batch = batch;
+    blq->qlen       = qlen;
+    blq->qmask      = qlen - 1;
+    blq->prod_batch = prod_batch;
+    blq->cons_batch = cons_batch;
 
     assert(reinterpret_cast<uintptr_t>(blq) % CACHELINE_SIZE == 0);
     assert((reinterpret_cast<uintptr_t>(&blq->write)) -
@@ -520,7 +523,7 @@ blq_producer(Global *const g)
     const uint64_t spin          = g->prod_spin_cycles;
     long long int left           = g->num_packets;
     const unsigned int pool_mask = g->blq->qmask;
-    const unsigned int batch     = g->batch;
+    const unsigned int batch     = g->prod_batch;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
@@ -580,7 +583,7 @@ blq_consumer(Global *const g)
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
-    const unsigned int batch   = g->batch;
+    const unsigned int batch   = g->cons_batch;
     Blq *const blq             = g->blq;
     unsigned int sum           = 0;
     unsigned int batch_packets = 0;
@@ -1137,7 +1140,7 @@ run_test(Global *g)
     g->cons_rate_limit_cycles = tf(g->cons_rate_limit_ns);
 
     if (g->test_type == "lq" || g->test_type == "blq") {
-        g->blq = blq_create(g->qlen, g->batch);
+        g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
         if (!g->blq) {
             exit(EXIT_FAILURE);
         }
@@ -1211,7 +1214,8 @@ usage(const char *progname)
 {
     printf("%s [-h]\n"
            "    [-n NUM_PACKETS (in millions) = %d]\n"
-           "    [-b MAX_BATCH = %d]\n"
+           "    [-b MAX_PRODUCER_BATCH = %d]\n"
+           "    [-b MAX_CONSUMER_BATCH = %d]\n"
            "    [-l QUEUE_LENGTH = %d]\n"
            "    [-L LINE_ENTRIES (iffq) = %d]\n"
            "    [-c PRODUCER_CORE_ID = -1]\n"
@@ -1222,17 +1226,18 @@ usage(const char *progname)
            "    [-M (access mbuf content)]\n"
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "\n",
-           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_QLEN,
-           Global::DFLT_LINE_ENTRIES);
+           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_BATCH,
+           Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
 }
 
 int
 main(int argc, char **argv)
 {
+    bool got_b_option = false;
+    struct sigaction sa;
+    int opt, ret;
     Global _g;
     Global *g = &_g;
-    int opt, ret;
-    struct sigaction sa;
 
     sa.sa_handler = sigint_handler;
     sigemptyset(&sa.sa_mask);
@@ -1261,10 +1266,19 @@ main(int argc, char **argv)
             break;
 
         case 'b':
-            g->batch = atoi(optarg);
-            if (g->batch < 1) {
-                printf("    Invalid batch '%s'\n", optarg);
-                return -1;
+            if (!got_b_option) {
+                got_b_option  = true;
+                g->prod_batch = atoi(optarg);
+                if (g->prod_batch < 1) {
+                    printf("    Invalid producer batch '%s'\n", optarg);
+                    return -1;
+                }
+            } else {
+                g->cons_batch = atoi(optarg);
+                if (g->cons_batch < 1) {
+                    printf("    Invalid consumer batch '%s'\n", optarg);
+                    return -1;
+                }
             }
             break;
 
