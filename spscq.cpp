@@ -152,6 +152,11 @@ enum class EmulatedOverhead {
     SpinCycles,
 };
 
+enum class OnlineRateMode {
+    None = 0,
+    Rate,
+};
+
 struct Blq;
 struct Iffq;
 
@@ -181,11 +186,14 @@ struct Global {
      * in nanoseconds and ticks. */
     int prod_spin_ns = 0, cons_spin_ns = 0;
     uint64_t prod_spin_cycles = 0, cons_spin_cycles = 0;
-    int spin_tsc = 0;
+    bool spin_tsc = false; /* nanoseconds (TSC) vs cycles */
 
     int cons_rate_limit_ns          = 0;
     uint64_t cons_rate_limit_cycles = 0;
 
+    bool online_rate = false;
+
+    /* Type of queue used. */
     std::string test_type = "lq";
 
     MbufMode mbuf_mode = MbufMode::NoAccess;
@@ -453,7 +461,7 @@ spin_cycles(uint64_t spin)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 lq_producer(Global *const g)
 {
@@ -486,14 +494,16 @@ lq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        rls.stat(left);
+        if (kOnlineRateMode == OnlineRateMode::Rate) {
+            rls.stat(left);
+        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 lq_consumer(Global *const g)
 {
@@ -537,7 +547,7 @@ lq_consumer(Global *const g)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 blq_producer(Global *const g)
 {
@@ -584,14 +594,16 @@ blq_producer(Global *const g)
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
-        rls.stat(left);
+        if (kOnlineRateMode == OnlineRateMode::Rate) {
+            rls.stat(left);
+        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 blq_consumer(Global *const g)
 {
@@ -708,7 +720,7 @@ ffq_read(Iffq *ffq)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 ffq_producer(Global *const g)
 {
@@ -739,14 +751,16 @@ ffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        rls.stat(left);
+        if (kOnlineRateMode == OnlineRateMode::Rate) {
+            rls.stat(left);
+        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 ffq_consumer(Global *const g)
 {
@@ -1022,7 +1036,7 @@ iffq_prefetch(Iffq *ffq)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 iffq_producer(Global *const g)
 {
@@ -1056,14 +1070,16 @@ iffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        rls.stat(left);
+        if (kOnlineRateMode == OnlineRateMode::Rate) {
+            rls.stat(left);
+        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 iffq_consumer(Global *const g)
 {
@@ -1108,7 +1124,7 @@ iffq_consumer(Global *const g)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead>
+          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
 static void
 biffq_producer(Global *const g)
 {
@@ -1156,7 +1172,9 @@ biffq_producer(Global *const g)
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
-        rls.stat(left);
+        if (kOnlineRateMode == OnlineRateMode::Rate) {
+            rls.stat(left);
+        }
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -1178,12 +1196,13 @@ using pc_function_t = std::function<void(Global *const)>;
 static int
 run_test(Global *g)
 {
-    std::map<
-        std::string,
-        std::map<MbufMode,
-                 std::map<RateLimitMode,
-                          std::map<EmulatedOverhead,
-                                   std::pair<pc_function_t, pc_function_t>>>>>
+    std::map<std::string,
+             std::map<MbufMode,
+                      std::map<RateLimitMode,
+                               std::map<EmulatedOverhead,
+                                        std::map<OnlineRateMode,
+                                                 std::pair<pc_function_t,
+                                                           pc_function_t>>>>>>
         matrix;
     std::function<uint64_t(uint64_t x)> tf =
         g->spin_tsc ? ns2tsc : [](uint64_t x) { return x; };
@@ -1194,9 +1213,14 @@ run_test(Global *g)
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
+
+#define __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, orm)                    \
+    matrix[STRFY(qname)][mm][rl][eo][orm] = std::make_pair(                    \
+        qname##_producer<mm, rl, eo, orm>, qname##_consumer<mm, rl, eo, orm>)
+
 #define __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, eo)                       \
-    matrix[STRFY(qname)][mm][rl][eo] = std::make_pair(                         \
-        qname##_producer<mm, rl, eo>, qname##_consumer<mm, rl, eo>)
+    __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, OnlineRateMode::None);      \
+    __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, OnlineRateMode::Rate);
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
     do {                                                                       \
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
@@ -1239,7 +1263,9 @@ run_test(Global *g)
                               ? EmulatedOverhead::None
                               : (g->spin_tsc ? EmulatedOverhead::SpinTSC
                                              : EmulatedOverhead::SpinCycles);
-    funcs = matrix[g->test_type][g->mbuf_mode][rl][eo];
+    OnlineRateMode orm =
+        (g->online_rate ? OnlineRateMode::Rate : OnlineRateMode::None);
+    funcs = matrix[g->test_type][g->mbuf_mode][rl][eo][orm];
 
     g->prod_spin_cycles       = tf(g->prod_spin_ns);
     g->cons_spin_cycles       = tf(g->cons_spin_ns);
@@ -1327,11 +1353,13 @@ usage(const char *progname)
            "    [-L LINE_ENTRIES (iffq) = %d]\n"
            "    [-c PRODUCER_CORE_ID = -1]\n"
            "    [-c CONSUMER_CORE_ID = -1]\n"
-           "    [-P PRODUCER_SPIN_NS = 0]\n"
-           "    [-C CONSUMER_SPIN_NS = 0]\n"
+           "    [-P PRODUCER_SPIN (cycles, ns) = 0]\n"
+           "    [-C CONSUMER_SPIN (cycles, ns) = 0]\n"
            "    [-t TEST_TYPE (lq,blq,ffq,iffq,biffq)]\n"
            "    [-M (access mbuf content)]\n"
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
+           "    [-T (emulate load using TSC)]\n"
+           "    [-R (use online rating)]\n"
            "\n",
            progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_BATCH,
            Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
@@ -1355,7 +1383,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:T")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:TR")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1440,7 +1468,7 @@ main(int argc, char **argv)
             break;
 
         case 'T':
-            g->spin_tsc = 1;
+            g->spin_tsc = true;
             break;
 
         case 'M':
@@ -1461,6 +1489,10 @@ main(int argc, char **argv)
                 printf("    Invalid consumer rate limit '%s'\n", optarg);
                 return -1;
             }
+            break;
+
+        case 'R':
+            g->online_rate = true;
             break;
 
         default:
