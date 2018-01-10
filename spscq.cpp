@@ -634,6 +634,10 @@ blq_consumer(Global *const g)
  * Many fields are only used by the Improved FastFoward queue (see below).
  */
 struct Iffq {
+#define IFFQ_PROD_CACHE_ENTRIES 256
+    uintptr_t prod_cache[IFFQ_PROD_CACHE_ENTRIES];
+
+    CACHELINE_ALIGNED
     /* Shared (constant) fields. */
     unsigned int entry_mask;
     unsigned int seqbit_shift;
@@ -644,6 +648,8 @@ struct Iffq {
     CACHELINE_ALIGNED
     unsigned int prod_write;
     unsigned int prod_check;
+    unsigned int prod_write_pub;
+    unsigned int prod_cache_write;
 
     /* Consumer fields. */
     CACHELINE_ALIGNED
@@ -814,8 +820,9 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
 
     m->cons_clear = 0;
     m->cons_read  = m->line_entries;
-    m->prod_write = m->line_entries;
+    m->prod_write = m->prod_write_pub = m->line_entries;
     m->prod_check = 2 * m->line_entries;
+    m->prod_cache_write = 0;
 
     return 0;
 }
@@ -845,9 +852,9 @@ iffq_create(unsigned int entries, unsigned int line_size)
     }
 
     assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
-    assert((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
-               (reinterpret_cast<uintptr_t>(&ffq->prod_write)) ==
-           CACHELINE_SIZE);
+    assert(((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
+               (reinterpret_cast<uintptr_t>(&ffq->prod_write))) % CACHELINE_SIZE ==
+           0);
     assert((reinterpret_cast<uintptr_t>(&ffq->q[0])) -
                (reinterpret_cast<uintptr_t>(&ffq->cons_clear)) ==
            CACHELINE_SIZE);
@@ -917,14 +924,21 @@ iffq_wspace(Iffq *ffq)
 }
 
 static inline void
-iffq_insert_nocheck(Iffq *ffq, Mbuf *m)
+iffq_insert_local(Iffq *ffq, Mbuf *m)
 {
-    /* Here we need a StoreStore barrier, to prevent writes to the
-     * mbufs to be reordered after the write to the queue slot. */
-    compiler_barrier();
-    ffq->q[ffq->prod_write & ffq->entry_mask] =
-        (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
+    ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
     ffq->prod_write++;
+}
+
+static inline void
+iffq_insert_publish(Iffq *ffq)
+{
+    unsigned int w = ffq->prod_write_pub;
+    for (unsigned int i = 0; i < ffq->prod_cache_write; i++, w++) {
+        ffq->q[w & ffq->entry_mask] = ffq->prod_cache[i];
+    }
+    ffq->prod_write_pub = w;
+    ffq->prod_cache_write = 0;
 }
 
 static inline int
@@ -1125,13 +1139,14 @@ biffq_producer(Global *const g)
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-                iffq_insert_nocheck(ffq, m);
+                iffq_insert_local(ffq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_cycles(spin);
                 }
             }
+            iffq_insert_publish(ffq);
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
