@@ -904,13 +904,13 @@ iffq_insert(Iffq *ffq, Mbuf *m)
     return 0;
 }
 
-static inline int
+static inline unsigned int
 iffq_wspace(Iffq *ffq)
 {
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
         if (ffq->q[(ffq->prod_check + ffq->line_entries) & ffq->entry_mask])
-            return -ENOBUFS;
+            return 0;
         ffq->prod_check += ffq->line_entries;
     }
     return ffq->prod_check - ffq->prod_write;
