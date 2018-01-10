@@ -905,6 +905,29 @@ iffq_insert(Iffq *ffq, Mbuf *m)
 }
 
 static inline int
+iffq_wspace(Iffq *ffq)
+{
+    if (unlikely(ffq->prod_write == ffq->prod_check)) {
+        /* Leave a cache line empty. */
+        if (ffq->q[(ffq->prod_check + ffq->line_entries) & ffq->entry_mask])
+            return -ENOBUFS;
+        ffq->prod_check += ffq->line_entries;
+    }
+    return ffq->prod_check - ffq->prod_write;
+}
+
+static inline void
+iffq_insert_nocheck(Iffq *ffq, Mbuf *m)
+{
+    /* Here we need a StoreStore barrier, to prevent writes to the
+     * mbufs to be reordered after the write to the queue slot. */
+    compiler_barrier();
+    ffq->q[ffq->prod_write & ffq->entry_mask] =
+        (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
+    ffq->prod_write++;
+}
+
+static inline int
 __iffq_empty(Iffq *ffq, unsigned int i, uintptr_t v)
 {
     return (!v) || ((v ^ (i >> ffq->seqbit_shift)) & 0x1);
@@ -1060,6 +1083,69 @@ iffq_consumer(Global *const g)
     g->consumer_footer();
     printf("[C] sum = %x\n", sum);
 }
+
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
+static void
+biffq_producer(Global *const g)
+{
+    const uint64_t spin          = g->prod_spin_cycles;
+    long long int left           = g->num_packets;
+    const unsigned int pool_mask = g->qlen - 1;
+    const unsigned int batch     = g->prod_batch;
+    Iffq *const ffq              = g->ffq;
+    unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
+#ifdef RATE
+    RATE_HEADER(g);
+#endif
+
+    assert(ffq);
+    g->producer_header();
+
+    while (left > 0) {
+        unsigned int avail = iffq_wspace(ffq);
+
+#ifdef QDEBUG
+        iffq_dump("P", ffq);
+#endif
+
+        if (avail) {
+            if (avail > batch) {
+                avail = batch;
+            }
+#ifndef RATE
+            /* Enable this to get a consistent 'sum' in the consumer. */
+            if (unlikely(avail > left)) {
+                avail = left;
+            }
+#endif
+            left -= avail;
+            batch_packets += avail;
+            for (; avail > 0; avail--) {
+                Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+                iffq_insert_nocheck(ffq, m);
+                if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
+                    tsc_sleep_till(rdtsc() + spin);
+                } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                    spin_cycles(spin);
+                }
+            }
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+        }
+#ifdef RATE
+        RATE_BODY(left);
+#endif
+    }
+    g->producer_batches = batches;
+    g->producer_footer();
+}
+
+#define biffq_consumer iffq_consumer
+
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 #if 1
 using pc_function_t = void (*)(Global *const);
@@ -1123,6 +1209,8 @@ run_test(Global *g)
     /* Improved fast-forward queue (PSPAT). */
     MATRIX_ADD(iffq);
 
+    MATRIX_ADD(biffq);
+
     if (matrix.count(g->test_type) == 0) {
         printf("Error: unknown test type '%s'\n", g->test_type.c_str());
         exit(EXIT_FAILURE);
@@ -1145,7 +1233,8 @@ run_test(Global *g)
             exit(EXIT_FAILURE);
         }
         blq_dump("P", g->blq);
-    } else if (g->test_type == "iffq" || g->test_type == "ffq") {
+    } else if (g->test_type == "iffq" || g->test_type == "ffq" ||
+               g->test_type == "biffq") {
         (void)iffq_empty;
         (void)iffq_prefetch;
         g->ffq = iffq_create(g->qlen,
@@ -1222,7 +1311,7 @@ usage(const char *progname)
            "    [-c CONSUMER_CORE_ID = -1]\n"
            "    [-P PRODUCER_SPIN_NS = 0]\n"
            "    [-C CONSUMER_SPIN_NS = 0]\n"
-           "    [-t TEST_TYPE (lq,blq,ffq,iffq)]\n"
+           "    [-t TEST_TYPE (lq,blq,ffq,iffq,biffq)]\n"
            "    [-M (access mbuf content)]\n"
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "\n",
