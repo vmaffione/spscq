@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <cstdlib>
+#include <fstream>
 #include <cstring>
 #include <string>
 #include <unistd.h>
@@ -18,6 +19,7 @@
 #include <functional>
 #include <chrono>
 #include <signal.h>
+#include <sstream>
 
 #include "mlib.h"
 
@@ -1189,6 +1191,34 @@ using pc_function_t = void (*)(Global *const);
 using pc_function_t = std::function<void(Global *const)>;
 #endif
 
+static void
+perf_measure(Global *const g, bool producer)
+{
+    std::string filename = std::tmpnam(nullptr);
+    std::string cmd;
+    int ret;
+
+    {
+        std::stringstream ss;
+        ss << "./get-cache-miss-rate.sh " << (producer ? g->p_core : g->c_core)
+           << " 2 " << filename;
+        cmd = ss.str();
+    }
+    printf("Running command '%s'\n", cmd.c_str());
+    ret = system(cmd.c_str());
+    if (ret) {
+        printf("[ERR] Command '%s' failed\n", cmd.c_str());
+        return;
+    }
+
+    std::ifstream fin(filename);
+    float result = 0.0;
+    fin >> result;
+    fin.close();
+
+    printf("[%s] L1 d-cache miss rate %5.2f\n", producer ? "P" : "C", result);
+}
+
 static int
 run_test(Global *g)
 {
@@ -1205,6 +1235,8 @@ run_test(Global *g)
     std::pair<pc_function_t, pc_function_t> funcs;
     std::thread pth;
     std::thread cth;
+    std::thread mth1, mth2;
+    bool use_perf_tool = g->p_core != -1 && g->c_core != -1;
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
@@ -1313,8 +1345,16 @@ run_test(Global *g)
 
     pth = std::thread(funcs.first, g);
     cth = std::thread(funcs.second, g);
+    if (use_perf_tool) {
+        mth1 = std::thread(perf_measure, g, /*producer=*/true);
+        mth2 = std::thread(perf_measure, g, /*producer=*/false);
+    }
     pth.join();
     cth.join();
+    if (use_perf_tool) {
+        mth1.join();
+        mth2.join();
+    }
 
     g->print_results();
 
