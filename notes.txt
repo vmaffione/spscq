@@ -21,3 +21,18 @@ blq::C puo attendere una notifica sulla cacheline del campo
 gli slot uno alla volta. Se il sistema e' fast consumer, in
 contemporanea biffq::C attende notifiche sugli stessi slot su cui
 biffq::P sta lavorando, quindi generando conflitti read-write.
+
+- Sembrano esistere combinazioni per cui biffq/iffq sono migliori
+  di blq:
+    $ ./spscq -c0 -c1  -n2000 -P2 -C1 -t blq
+    $ ./spscq -c0 -c1  -n2000 -P2 -C1 -t iffq
+    $ ./spscq -c0 -c1  -n2000 -P2 -C1 -t biffq
+
+  oppure '-P1 -C0' o '-P1 -C1', o altre situazioni di fast consumer
+  a rate molto alti
+
+- In termini di API, ffq e varianti hanno lo svantaggio che possono
+  implementare una coda che ha solamente la semantica di move, visto
+  che C deve azzerare gli slot. Al contrario, lq e varianti permettono
+  a P di riprendersi gli slot processati, quindi permettendo una
+  semantica di 'const reference'.
