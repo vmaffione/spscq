@@ -187,7 +187,7 @@ struct Global {
     unsigned int csum;
 
     CACHELINE_ALIGNED
-    long long unsigned pkt_cnt = 0;
+    volatile long long unsigned pkt_cnt = 0;
 
     CACHELINE_ALIGNED
     long long int producer_batches = 0;
@@ -1219,6 +1219,31 @@ perf_measure(Global *const g, bool producer)
     remove(filename);
 }
 
+static void
+control_thread(Global *const g)
+{
+    auto t_last                         = std::chrono::system_clock::now();
+    long long unsigned int pkt_cnt_last = 0;
+
+    for (unsigned long loopcnt = 0; !stop; loopcnt++) {
+        usleep(250000);
+
+        if (g->online_rate && loopcnt % 8 == 0) {
+            auto t_now = std::chrono::system_clock::now();
+            long long unsigned int pkt_cnt_now = g->pkt_cnt;
+            double mpps = (pkt_cnt_now - pkt_cnt_last) * 1000.0 /
+                          std::chrono::duration_cast<std::chrono::nanoseconds>(
+                              t_now - t_last)
+                              .count();
+
+            printf("%3.3f Mpps\n", mpps);
+
+            t_last       = t_now;
+            pkt_cnt_last = pkt_cnt_now;
+        }
+    }
+}
+
 static int
 run_test(Global *g)
 {
@@ -1234,7 +1259,8 @@ run_test(Global *g)
     std::pair<pc_function_t, pc_function_t> funcs;
     std::thread pth;
     std::thread cth;
-    std::thread mth1, mth2;
+    std::thread perf_th_p, perf_th_c;
+    std::thread ctrl_th;
     bool use_perf_tool = g->perf_counters && g->p_core != -1 &&
                          g->c_core != -1 && g->p_core != g->c_core;
 
@@ -1341,14 +1367,16 @@ run_test(Global *g)
     pth = std::thread(funcs.first, g);
     cth = std::thread(funcs.second, g);
     if (use_perf_tool) {
-        mth1 = std::thread(perf_measure, g, /*producer=*/true);
-        mth2 = std::thread(perf_measure, g, /*producer=*/false);
+        perf_th_p = std::thread(perf_measure, g, /*producer=*/true);
+        perf_th_c = std::thread(perf_measure, g, /*producer=*/false);
     }
+    ctrl_th = std::thread(control_thread, g);
     pth.join();
     cth.join();
+    ctrl_th.join();
     if (use_perf_tool) {
-        mth1.join();
-        mth2.join();
+        perf_th_p.join();
+        perf_th_c.join();
     }
 
     g->print_results();
