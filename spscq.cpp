@@ -1191,8 +1191,13 @@ perf_measure(Global *const g, bool producer)
 {
     char filename[32] = "/tmp/spscq-perfXXXXXX";
     std::string cmd;
-    int seconds = 3;
+    int seconds = g->duration - 2;
     int ret, fd;
+
+    if (seconds < 1) {
+        printf("[WRN] Not enough time to use perf stat\n");
+        return;
+    }
 
     fd = mkstemp(filename);
     if (fd < 0) {
@@ -1207,7 +1212,9 @@ perf_measure(Global *const g, bool producer)
            << " " << seconds << " " << filename;
         cmd = ss.str();
     }
-    sleep(1);
+    /* Wait a bit to make sure producer and consumer have started. */
+    usleep(350000);
+
     printf("Running command '%s'\n", cmd.c_str());
     ret = system(cmd.c_str());
     if (ret) {
