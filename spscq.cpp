@@ -191,8 +191,13 @@ struct Global {
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
+    /* L1 dcache miss rate in M/sec. */
     float prod_miss_rate = 0.0;
     float cons_miss_rate = 0.0;
+
+    /* CPU instruction rate in B/sec. */
+    float prod_insn_rate = 0.0;
+    float cons_insn_rate = 0.0;
 
     /* The lamport-like queue. */
     Blq *blq = nullptr;
@@ -221,6 +226,14 @@ Global::print_results()
         std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
             .count();
 
+    if (prod_insn_rate != 0.0) {
+        printf("[P] %.2f Ginsn/s %.2f CPU insn per packet\n", prod_insn_rate,
+               prod_insn_rate * 1000.0 / mpps);
+    }
+    if (cons_insn_rate != 0.0) {
+        printf("[C] %.2f Ginsn/s %.2f CPU insn per packet\n", cons_insn_rate,
+               cons_insn_rate * 1000.0 / mpps);
+    }
     if (producer_batches) {
         printf("[P] avg batch = %.3f\n",
                static_cast<double>(num_packets) /
@@ -1206,14 +1219,22 @@ using pc_function_t = std::function<void(Global *const)>;
 static void
 perf_measure(Global *const g, bool producer)
 {
-    std::string filename = std::tmpnam(nullptr);
+    char filename[32] = "/tmp/spscq-perfXXXXXX";
     std::string cmd;
-    int ret;
+    int seconds = 3;
+    int ret, fd;
+
+    fd = mkstemp(filename);
+    if (fd < 0) {
+        printf("[ERR] Failed to open temporary file: %s\n", strerror(errno));
+        return;
+    }
+    close(fd);
 
     {
         std::stringstream ss;
-        ss << "./get-cache-miss-rate.sh " << (producer ? g->p_core : g->c_core)
-           << " 2 " << filename;
+        ss << "./get-perf-top-results.sh " << (producer ? g->p_core : g->c_core)
+           << " " << seconds << " " << filename;
         cmd = ss.str();
     }
     sleep(1);
@@ -1226,8 +1247,10 @@ perf_measure(Global *const g, bool producer)
 
     std::ifstream fin(filename);
     float &miss_rate = producer ? g->prod_miss_rate : g->cons_miss_rate;
+    float &insn_rate = producer ? g->prod_insn_rate : g->cons_insn_rate;
     miss_rate        = 0.0;
-    fin >> miss_rate;
+    insn_rate        = 0.0;
+    fin >> miss_rate >> insn_rate;
     fin.close();
 }
 
