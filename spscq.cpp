@@ -191,6 +191,9 @@ struct Global {
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
+    float prod_miss_rate = 0.0;
+    float cons_miss_rate = 0.0;
+
     /* The lamport-like queue. */
     Blq *blq = nullptr;
 
@@ -213,7 +216,11 @@ struct Global {
 void
 Global::print_results()
 {
-    double mpps;
+    double mpps =
+        num_packets * 1000.0 /
+        std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
+            .count();
+
     if (producer_batches) {
         printf("[P] avg batch = %.3f\n",
                static_cast<double>(num_packets) /
@@ -224,9 +231,14 @@ Global::print_results()
                static_cast<double>(num_packets) /
                    static_cast<double>(consumer_batches));
     }
-    mpps = num_packets * 1000.0 /
-           std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
-               .count();
+    if (prod_miss_rate != 0.0) {
+        printf("[P] L1 d-cache miss rate %5.2f M/sec, %.2f packets/miss\n",
+               prod_miss_rate, mpps / prod_miss_rate);
+    }
+    if (cons_miss_rate != 0.0) {
+        printf("[C] L1 d-cache miss rate %5.2f M/sec, %.2f packets/miss\n",
+               cons_miss_rate, mpps / cons_miss_rate);
+    }
     printf("Throughput %3.3f Mpps\n", mpps);
 }
 
@@ -1204,6 +1216,7 @@ perf_measure(Global *const g, bool producer)
            << " 2 " << filename;
         cmd = ss.str();
     }
+    sleep(1);
     printf("Running command '%s'\n", cmd.c_str());
     ret = system(cmd.c_str());
     if (ret) {
@@ -1212,11 +1225,10 @@ perf_measure(Global *const g, bool producer)
     }
 
     std::ifstream fin(filename);
-    float result = 0.0;
-    fin >> result;
+    float &miss_rate = producer ? g->prod_miss_rate : g->cons_miss_rate;
+    miss_rate        = 0.0;
+    fin >> miss_rate;
     fin.close();
-
-    printf("[%s] L1 d-cache miss rate %5.2f\n", producer ? "P" : "C", result);
 }
 
 static int
