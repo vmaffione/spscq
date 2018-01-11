@@ -189,6 +189,8 @@ struct Global {
     /* Timestamp to compute experiment statistics. */
     std::chrono::system_clock::time_point begin, end;
 
+    unsigned int csum;
+
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
@@ -226,6 +228,10 @@ Global::print_results()
         num_packets * 1000.0 /
         std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
             .count();
+
+    if (csum) {
+        printf("[C] csum = %x\n", csum);
+    }
 
     if (prod_insn_rate != 0.0) {
         printf("[P] %.2f Ginsn/s %.2f CPU insn per packet\n", prod_insn_rate,
@@ -302,10 +308,10 @@ mbuf_get(Global *const g, unsigned int *pool_idx, const unsigned int pool_mask)
 
 template <MbufMode kMbufMode>
 static inline void
-mbuf_put(Mbuf *const m, unsigned int *sum)
+mbuf_put(Mbuf *const m, unsigned int *csum)
 {
     if (kMbufMode != MbufMode::NoAccess) {
-        *sum += m->len;
+        *csum += m->len;
     }
 }
 
@@ -535,7 +541,7 @@ lq_consumer(Global *const g)
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
     Blq *const blq             = g->blq;
-    unsigned int sum           = 0;
+    unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
@@ -551,7 +557,7 @@ lq_consumer(Global *const g)
         if (m) {
             --left;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &sum);
+            mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -566,8 +572,8 @@ lq_consumer(Global *const g)
         }
     }
     g->consumer_batches = batches;
+    g->csum             = csum;
     g->consumer_footer();
-    printf("[C] sum = %x\n", sum);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -598,7 +604,8 @@ blq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-            /* Enable this to get a consistent 'sum' in the consumer. */
+            /* This check is needed to get a consistent 'csum' in the consumer.
+             */
             if (unlikely(avail > left)) {
                 avail = left;
             }
@@ -636,7 +643,7 @@ blq_consumer(Global *const g)
     long long int left         = g->num_packets;
     const unsigned int batch   = g->cons_batch;
     Blq *const blq             = g->blq;
-    unsigned int sum           = 0;
+    unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
@@ -658,7 +665,7 @@ blq_consumer(Global *const g)
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 m = blq_read_local(blq);
-                mbuf_put<kMbufMode>(m, &sum);
+                mbuf_put<kMbufMode>(m, &csum);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                     tsc_sleep_till(rdtsc() + spin);
                 } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -674,9 +681,9 @@ blq_consumer(Global *const g)
             }
         }
     }
+    g->csum             = csum;
     g->consumer_batches = batches;
     g->consumer_footer();
-    printf("[C] sum = %x\n", sum);
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -792,7 +799,7 @@ ffq_consumer(Global *const g)
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
     Iffq *const ffq            = g->ffq;
-    unsigned int sum           = 0;
+    unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
@@ -805,7 +812,7 @@ ffq_consumer(Global *const g)
         if (m) {
             --left;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &sum);
+            mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -819,9 +826,9 @@ ffq_consumer(Global *const g)
             }
         }
     }
+    g->csum             = csum;
     g->consumer_batches = batches;
     g->consumer_footer();
-    printf("[C] sum = %x\n", sum);
 }
 
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -1111,7 +1118,7 @@ iffq_consumer(Global *const g)
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     long long int left         = g->num_packets;
     Iffq *const ffq            = g->ffq;
-    unsigned int sum           = 0;
+    unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     Mbuf *m;
@@ -1127,7 +1134,7 @@ iffq_consumer(Global *const g)
         if (m) {
             --left;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &sum);
+            mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
             } else if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -1142,9 +1149,9 @@ iffq_consumer(Global *const g)
             }
         }
     }
+    g->csum             = csum;
     g->consumer_batches = batches;
     g->consumer_footer();
-    printf("[C] sum = %x\n", sum);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -1176,7 +1183,8 @@ biffq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-            /* Enable this to get a consistent 'sum' in the consumer. */
+            /* This check is needed to get a consistent 'csum' in the consumer.
+             */
             if (unlikely(avail > left)) {
                 avail = left;
             }
