@@ -142,13 +142,12 @@ struct Blq;
 struct Iffq;
 
 struct Global {
-    static constexpr int DFLT_N            = 50;
     static constexpr int DFLT_BATCH        = 32;
     static constexpr int DFLT_QLEN         = 256;
     static constexpr int DFLT_LINE_ENTRIES = 32;
 
     /* Test length as a number of packets. */
-    long long int num_packets = DFLT_N * 1000000LL; /* 50 millions */
+    long long unsigned int num_packets = 0; /* infinite */
 
     /* Length of the SPSC queue. */
     unsigned int qlen = DFLT_QLEN;
@@ -1228,7 +1227,7 @@ control_thread(Global *const g)
     for (unsigned long loopcnt = 0; !stop; loopcnt++) {
         usleep(250000);
 
-        if (g->online_rate && loopcnt % 8 == 0) {
+        if (loopcnt % 8 == 0) {
             auto t_now = std::chrono::system_clock::now();
             long long unsigned int pkt_cnt_now = g->pkt_cnt;
             double mpps = (pkt_cnt_now - pkt_cnt_last) * 1000.0 /
@@ -1236,7 +1235,13 @@ control_thread(Global *const g)
                               t_now - t_last)
                               .count();
 
-            printf("%3.3f Mpps\n", mpps);
+            if (g->online_rate) {
+                printf("%3.3f Mpps\n", mpps);
+            }
+
+            if (g->num_packets > 0 && pkt_cnt_now > g->num_packets) {
+                stop = 1;
+            }
 
             t_last       = t_now;
             pkt_cnt_last = pkt_cnt_now;
@@ -1400,7 +1405,7 @@ static void
 usage(const char *progname)
 {
     printf("%s [-h]\n"
-           "    [-n NUM_PACKETS (in millions) = %d]\n"
+           "    [-n NUM_PACKETS (in millions) = inf]\n"
            "    [-b MAX_PRODUCER_BATCH = %d]\n"
            "    [-b MAX_CONSUMER_BATCH = %d]\n"
            "    [-l QUEUE_LENGTH = %d]\n"
@@ -1416,8 +1421,8 @@ usage(const char *progname)
            "    [-R (use online rating)]\n"
            "    [-p (use CPU performance counters)]\n"
            "\n",
-           progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_BATCH,
-           Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
+           progname, Global::DFLT_BATCH, Global::DFLT_BATCH, Global::DFLT_QLEN,
+           Global::DFLT_LINE_ENTRIES);
 }
 
 int
@@ -1445,7 +1450,7 @@ main(int argc, char **argv)
             return 0;
 
         case 'n':
-            g->num_packets = atoi(optarg) * 1000000LL;
+            g->num_packets = atoi(optarg) * 1000000ULL;
             if (g->num_packets < 0) {
                 printf("    Invalid number of packets '%s'\n", optarg);
                 return -1;
