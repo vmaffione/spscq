@@ -27,13 +27,12 @@
 
 #define ONEBILLION (1000LL * 1000000LL) /* 1 billion */
 
-static int stop = 0;
+static volatile int stop = 0;
 
 static void
 sigint_handler(int signum)
 {
     stop = 1;
-    exit(EXIT_SUCCESS);
 }
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
@@ -139,11 +138,6 @@ enum class EmulatedOverhead {
     SpinCycles,
 };
 
-enum class OnlineRateMode {
-    None = 0,
-    Rate,
-};
-
 struct Blq;
 struct Iffq;
 
@@ -189,8 +183,13 @@ struct Global {
     /* Timestamp to compute experiment statistics. */
     std::chrono::system_clock::time_point begin, end;
 
+    /* Checksum for when -M is used. */
     unsigned int csum;
 
+    CACHELINE_ALIGNED
+    long long unsigned pkt_cnt = 0;
+
+    CACHELINE_ALIGNED
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
@@ -225,7 +224,7 @@ void
 Global::print_results()
 {
     double mpps =
-        num_packets * 1000.0 /
+        pkt_cnt * 1000.0 /
         std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin)
             .count();
 
@@ -243,12 +242,12 @@ Global::print_results()
     }
     if (producer_batches) {
         printf("[P] avg batch = %.3f\n",
-               static_cast<double>(num_packets) /
+               static_cast<double>(pkt_cnt) /
                    static_cast<double>(producer_batches));
     }
     if (consumer_batches) {
         printf("[C] avg batch = %.3f\n",
-               static_cast<double>(num_packets) /
+               static_cast<double>(pkt_cnt) /
                    static_cast<double>(consumer_batches));
     }
     if (prod_miss_rate != 0.0) {
@@ -491,28 +490,25 @@ spin_cycles(uint64_t spin)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 lq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
-    long long int left           = g->num_packets;
     const unsigned int pool_mask = g->blq->qmask;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-    RateLimitedStats rls(g->num_packets);
 
     assert(blq);
     g->producer_header();
-    while (left > 0) {
+    while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
         if (blq_write(blq, m) == 0) {
-            --left;
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -524,22 +520,18 @@ lq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        if (kOnlineRateMode == OnlineRateMode::Rate) {
-            rls.stat(left);
-        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 lq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
-    long long int left         = g->num_packets;
     Blq *const blq             = g->blq;
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
@@ -549,13 +541,13 @@ lq_consumer(Global *const g)
     assert(blq);
     g->consumer_header();
 
-    while (left > 0) {
+    while (!stop) {
 #ifdef QDEBUG
         blq_dump("C", blq);
 #endif
         m = blq_read(blq);
         if (m) {
-            --left;
+            ++g->pkt_cnt;
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
@@ -577,24 +569,22 @@ lq_consumer(Global *const g)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 blq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
-    long long int left           = g->num_packets;
     const unsigned int pool_mask = g->blq->qmask;
     const unsigned int batch     = g->prod_batch;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-    RateLimitedStats rls(g->num_packets);
 
     assert(blq);
     g->producer_header();
 
-    while (left > 0) {
+    while (!stop) {
         unsigned int avail = blq_wspace(blq);
 
 #ifdef QDEBUG
@@ -604,12 +594,6 @@ blq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-            /* This check is needed to get a consistent 'csum' in the consumer.
-             */
-            if (unlikely(avail > left)) {
-                avail = left;
-            }
-            left -= avail;
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
@@ -625,22 +609,18 @@ blq_producer(Global *const g)
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
-        if (kOnlineRateMode == OnlineRateMode::Rate) {
-            rls.stat(left);
-        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 blq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
-    long long int left         = g->num_packets;
     const unsigned int batch   = g->cons_batch;
     Blq *const blq             = g->blq;
     unsigned int csum          = 0;
@@ -651,7 +631,7 @@ blq_consumer(Global *const g)
     assert(blq);
     g->consumer_header();
 
-    while (left > 0) {
+    while (!stop) {
         unsigned int avail = blq_rspace(blq);
 
 #ifdef QDEBUG
@@ -661,8 +641,8 @@ blq_consumer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-            left -= avail;
             batch_packets += avail;
+            g->pkt_cnt += avail;
             for (; avail > 0; avail--) {
                 m = blq_read_local(blq);
                 mbuf_put<kMbufMode>(m, &csum);
@@ -751,26 +731,23 @@ ffq_read(Iffq *ffq)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 ffq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
-    long long int left           = g->num_packets;
     const unsigned int pool_mask = g->ffq->entry_mask;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
 
-    while (left > 0) {
+    while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         if (ffq_write(ffq, m) == 0) {
-            --left;
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -782,22 +759,18 @@ ffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        if (kOnlineRateMode == OnlineRateMode::Rate) {
-            rls.stat(left);
-        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 ffq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
-    long long int left         = g->num_packets;
     Iffq *const ffq            = g->ffq;
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
@@ -807,11 +780,11 @@ ffq_consumer(Global *const g)
     assert(ffq);
     g->consumer_header();
 
-    while (left > 0) {
+    while (!stop) {
         m = ffq_read(ffq);
         if (m) {
-            --left;
             ++batch_packets;
+            ++g->pkt_cnt;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -1067,29 +1040,26 @@ iffq_prefetch(Iffq *ffq)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 iffq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
-    long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
 
-    while (left > 0) {
+    while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
 #ifdef QDEBUG
         iffq_dump("P", ffq);
 #endif
         if (iffq_insert(ffq, m) == 0) {
-            --left;
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
                 tsc_sleep_till(rdtsc() + spin);
@@ -1101,22 +1071,18 @@ iffq_producer(Global *const g)
             batch_packets = 0;
             pool_idx--;
         }
-        if (kOnlineRateMode == OnlineRateMode::Rate) {
-            rls.stat(left);
-        }
     }
     g->producer_batches = batches;
     g->producer_footer();
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 iffq_consumer(Global *const g)
 {
     const uint64_t spin        = g->cons_spin_cycles;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
-    long long int left         = g->num_packets;
     Iffq *const ffq            = g->ffq;
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
@@ -1126,13 +1092,13 @@ iffq_consumer(Global *const g)
     assert(ffq);
     g->consumer_header();
 
-    while (left > 0) {
+    while (!stop) {
 #ifdef QDEBUG
         iffq_dump("C", ffq);
 #endif
         m = iffq_extract(ffq);
         if (m) {
-            --left;
+            ++g->pkt_cnt;
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinTSC && spin) {
@@ -1155,24 +1121,22 @@ iffq_consumer(Global *const g)
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
-          EmulatedOverhead kEmulatedOverhead, OnlineRateMode kOnlineRateMode>
+          EmulatedOverhead kEmulatedOverhead>
 static void
 biffq_producer(Global *const g)
 {
     const uint64_t spin          = g->prod_spin_cycles;
-    long long int left           = g->num_packets;
     const unsigned int pool_mask = g->qlen - 1;
     const unsigned int batch     = g->prod_batch;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
-    RateLimitedStats rls(g->num_packets);
 
     assert(ffq);
     g->producer_header();
 
-    while (left > 0) {
+    while (!stop) {
         unsigned int avail = iffq_wspace(ffq);
 
 #ifdef QDEBUG
@@ -1183,12 +1147,6 @@ biffq_producer(Global *const g)
             if (avail > batch) {
                 avail = batch;
             }
-            /* This check is needed to get a consistent 'csum' in the consumer.
-             */
-            if (unlikely(avail > left)) {
-                avail = left;
-            }
-            left -= avail;
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
@@ -1203,9 +1161,6 @@ biffq_producer(Global *const g)
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
-        }
-        if (kOnlineRateMode == OnlineRateMode::Rate) {
-            rls.stat(left);
         }
     }
     g->producer_batches = batches;
@@ -1261,18 +1216,18 @@ perf_measure(Global *const g, bool producer)
     insn_rate        = 0.0;
     fin >> miss_rate >> insn_rate;
     fin.close();
+    remove(filename);
 }
 
 static int
 run_test(Global *g)
 {
-    std::map<std::string,
-             std::map<MbufMode,
-                      std::map<RateLimitMode,
-                               std::map<EmulatedOverhead,
-                                        std::map<OnlineRateMode,
-                                                 std::pair<pc_function_t,
-                                                           pc_function_t>>>>>>
+    std::map<
+        std::string,
+        std::map<MbufMode,
+                 std::map<RateLimitMode,
+                          std::map<EmulatedOverhead,
+                                   std::pair<pc_function_t, pc_function_t>>>>>
         matrix;
     std::function<uint64_t(uint64_t x)> tf =
         g->spin_tsc ? ns2tsc : [](uint64_t x) { return x; };
@@ -1286,13 +1241,10 @@ run_test(Global *g)
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
 
-#define __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, orm)                    \
-    matrix[STRFY(qname)][mm][rl][eo][orm] = std::make_pair(                    \
-        qname##_producer<mm, rl, eo, orm>, qname##_consumer<mm, rl, eo, orm>)
-
 #define __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, eo)                       \
-    __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, OnlineRateMode::None);      \
-    __MATRIX_ADD_ONLINERATEMODE(qname, mm, rl, eo, OnlineRateMode::Rate);
+    matrix[STRFY(qname)][mm][rl][eo] = std::make_pair(                         \
+        qname##_producer<mm, rl, eo>, qname##_consumer<mm, rl, eo>)
+
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
     do {                                                                       \
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, EmulatedOverhead::None);  \
@@ -1335,9 +1287,7 @@ run_test(Global *g)
                               ? EmulatedOverhead::None
                               : (g->spin_tsc ? EmulatedOverhead::SpinTSC
                                              : EmulatedOverhead::SpinCycles);
-    OnlineRateMode orm =
-        (g->online_rate ? OnlineRateMode::Rate : OnlineRateMode::None);
-    funcs = matrix[g->test_type][g->mbuf_mode][rl][eo][orm];
+    funcs = matrix[g->test_type][g->mbuf_mode][rl][eo];
 
     g->prod_spin_cycles       = tf(g->prod_spin_ns);
     g->cons_spin_cycles       = tf(g->cons_spin_ns);
