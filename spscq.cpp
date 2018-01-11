@@ -145,6 +145,7 @@ struct Global {
     static constexpr int DFLT_BATCH        = 32;
     static constexpr int DFLT_QLEN         = 256;
     static constexpr int DFLT_LINE_ENTRIES = 32;
+    static constexpr int DFLT_D            = 10;
 
     /* Test length as a number of packets. */
     long long unsigned int num_packets = 0; /* infinite */
@@ -174,6 +175,9 @@ struct Global {
     bool online_rate   = false;
     bool perf_counters = false;
 
+    /* Test duration in seconds. */
+    unsigned int duration = DFLT_D;
+
     /* Type of queue used. */
     std::string test_type = "lq";
 
@@ -185,9 +189,12 @@ struct Global {
     /* Checksum for when -M is used. */
     unsigned int csum;
 
+    /* Packet count written back by consumers. It's safer for it
+     * to have its own cacheline. */
     CACHELINE_ALIGNED
     volatile long long unsigned pkt_cnt = 0;
 
+    /* Average batches as seen by producer and consumer. */
     CACHELINE_ALIGNED
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
@@ -1222,9 +1229,10 @@ static void
 control_thread(Global *const g)
 {
     auto t_last                         = std::chrono::system_clock::now();
+    auto t_first                        = t_last;
     long long unsigned int pkt_cnt_last = 0;
 
-    for (unsigned long loopcnt = 0; !stop; loopcnt++) {
+    for (unsigned int loopcnt = 1; !stop; loopcnt++) {
         usleep(250000);
 
         if (loopcnt % 8 == 0) {
@@ -1240,6 +1248,14 @@ control_thread(Global *const g)
             }
 
             if (g->num_packets > 0 && pkt_cnt_now > g->num_packets) {
+                /* Packet threshold reached. */
+                stop = 1;
+            }
+
+            if (std::chrono::duration_cast<std::chrono::seconds>(t_now -
+                                                                 t_first)
+                    .count() >= g->duration) {
+                /* We ran out of time. */
                 stop = 1;
             }
 
@@ -1406,6 +1422,7 @@ usage(const char *progname)
 {
     printf("%s [-h]\n"
            "    [-n NUM_PACKETS (in millions) = inf]\n"
+           "    [-D DURATION (in seconds) = %d]\n"
            "    [-b MAX_PRODUCER_BATCH = %d]\n"
            "    [-b MAX_CONSUMER_BATCH = %d]\n"
            "    [-l QUEUE_LENGTH = %d]\n"
@@ -1421,8 +1438,8 @@ usage(const char *progname)
            "    [-R (use online rating)]\n"
            "    [-p (use CPU performance counters)]\n"
            "\n",
-           progname, Global::DFLT_BATCH, Global::DFLT_BATCH, Global::DFLT_QLEN,
-           Global::DFLT_LINE_ENTRIES);
+           progname, Global::DFLT_D, Global::DFLT_BATCH, Global::DFLT_BATCH,
+           Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
 }
 
 int
@@ -1443,7 +1460,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:TRp")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:TRpD:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1557,6 +1574,14 @@ main(int argc, char **argv)
 
         case 'p':
             g->perf_counters = true;
+            break;
+
+        case 'D':
+            g->duration = atoi(optarg);
+            if (g->duration < 1) {
+                printf("    Invalid test duration '%s' (in seconds)\n", optarg);
+                return -1;
+            }
             break;
 
         default:
