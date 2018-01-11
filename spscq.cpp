@@ -167,7 +167,7 @@ struct Global {
     unsigned int cons_batch = DFLT_BATCH;
 
     /* Affinity for producer and consumer. */
-    int p_core = -1, c_core = -1;
+    int p_core = 0, c_core = 1;
 
     /* Emulated per-packet load for the producer and consumer side,
      * in nanoseconds and ticks. */
@@ -178,7 +178,8 @@ struct Global {
     int cons_rate_limit_ns          = 0;
     uint64_t cons_rate_limit_cycles = 0;
 
-    bool online_rate = false;
+    bool online_rate   = false;
+    bool perf_counters = false;
 
     /* Type of queue used. */
     std::string test_type = "lq";
@@ -1271,7 +1272,8 @@ run_test(Global *g)
     std::thread pth;
     std::thread cth;
     std::thread mth1, mth2;
-    bool use_perf_tool = g->p_core != -1 && g->c_core != -1;
+    bool use_perf_tool = g->perf_counters && g->p_core != -1 &&
+                         g->c_core != -1 && g->p_core != g->c_core;
 
 #define __STRFY(x) #x
 #define STRFY(x) __STRFY(x)
@@ -1417,8 +1419,8 @@ usage(const char *progname)
            "    [-b MAX_CONSUMER_BATCH = %d]\n"
            "    [-l QUEUE_LENGTH = %d]\n"
            "    [-L LINE_ENTRIES (iffq) = %d]\n"
-           "    [-c PRODUCER_CORE_ID = -1]\n"
-           "    [-c CONSUMER_CORE_ID = -1]\n"
+           "    [-c PRODUCER_CORE_ID = 0]\n"
+           "    [-c CONSUMER_CORE_ID = 1]\n"
            "    [-P PRODUCER_SPIN (cycles, ns) = 0]\n"
            "    [-C CONSUMER_SPIN (cycles, ns) = 0]\n"
            "    [-t TEST_TYPE (lq,blq,ffq,iffq,biffq)]\n"
@@ -1426,6 +1428,7 @@ usage(const char *progname)
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "    [-T (emulate load using TSC)]\n"
            "    [-R (use online rating)]\n"
+           "    [-p (use CPU performance counters)]\n"
            "\n",
            progname, Global::DFLT_N, Global::DFLT_BATCH, Global::DFLT_BATCH,
            Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
@@ -1449,7 +1452,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:TR")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:TRp")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1559,6 +1562,10 @@ main(int argc, char **argv)
 
         case 'R':
             g->online_rate = true;
+            break;
+
+        case 'p':
+            g->perf_counters = true;
             break;
 
         default:
