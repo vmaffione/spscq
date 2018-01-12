@@ -1218,12 +1218,59 @@ out:
 
 #define blq_client lq_client
 #define blq_server lq_server
-#define ffq_client lq_client
-#define ffq_server lq_server
-#define iffq_client lq_client
-#define iffq_server lq_server
-#define biffq_client lq_client
-#define biffq_server lq_server
+
+template <MbufMode kMbufMode>
+void
+ffq_client(Global *const g)
+{
+    const unsigned int pool_mask = g->ffq->entry_mask;
+    Iffq *const ffq              = g->ffq;
+    Iffq *const ffq_back         = g->ffq_back;
+    unsigned int pool_idx        = 0;
+    int ret;
+
+    g->producer_header();
+    while (!stop) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        ret     = ffq_write(ffq, m);
+        assert(ret == 0);
+        while ((m = ffq_read(ffq_back)) == nullptr && !stop) {
+        }
+        ++g->pkt_cnt;
+    }
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+ffq_server(Global *const g)
+{
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
+    unsigned int csum    = 0;
+    int ret;
+
+    g->consumer_header();
+    while (!stop) {
+        Mbuf *m;
+        while ((m = ffq_read(ffq)) == nullptr) {
+            if (unlikely(stop)) {
+                goto out;
+            }
+        }
+        mbuf_put<kMbufMode>(m, &csum);
+        ret = ffq_write(ffq_back, m);
+        assert(ret == 0);
+    }
+out:
+    g->csum = csum;
+    g->consumer_footer();
+}
+
+#define iffq_client ffq_client
+#define iffq_server ffq_server
+#define biffq_client ffq_client
+#define biffq_server ffq_server
 
     /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -1417,6 +1464,14 @@ run_test(Global *g)
             exit(EXIT_FAILURE);
         }
         iffq_dump("P", g->ffq);
+        if (g->latency) {
+            g->ffq_back =
+                iffq_create(g->qlen,
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+            if (!g->ffq_back) {
+                exit(EXIT_FAILURE);
+            }
+        }
     } else {
         assert(0);
     }
@@ -1475,6 +1530,10 @@ run_test(Global *g)
     if (g->ffq) {
         iffq_free(g->ffq);
         g->ffq = nullptr;
+    }
+    if (g->ffq_back) {
+        iffq_free(g->ffq_back);
+        g->ffq_back = nullptr;
     }
 
     return 0;
