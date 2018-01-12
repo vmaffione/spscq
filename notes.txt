@@ -36,3 +36,7 @@ biffq::P sta lavorando, quindi generando conflitti read-write.
   che C deve azzerare gli slot. Al contrario, lq e varianti permettono
   a P di riprendersi gli slot processati, quindi permettendo una
   semantica di 'const reference'.
+
+- In generale biffq (e in alcuni casi iffq) sembrano comportarsi
+  meglio in termini di misses/packet. Questo pero' non e' abbastanza
+  a rate molto alti (200+ Mpps) per via dell'instruction count.
