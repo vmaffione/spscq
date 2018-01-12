@@ -235,7 +235,11 @@ Global::print_results()
             .count();
 
     if (csum) {
-        printf("[C] csum = %x\n", csum);
+        unsigned int expect = static_cast<unsigned int>(
+            static_cast<long long unsigned>(pkt_cnt) * (pkt_cnt - 1) / 2);
+        printf("PKTS %llu\n", pkt_cnt);
+        printf("[C] csum = %x, expect = %x, diff = %x\n", csum, expect,
+               expect - csum);
     }
 
     if (prod_insn_rate != 0.0) {
@@ -547,7 +551,7 @@ lq_consumer(Global *const g)
     assert(blq);
     g->consumer_header();
 
-    while (!stop) {
+    for (;;) {
 #ifdef QDEBUG
         blq_dump("C", blq);
 #endif
@@ -566,6 +570,9 @@ lq_consumer(Global *const g)
             batch_packets = 0;
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
+            }
+            if (unlikely(stop)) {
+                break;
             }
         }
     }
@@ -637,7 +644,7 @@ blq_consumer(Global *const g)
     assert(blq);
     g->consumer_header();
 
-    while (!stop) {
+    for (;;) {
         unsigned int avail = blq_rspace(blq);
 
 #ifdef QDEBUG
@@ -664,6 +671,9 @@ blq_consumer(Global *const g)
             batch_packets = 0;
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
+            }
+            if (unlikely(stop)) {
+                break;
             }
         }
     }
@@ -786,7 +796,7 @@ ffq_consumer(Global *const g)
     assert(ffq);
     g->consumer_header();
 
-    while (!stop) {
+    for (;;) {
         m = ffq_read(ffq);
         if (m) {
             ++batch_packets;
@@ -802,6 +812,9 @@ ffq_consumer(Global *const g)
             batch_packets = 0;
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
+            }
+            if (unlikely(stop)) {
+                break;
             }
         }
     }
@@ -1098,7 +1111,7 @@ iffq_consumer(Global *const g)
     assert(ffq);
     g->consumer_header();
 
-    while (!stop) {
+    for (;;) {
 #ifdef QDEBUG
         iffq_dump("C", ffq);
 #endif
@@ -1118,6 +1131,9 @@ iffq_consumer(Global *const g)
             batch_packets = 0;
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
+            }
+            if (unlikely(stop)) {
+                break;
             }
         }
     }
