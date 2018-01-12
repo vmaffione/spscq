@@ -1267,10 +1267,58 @@ out:
     g->consumer_footer();
 }
 
-#define iffq_client ffq_client
-#define iffq_server ffq_server
-#define biffq_client ffq_client
-#define biffq_server ffq_server
+template <MbufMode kMbufMode>
+void
+iffq_client(Global *const g)
+{
+    const unsigned int pool_mask = g->ffq->entry_mask;
+    Iffq *const ffq              = g->ffq;
+    Iffq *const ffq_back         = g->ffq_back;
+    unsigned int pool_idx        = 0;
+    int ret;
+
+    g->producer_header();
+    while (!stop) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        ret     = iffq_insert(ffq, m);
+        assert(ret == 0);
+        while ((m = iffq_extract(ffq_back)) == nullptr && !stop) {
+        }
+        iffq_clear(ffq_back);
+        ++g->pkt_cnt;
+    }
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+iffq_server(Global *const g)
+{
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
+    unsigned int csum    = 0;
+    int ret;
+
+    g->consumer_header();
+    while (!stop) {
+        Mbuf *m;
+        while ((m = iffq_extract(ffq)) == nullptr) {
+            if (unlikely(stop)) {
+                goto out;
+            }
+        }
+        iffq_clear(ffq);
+        mbuf_put<kMbufMode>(m, &csum);
+        ret = iffq_insert(ffq_back, m);
+        assert(ret == 0);
+    }
+out:
+    g->csum = csum;
+    g->consumer_footer();
+}
+
+#define biffq_client iffq_client
+#define biffq_server iffq_server
 
     /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -1558,6 +1606,7 @@ usage(const char *progname)
            "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
            "    [-R (use online rating)]\n"
            "    [-p (use CPU performance counters)]\n"
+           "    [-T (carry out latency tests rather than throughput tests)]\n"
            "\n",
            progname, Global::DFLT_D, Global::DFLT_BATCH, Global::DFLT_BATCH,
            Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
