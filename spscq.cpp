@@ -226,6 +226,21 @@ struct Global {
     void print_results();
 };
 
+static void
+miss_rate_print(const char *prefix, double mpps, float miss_rate)
+{
+    double ratio     = mpps / miss_rate;
+    const char *unit = "packets/miss";
+
+    if (ratio < 1.0) {
+        ratio = 1 / ratio;
+        unit  = "misses/packet";
+    }
+
+    printf("[%s] L1 d-cache miss rate %5.2f M/sec, %.2f %s\n", prefix,
+           miss_rate, ratio, unit);
+}
+
 void
 Global::print_results()
 {
@@ -260,14 +275,8 @@ Global::print_results()
                static_cast<double>(pkt_cnt) /
                    static_cast<double>(consumer_batches));
     }
-    if (prod_miss_rate != 0.0) {
-        printf("[P] L1 d-cache miss rate %5.2f M/sec, %.2f packets/miss\n",
-               prod_miss_rate, mpps / prod_miss_rate);
-    }
-    if (cons_miss_rate != 0.0) {
-        printf("[C] L1 d-cache miss rate %5.2f M/sec, %.2f packets/miss\n",
-               cons_miss_rate, mpps / cons_miss_rate);
-    }
+    miss_rate_print("P", mpps, prod_miss_rate);
+    miss_rate_print("C", mpps, cons_miss_rate);
     printf("Throughput %3.3f Mpps\n", mpps);
 }
 
