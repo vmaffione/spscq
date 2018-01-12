@@ -511,7 +511,6 @@ lq_producer(Global *const g)
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
 
-    assert(blq);
     g->producer_header();
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
@@ -548,9 +547,7 @@ lq_consumer(Global *const g)
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(blq);
     g->consumer_header();
-
     for (;;) {
 #ifdef QDEBUG
         blq_dump("C", blq);
@@ -594,7 +591,6 @@ blq_producer(Global *const g)
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
 
-    assert(blq);
     g->producer_header();
 
     while (!stop) {
@@ -641,7 +637,6 @@ blq_consumer(Global *const g)
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(blq);
     g->consumer_header();
 
     for (;;) {
@@ -758,7 +753,6 @@ ffq_producer(Global *const g)
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
 
-    assert(ffq);
     g->producer_header();
 
     while (!stop) {
@@ -793,7 +787,6 @@ ffq_consumer(Global *const g)
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(ffq);
     g->consumer_header();
 
     for (;;) {
@@ -1070,7 +1063,6 @@ iffq_producer(Global *const g)
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
 
-    assert(ffq);
     g->producer_header();
 
     while (!stop) {
@@ -1108,7 +1100,6 @@ iffq_consumer(Global *const g)
     unsigned int batches       = 0;
     Mbuf *m;
 
-    assert(ffq);
     g->consumer_header();
 
     for (;;) {
@@ -1155,7 +1146,6 @@ biffq_producer(Global *const g)
     unsigned int batch_packets   = 0;
     unsigned int batches         = 0;
 
-    assert(ffq);
     g->producer_header();
 
     while (!stop) {
@@ -1192,6 +1182,58 @@ biffq_producer(Global *const g)
 #define biffq_consumer iffq_consumer
 
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+/*
+ * Support for latency tests.
+ */
+template <MbufMode kMbufMode>
+void
+lq_client(Global *const g)
+{
+    const unsigned int pool_mask = g->blq->qmask;
+    Blq *const blq               = g->blq;
+    unsigned int pool_idx        = 0;
+
+    g->producer_header();
+    while (!stop) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        while (blq_write(blq, m)) { }
+        while ((m = blq_read(blq)) != nullptr) { }
+        ++g->pkt_cnt;
+    }
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+lq_server(Global *const g)
+{
+    Blq *const blq               = g->blq;
+    unsigned int csum = 0;
+
+    g->consumer_header();
+    while (!stop) {
+        Mbuf *m;
+        while ((m = blq_read(blq)) != nullptr) { }
+        mbuf_put<kMbufMode>(m, &csum);
+        while (blq_write(blq, m)) { }
+    }
+
+    g->csum = csum;
+    g->consumer_footer();
+}
+
+#define blq_client lq_client
+#define blq_server lq_server
+#define ffq_client lq_client
+#define ffq_server lq_server
+#define iffq_client lq_client
+#define iffq_server lq_server
+#define biffq_client lq_client
+#define biffq_server lq_server
+
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
 #if 1
 using pc_function_t = void (*)(Global *const);
 #else
