@@ -1327,7 +1327,8 @@ using pc_function_t = void (*)(Global *const);
 #else
 /* Just using std::function makes the processing loops slower.
  * I cannot believe it! It could be due to some differences in how
- * code is laid out in memory...
+ * code is laid out in memory... maybe it has effect on the
+ * CPU branch predictor?
  */
 using pc_function_t = std::function<void(Global *const)>;
 #endif
@@ -1475,7 +1476,7 @@ run_test(Global *g)
     MATRIX_ADD(ffq);
     /* Improved fast-forward queue (PSPAT). */
     MATRIX_ADD(iffq);
-
+    /* Improved fast-forward queue with batching capabilities. */
     MATRIX_ADD(biffq);
 
     if (throughput_matrix.count(g->test_type) == 0) {
