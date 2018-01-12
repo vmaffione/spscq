@@ -1174,6 +1174,7 @@ lq_client(Global *const g)
 {
     const unsigned int pool_mask = g->blq->qmask;
     Blq *const blq               = g->blq;
+    Blq *const blq_back          = g->blq_back;
     unsigned int pool_idx        = 0;
     int ret;
 
@@ -1182,7 +1183,7 @@ lq_client(Global *const g)
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
         ret     = blq_write(blq, m);
         assert(ret == 0);
-        while ((m = blq_read(blq)) != nullptr && !stop) {
+        while ((m = blq_read(blq_back)) == nullptr && !stop) {
         }
         ++g->pkt_cnt;
     }
@@ -1193,20 +1194,21 @@ template <MbufMode kMbufMode>
 void
 lq_server(Global *const g)
 {
-    Blq *const blq    = g->blq_back;
-    unsigned int csum = 0;
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
+    unsigned int csum   = 0;
     int ret;
 
     g->consumer_header();
     while (!stop) {
         Mbuf *m;
-        while ((m = blq_read(blq)) != nullptr) {
+        while ((m = blq_read(blq)) == nullptr) {
             if (unlikely(stop)) {
                 goto out;
             }
         }
         mbuf_put<kMbufMode>(m, &csum);
-        ret = blq_write(blq, m);
+        ret = blq_write(blq_back, m);
         assert(ret == 0);
     }
 out:
@@ -1330,7 +1332,7 @@ run_test(Global *g)
                  std::map<RateLimitMode,
                           std::map<EmulatedOverhead,
                                    std::pair<pc_function_t, pc_function_t>>>>>
-        thr_matrix;
+        throughput_matrix;
     std::map<std::string,
              std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>>
         latency_matrix;
@@ -1346,7 +1348,7 @@ run_test(Global *g)
 #define STRFY(x) __STRFY(x)
 
 #define __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl, eo)                       \
-    thr_matrix[STRFY(qname)][mm][rl][eo] = std::make_pair(                     \
+    throughput_matrix[STRFY(qname)][mm][rl][eo] = std::make_pair(              \
         qname##_producer<mm, rl, eo>, qname##_consumer<mm, rl, eo>)
 
 #define __MATRIX_ADD_RATELIMITMODE(qname, mm, rl)                              \
@@ -1381,7 +1383,7 @@ run_test(Global *g)
 
     MATRIX_ADD(biffq);
 
-    if (thr_matrix.count(g->test_type) == 0) {
+    if (throughput_matrix.count(g->test_type) == 0) {
         printf("Error: unknown test type '%s'\n", g->test_type.c_str());
         exit(EXIT_FAILURE);
     }
@@ -1391,7 +1393,7 @@ run_test(Global *g)
                               ? EmulatedOverhead::None
                               : EmulatedOverhead::SpinCycles;
     funcs = g->latency ? latency_matrix[g->test_type][g->mbuf_mode]
-                       : thr_matrix[g->test_type][g->mbuf_mode][rl][eo];
+                       : throughput_matrix[g->test_type][g->mbuf_mode][rl][eo];
 
     if (g->test_type == "lq" || g->test_type == "blq") {
         g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
