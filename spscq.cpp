@@ -176,6 +176,9 @@ struct Global {
     /* Type of queue used. */
     std::string test_type = "lq";
 
+    /* If true we do a latency test; if false we do a throughput test. */
+    bool latency = false;
+
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
     /* Timestamp to compute experiment statistics. */
@@ -203,10 +206,12 @@ struct Global {
     float cons_insn_rate = 0.0;
 
     /* The lamport-like queue. */
-    Blq *blq = nullptr;
+    Blq *blq      = nullptr;
+    Blq *blq_back = nullptr;
 
     /* The ff-like queue. */
-    Iffq *ffq = nullptr;
+    Iffq *ffq      = nullptr;
+    Iffq *ffq_back = nullptr;
 
     /* A pool of preallocated mbufs. */
     Mbuf *pool = nullptr;
@@ -1170,13 +1175,14 @@ lq_client(Global *const g)
     const unsigned int pool_mask = g->blq->qmask;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
+    int ret;
 
     g->producer_header();
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-        while (blq_write(blq, m)) {
-        }
-        while ((m = blq_read(blq)) != nullptr) {
+        ret     = blq_write(blq, m);
+        assert(ret == 0);
+        while ((m = blq_read(blq)) != nullptr && !stop) {
         }
         ++g->pkt_cnt;
     }
@@ -1187,19 +1193,23 @@ template <MbufMode kMbufMode>
 void
 lq_server(Global *const g)
 {
-    Blq *const blq    = g->blq;
+    Blq *const blq    = g->blq_back;
     unsigned int csum = 0;
+    int ret;
 
     g->consumer_header();
     while (!stop) {
         Mbuf *m;
         while ((m = blq_read(blq)) != nullptr) {
+            if (unlikely(stop)) {
+                goto out;
+            }
         }
         mbuf_put<kMbufMode>(m, &csum);
-        while (blq_write(blq, m)) {
-        }
+        ret = blq_write(blq, m);
+        assert(ret == 0);
     }
-
+out:
     g->csum = csum;
     g->consumer_footer();
 }
@@ -1321,11 +1331,9 @@ run_test(Global *g)
                           std::map<EmulatedOverhead,
                                    std::pair<pc_function_t, pc_function_t>>>>>
         thr_matrix;
-#if 1
     std::map<std::string,
              std::map<MbufMode, std::pair<pc_function_t, pc_function_t>>>
         latency_matrix;
-#endif
     std::pair<pc_function_t, pc_function_t> funcs;
     std::thread pth;
     std::thread cth;
@@ -1382,7 +1390,8 @@ run_test(Global *g)
     EmulatedOverhead eo = (g->prod_spin_cycles == 0 && g->cons_spin_cycles == 0)
                               ? EmulatedOverhead::None
                               : EmulatedOverhead::SpinCycles;
-    funcs = thr_matrix[g->test_type][g->mbuf_mode][rl][eo];
+    funcs = g->latency ? latency_matrix[g->test_type][g->mbuf_mode]
+                       : thr_matrix[g->test_type][g->mbuf_mode][rl][eo];
 
     if (g->test_type == "lq" || g->test_type == "blq") {
         g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
@@ -1390,6 +1399,12 @@ run_test(Global *g)
             exit(EXIT_FAILURE);
         }
         blq_dump("P", g->blq);
+        if (g->latency) {
+            g->blq_back = blq_create(g->qlen, g->prod_batch, g->cons_batch);
+            if (!g->blq_back) {
+                exit(EXIT_FAILURE);
+            }
+        }
     } else if (g->test_type == "iffq" || g->test_type == "ffq" ||
                g->test_type == "biffq") {
         (void)iffq_empty;
@@ -1448,12 +1463,14 @@ run_test(Global *g)
 
     free(g->pool);
     if (g->blq) {
-        blq_dump("P", g->blq);
         blq_free(g->blq);
         g->blq = nullptr;
     }
+    if (g->blq_back) {
+        blq_free(g->blq_back);
+        g->blq_back = nullptr;
+    }
     if (g->ffq) {
-        iffq_dump("P", g->ffq);
         iffq_free(g->ffq);
         g->ffq = nullptr;
     }
@@ -1503,7 +1520,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:T")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1621,6 +1638,10 @@ main(int argc, char **argv)
                 printf("    Invalid test duration '%s' (in seconds)\n", optarg);
                 return -1;
             }
+            break;
+
+        case 'T':
+            g->latency = true;
             break;
 
         default:
