@@ -342,6 +342,7 @@ struct Blq {
     /* Producer private data. */
     CACHELINE_ALIGNED
     unsigned int write_priv;
+    unsigned int read_shadow;
 
     /* Producer write, consumer read. */
     CACHELINE_ALIGNED
@@ -350,6 +351,7 @@ struct Blq {
     /* Consumer private data. */
     CACHELINE_ALIGNED
     unsigned int read_priv;
+    unsigned int write_shadow;
 
     /* Producer read, consumer write. */
     CACHELINE_ALIGNED
