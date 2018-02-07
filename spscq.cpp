@@ -405,14 +405,24 @@ blq_create(int qlen, int prod_batch, int cons_batch)
     return blq;
 }
 
+//#define LLQ
 static inline int
 lq_write(Blq *q, Mbuf *m)
 {
     unsigned int next = (q->write + 1) & q->qmask;
 
+#ifdef LLQ
+    if (next == q->read_shadow) {
+        q->read_shadow = q->read;
+    }
+    if (next == q->read_shadow) {
+        return -1; /* no space */
+    }
+#else
     if (next == q->read) {
         return -1; /* no space */
     }
+#endif
     q->q[q->write] = m;
     compiler_barrier();
     q->write = next;
@@ -423,9 +433,18 @@ static inline Mbuf *
 lq_read(Blq *q)
 {
     Mbuf *m;
+#ifdef LLQ
+    if (q->read == q->write_shadow) {
+        q->write_shadow = q->write;
+    }
+    if (q->read == q->write_shadow) {
+        return NULL; /* queue empty */
+    }
+#else
     if (q->read == q->write) {
         return NULL; /* queue empty */
     }
+#endif
     compiler_barrier();
     m = q->q[q->read];
     q->read = (q->read + 1) & q->qmask;
