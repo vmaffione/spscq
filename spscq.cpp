@@ -454,7 +454,14 @@ lq_read(Blq *q)
 static inline unsigned int
 blq_wspace(Blq *blq)
 {
-    return (blq->read - 1 - blq->write_priv) & blq->qmask;
+    unsigned int space = (blq->read_shadow - 1 - blq->write_priv) & blq->qmask;
+
+    if (space) {
+        return space;
+    }
+    blq->read_shadow = blq->read;
+
+    return (blq->read_shadow - 1 - blq->write_priv) & blq->qmask;
 }
 
 /* No boundary checks, to be called after blq_wspace(). */
@@ -479,16 +486,19 @@ blq_write_publish(Blq *blq)
 static inline unsigned int
 blq_rspace(Blq *blq)
 {
-    unsigned int space;
+    unsigned int space = blq->write_shadow - blq->read_priv;
 
-    space = blq->write - blq->read_priv;
+    if (space) {
+        return space;
+    }
+    blq->write_shadow = blq->write;
     /* Here we need a LoadLoad barrier to prevent upcoming loads to the queue
      * slot and mbuf content to be reordered before the load of blq->write. On
      * x86 a compiler barrier suffices, because loads have acquire semantic
      * (preventing LoadLoad and LoadStore reordering). */
     compiler_barrier();
 
-    return space;
+    return blq->write_shadow - blq->read_priv;
 }
 
 /* No boundary checks, to be called after blq_rspace(). */
