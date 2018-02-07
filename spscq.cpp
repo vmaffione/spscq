@@ -252,7 +252,7 @@ Global::print_results()
     if (csum) {
         unsigned int expect = static_cast<unsigned int>(
             static_cast<long long unsigned>(pkt_cnt) * (pkt_cnt - 1) / 2);
-        printf("PKTS %llu\n", pkt_cnt);
+        // printf("PKTS %llu\n", pkt_cnt);
         printf("[C] csum = %x, expect = %x, diff = %x\n", csum, expect,
                expect - csum);
     }
@@ -405,6 +405,33 @@ blq_create(int qlen, int prod_batch, int cons_batch)
     return blq;
 }
 
+static inline int
+lq_write(Blq *q, Mbuf *m)
+{
+    unsigned int next = (q->write + 1) & q->qmask;
+
+    if (next == q->read) {
+        return -1; /* no space */
+    }
+    q->q[q->write] = m;
+    compiler_barrier();
+    q->write = next;
+    return 0;
+}
+
+static inline Mbuf *
+lq_read(Blq *q)
+{
+    Mbuf *m;
+    if (q->read == q->write) {
+        return NULL; /* queue empty */
+    }
+    compiler_barrier();
+    m = q->q[q->read];
+    q->read = (q->read + 1) & q->qmask;
+    return m;
+}
+
 static inline unsigned int
 blq_wspace(Blq *blq)
 {
@@ -428,18 +455,6 @@ blq_write_publish(Blq *blq)
      * release semantic (preventing StoreStore and LoadStore reordering). */
     compiler_barrier();
     blq->write = blq->write_priv;
-}
-
-static inline int
-blq_write(Blq *blq, Mbuf *m)
-{
-    if (blq_wspace(blq) == 0) {
-        return -1; /* no space */
-    }
-    blq_write_local(blq, m);
-    blq_write_publish(blq);
-
-    return 0;
 }
 
 static inline unsigned int
@@ -470,20 +485,6 @@ static inline void
 blq_read_publish(Blq *blq)
 {
     blq->read = blq->read_priv;
-}
-
-static inline Mbuf *
-blq_read(Blq *blq)
-{
-    Mbuf *m;
-
-    if (blq_rspace(blq) == 0) {
-        return NULL; /* no space */
-    }
-    m = blq_read_local(blq);
-    blq_read_publish(blq);
-
-    return m;
 }
 
 static void
@@ -528,7 +529,7 @@ lq_producer(Global *const g)
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
-        if (blq_write(blq, m) == 0) {
+        if (lq_write(blq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
@@ -561,7 +562,7 @@ lq_consumer(Global *const g)
 #ifdef QDEBUG
         blq_dump("C", blq);
 #endif
-        m = blq_read(blq);
+        m = lq_read(blq);
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
@@ -1192,9 +1193,9 @@ lq_client(Global *const g)
     g->producer_header();
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-        ret     = blq_write(blq, m);
+        ret     = lq_write(blq, m);
         assert(ret == 0);
-        while ((m = blq_read(blq_back)) == nullptr && !stop) {
+        while ((m = lq_read(blq_back)) == nullptr && !stop) {
         }
         ++g->pkt_cnt;
     }
@@ -1213,13 +1214,13 @@ lq_server(Global *const g)
     g->consumer_header();
     while (!stop) {
         Mbuf *m;
-        while ((m = blq_read(blq)) == nullptr) {
+        while ((m = lq_read(blq)) == nullptr) {
             if (unlikely(stop)) {
                 goto out;
             }
         }
         mbuf_put<kMbufMode>(m, &csum);
-        ret = blq_write(blq_back, m);
+        ret = lq_write(blq_back, m);
         assert(ret == 0);
     }
 out:
