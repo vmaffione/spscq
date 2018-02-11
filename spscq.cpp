@@ -446,7 +446,7 @@ lq_read(Blq *q)
     }
 #endif
     compiler_barrier();
-    m = q->q[q->read];
+    m       = q->q[q->read];
     q->read = (q->read + 1) & q->qmask;
     return m;
 }
@@ -751,7 +751,6 @@ ffq_write(Iffq *ffq, Mbuf *m)
     if (*qslot != 0) {
         return -1; /* no space */
     }
-    compiler_barrier();
     *qslot = reinterpret_cast<uintptr_t>(m);
     ffq->prod_write++;
 
@@ -768,8 +767,6 @@ ffq_read(Iffq *ffq)
         *qslot = 0; /* clear */
         ffq->cons_read++;
     }
-
-    compiler_barrier();
 
     return m;
 }
@@ -790,6 +787,9 @@ ffq_producer(Global *const g)
 
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        if (kMbufMode != MbufMode::NoAccess) {
+            compiler_barrier();
+        }
         if (ffq_write(ffq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -825,6 +825,9 @@ ffq_consumer(Global *const g)
         if (m) {
             ++batch_packets;
             ++g->pkt_cnt;
+            if (kMbufMode != MbufMode::NoAccess) {
+                compiler_barrier();
+            }
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
@@ -974,9 +977,6 @@ iffq_insert(Iffq *ffq, Mbuf *m)
 #if 0
     assert((((uintptr_t)m) & 0x1) == 0);
 #endif
-    /* Here we need a StoreStore barrier, to prevent writes to the
-     * mbufs to be reordered after the write to the queue slot. */
-    compiler_barrier();
     *h = value;
     ffq->prod_write++;
     return 0;
@@ -1051,10 +1051,6 @@ iffq_extract(Iffq *ffq)
 
     ffq->cons_read++;
 
-    /* Here we need a LoadLoad barrier, to prevent reads from the
-     * mbufs to be reordered before the read to the queue slot. */
-    compiler_barrier();
-
     return (Mbuf *)(v & ~0x1);
 }
 
@@ -1099,6 +1095,11 @@ iffq_producer(Global *const g)
 #ifdef QDEBUG
         iffq_dump("P", ffq);
 #endif
+        if (kMbufMode != MbufMode::NoAccess) {
+            /* Here we need a StoreStore barrier, to prevent writes to the
+             * mbufs to be reordered after the write to the queue slot. */
+            compiler_barrier();
+        }
         if (iffq_insert(ffq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -1137,6 +1138,12 @@ iffq_consumer(Global *const g)
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
+            if (kMbufMode != MbufMode::NoAccess) {
+                /* Here we need a LoadLoad barrier, to prevent reads from the
+                 * mbufs to be reordered before the read to the queue slot. */
+                compiler_barrier();
+            }
+
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
@@ -1191,6 +1198,9 @@ biffq_producer(Global *const g)
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_cycles(spin);
                 }
+            }
+            if (kMbufMode != MbufMode::NoAccess) {
+                compiler_barrier();
             }
             iffq_insert_publish(ffq);
         } else {
