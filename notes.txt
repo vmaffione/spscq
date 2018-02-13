@@ -40,3 +40,6 @@ biffq::P sta lavorando, quindi generando conflitti read-write.
 - In generale biffq (e in alcuni casi iffq) sembrano comportarsi
   meglio in termini di misses/packet. Questo pero' non e' abbastanza
   a rate molto alti (200+ Mpps) per via dell'instruction count.
+
+- Con indirect payload (-M), sembra che biffq vada anche un po'
+  meglio di blq, per via delle barriere.
