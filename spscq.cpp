@@ -825,9 +825,6 @@ ffq_consumer(Global *const g)
         if (m) {
             ++batch_packets;
             ++g->pkt_cnt;
-            if (kMbufMode != MbufMode::NoAccess) {
-                compiler_barrier();
-            }
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
@@ -1138,12 +1135,6 @@ iffq_consumer(Global *const g)
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
-            if (kMbufMode != MbufMode::NoAccess) {
-                /* Here we need a LoadLoad barrier, to prevent reads from the
-                 * mbufs to be reordered before the read to the queue slot. */
-                compiler_barrier();
-            }
-
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                 spin_cycles(spin);
