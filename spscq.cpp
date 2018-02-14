@@ -960,21 +960,13 @@ iffq_dump(const char *prefix, Iffq *ffq)
 static inline int
 iffq_insert(Iffq *ffq, Mbuf *m)
 {
-    volatile uintptr_t *h = &ffq->q[ffq->prod_write & ffq->entry_mask];
-    uintptr_t value =
-        (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
-
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
         if (ffq->q[(ffq->prod_check + ffq->line_entries) & ffq->entry_mask])
             return -ENOBUFS;
         ffq->prod_check += ffq->line_entries;
-        //__builtin_prefetch(h + ffq->line_entries);
     }
-#if 0
-    assert((((uintptr_t)m) & 0x1) == 0);
-#endif
-    *h = value;
+    ffq->q[ffq->prod_write & ffq->entry_mask] = (uintptr_t)m;
     ffq->prod_write++;
     return 0;
 }
@@ -1010,26 +1002,6 @@ iffq_insert_publish(Iffq *ffq)
     ffq->prod_cache_write = 0;
 }
 
-static inline int
-__iffq_empty(Iffq *ffq, unsigned int i, uintptr_t v)
-{
-    return (!v) || ((v ^ (i >> ffq->seqbit_shift)) & 0x1);
-}
-
-/**
- * iffq_empty - test for an empty mailbox
- * @m: the mailbox to test
- *
- * Returns non-zero if the mailbox is empty
- */
-static inline int
-iffq_empty(Iffq *m)
-{
-    uintptr_t v = m->q[m->cons_read & m->entry_mask];
-
-    return __iffq_empty(m, m->cons_read, v);
-}
-
 /**
  * iffq_extract - extract a value
  * @ffq: the mailbox where to extract from
@@ -1041,14 +1013,11 @@ iffq_empty(Iffq *m)
 static inline Mbuf *
 iffq_extract(Iffq *ffq)
 {
-    uintptr_t v = ffq->q[ffq->cons_read & ffq->entry_mask];
-
-    if (__iffq_empty(ffq, ffq->cons_read, v))
-        return NULL;
-
-    ffq->cons_read++;
-
-    return (Mbuf *)(v & ~0x1);
+    uintptr_t m = ffq->q[ffq->cons_read & ffq->entry_mask];
+    if (m) {
+        ffq->cons_read++;
+    }
+    return (Mbuf *)m;
 }
 
 /**
@@ -1061,8 +1030,7 @@ iffq_clear(Iffq *ffq)
 {
     unsigned int s = ffq->cons_read & ffq->line_mask;
 
-    for (; (ffq->cons_clear /* & ffq->line_mask */) != s;
-         ffq->cons_clear += ffq->line_entries) {
+    for (; (ffq->cons_clear /* & ffq->line_mask */) != s; ffq->cons_clear++) {
         ffq->q[ffq->cons_clear & ffq->entry_mask] = 0;
     }
 }
@@ -1547,7 +1515,6 @@ run_test(Global *g)
         }
     } else if (g->test_type == "iffq" || g->test_type == "ffq" ||
                g->test_type == "biffq") {
-        (void)iffq_empty;
         (void)iffq_prefetch;
         g->ffq = iffq_create(g->qlen,
                              /*line_size=*/g->line_entries * sizeof(uintptr_t));
