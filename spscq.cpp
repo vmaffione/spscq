@@ -61,7 +61,7 @@ roundup(unsigned int x, unsigned int y)
     return ((x + (y - 1)) / y) * y;
 }
 
-static unsigned int
+unsigned int
 ilog2(unsigned int x)
 {
     unsigned int probe = 0x00000001U;
@@ -722,7 +722,6 @@ struct Iffq {
     CACHELINE_ALIGNED
     /* Shared (constant) fields. */
     unsigned int entry_mask;
-    unsigned int seqbit_shift;
     unsigned int line_entries;
     unsigned int line_mask;
 
@@ -882,11 +881,9 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
     m->line_entries = entries_per_line;
     m->line_mask    = ~(entries_per_line - 1);
     m->entry_mask   = entries - 1;
-    m->seqbit_shift = ilog2(entries);
 
-    printf("iffq: line_entries %u line_mask %x entry_mask %x seqbit_shift "
-           "%u\n",
-           m->line_entries, m->line_mask, m->entry_mask, m->seqbit_shift);
+    printf("iffq: line_entries %u line_mask %x entry_mask %x\n",
+           m->line_entries, m->line_mask, m->entry_mask);
 
     m->cons_clear = 0;
     m->cons_read  = m->line_entries;
@@ -986,8 +983,7 @@ iffq_wspace(Iffq *ffq)
 static inline void
 iffq_insert_local(Iffq *ffq, Mbuf *m)
 {
-    ffq->prod_cache[ffq->prod_cache_write++] =
-        (uintptr_t)m | ((ffq->prod_write >> ffq->seqbit_shift) & 0x1);
+    ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m;
     ffq->prod_write++;
 }
 
