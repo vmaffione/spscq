@@ -865,9 +865,10 @@ iffq_size(unsigned int entries)
  * Returns 0 on success, -errno on failure.
  */
 int
-iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
+iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
 {
     unsigned int entries_per_line;
+    unsigned int i;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
         entries * sizeof(uintptr_t) <= 2 * line_size ||
@@ -891,6 +892,15 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
     m->prod_check                     = 2 * m->line_entries;
     m->prod_cache_write               = 0;
 
+    if (improved) {
+        /* For iffq and biffq we need to have something different
+         * from nullptr in [cons_clear, cons_read[, or the producer
+         * can get confused. */
+        for (i = m->cons_clear; i != m->cons_read; i++) {
+            m->q[i] = (uintptr_t)1; /* garbage */
+        }
+    }
+
     return 0;
 }
 
@@ -902,7 +912,7 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size)
  * Both entries and line_size must be a power of 2.
  */
 Iffq *
-iffq_create(unsigned int entries, unsigned int line_size)
+__iffq_create(unsigned int entries, unsigned int line_size, bool improved)
 {
     Iffq *ffq;
     int err;
@@ -912,7 +922,7 @@ iffq_create(unsigned int entries, unsigned int line_size)
         return NULL;
     }
 
-    err = iffq_init(ffq, entries, line_size);
+    err = iffq_init(ffq, entries, line_size, improved);
     if (err) {
         free(ffq);
         return NULL;
@@ -928,6 +938,18 @@ iffq_create(unsigned int entries, unsigned int line_size)
            CACHELINE_SIZE);
 
     return ffq;
+}
+
+Iffq *
+iffq_create(unsigned int entries, unsigned int line_size)
+{
+    return __iffq_create(entries, line_size, /*improved=*/true);
+}
+
+Iffq *
+ffq_create(unsigned int entries, unsigned int line_size)
+{
+    return __iffq_create(entries, line_size, /*improved=*/false);
 }
 
 /**
@@ -1024,7 +1046,7 @@ iffq_extract(Iffq *ffq)
 static inline void
 iffq_clear(Iffq *ffq)
 {
-    unsigned int s = ffq->cons_read & ffq->line_mask;
+    unsigned int s = (ffq->cons_read - ffq->line_entries) & ffq->line_mask;
 
     for (; (ffq->cons_clear /* & ffq->line_mask */) != s; ffq->cons_clear++) {
         ffq->q[ffq->cons_clear & ffq->entry_mask] = 0;
@@ -1509,8 +1531,22 @@ run_test(Global *g)
                 exit(EXIT_FAILURE);
             }
         }
-    } else if (g->test_type == "iffq" || g->test_type == "ffq" ||
-               g->test_type == "biffq") {
+    } else if (g->test_type == "ffq") {
+        g->ffq = ffq_create(g->qlen,
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+        if (!g->ffq) {
+            exit(EXIT_FAILURE);
+        }
+        iffq_dump("P", g->ffq);
+        if (g->latency) {
+            g->ffq_back =
+                ffq_create(g->qlen,
+                           /*line_size=*/g->line_entries * sizeof(uintptr_t));
+            if (!g->ffq_back) {
+                exit(EXIT_FAILURE);
+            }
+        }
+    } else if (g->test_type == "iffq" || g->test_type == "biffq") {
         (void)iffq_prefetch;
         g->ffq = iffq_create(g->qlen,
                              /*line_size=*/g->line_entries * sizeof(uintptr_t));
