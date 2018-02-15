@@ -23,6 +23,8 @@
 
 #include "mlib.h"
 
+#define RATE_LIMITING_CONSUMER /* Enable support for rate limiting consumer */
+
 #undef QDEBUG /* dump queue state at each operation */
 
 #define ONEBILLION (1000LL * 1000000LL) /* 1 billion */
@@ -1481,6 +1483,7 @@ run_test(Global *g)
         __MATRIX_ADD_EMULATEDOVERHEAD(qname, mm, rl,                           \
                                       EmulatedOverhead::SpinCycles);           \
     } while (0)
+#ifdef RATE_LIMITING_CONSUMER
 #define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
     do {                                                                       \
         __MATRIX_ADD_RATELIMITMODE(qname, mm, RateLimitMode::None);            \
@@ -1488,6 +1491,14 @@ run_test(Global *g)
         latency_matrix[STRFY(qname)][mm] =                                     \
             std::make_pair(qname##_client<mm>, qname##_server<mm>);            \
     } while (0)
+#else /* RATE_LIMITING_CONSUMER */
+#define __MATRIX_ADD_MBUFMODE(qname, mm)                                       \
+    do {                                                                       \
+        __MATRIX_ADD_RATELIMITMODE(qname, mm, RateLimitMode::None);            \
+        latency_matrix[STRFY(qname)][mm] =                                     \
+            std::make_pair(qname##_client<mm>, qname##_server<mm>);            \
+    } while (0)
+#endif /* RATE_LIMITING_CONSUMER */
 #define MATRIX_ADD(qname)                                                      \
     do {                                                                       \
         __MATRIX_ADD_MBUFMODE(qname, MbufMode::NoAccess);                      \
@@ -1769,11 +1780,16 @@ main(int argc, char **argv)
             break;
 
         case 'r':
+#ifdef RATE_LIMITING_CONSUMER
             g->cons_rate_limit_cycles = atoi(optarg);
             if (g->cons_rate_limit_cycles < 0) {
                 printf("    Invalid consumer rate limit '%s'\n", optarg);
                 return -1;
             }
+#else
+            printf("    Rate limiting consumer not supported\n");
+            return -1;
+#endif
             break;
 
         case 'R':
