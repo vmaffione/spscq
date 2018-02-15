@@ -890,7 +890,7 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
     m->cons_clear       = 0;
     m->cons_read        = m->line_entries;
     m->prod_write       = m->line_entries;
-    m->prod_check       = 2 * m->line_entries;
+    m->prod_check       = m->line_entries;
     m->prod_cache_write = 0;
 
     if (improved) {
