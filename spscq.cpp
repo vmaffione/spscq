@@ -231,13 +231,8 @@ struct Global {
 static void
 miss_rate_print(const char *prefix, double mpps, float miss_rate)
 {
-    double ratio     = mpps / miss_rate;
-    const char *unit = "packets/miss";
-
-    if (ratio < 1.0) {
-        ratio = 1 / ratio;
-        unit  = "misses/packet";
-    }
+    double ratio     = miss_rate / mpps;
+    const char *unit = "misses/packet";
 
     printf("[%s] L1 d-cache miss rate %5.2f M/sec, %.2f %s\n", prefix,
            miss_rate, ratio, unit);
