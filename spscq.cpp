@@ -23,7 +23,7 @@
 
 #include "mlib.h"
 
-#define RATE_LIMITING_CONSUMER /* Enable support for rate limiting consumer */
+//#define RATE_LIMITING_CONSUMER /* Enable support for rate limiting consumer */
 
 #undef QDEBUG /* dump queue state at each operation */
 
@@ -407,24 +407,14 @@ blq_create(int qlen, int prod_batch, int cons_batch)
     return blq;
 }
 
-//#define LLQ
 static inline int
 lq_write(Blq *q, Mbuf *m)
 {
     unsigned int next = (q->write + 1) & q->qmask;
 
-#ifdef LLQ
-    if (next == q->read_shadow) {
-        q->read_shadow = q->read;
-    }
-    if (next == q->read_shadow) {
-        return -1; /* no space */
-    }
-#else
     if (next == q->read) {
         return -1; /* no space */
     }
-#endif
     q->q[q->write] = m;
     compiler_barrier();
     q->write = next;
@@ -435,18 +425,42 @@ static inline Mbuf *
 lq_read(Blq *q)
 {
     Mbuf *m;
-#ifdef LLQ
+    if (q->read == q->write) {
+        return NULL; /* queue empty */
+    }
+    compiler_barrier();
+    m       = q->q[q->read];
+    q->read = (q->read + 1) & q->qmask;
+    return m;
+}
+
+static inline int
+llq_write(Blq *q, Mbuf *m)
+{
+    unsigned int next = (q->write + 1) & q->qmask;
+
+    if (next == q->read_shadow) {
+        q->read_shadow = q->read;
+    }
+    if (next == q->read_shadow) {
+        return -1; /* no space */
+    }
+    q->q[q->write] = m;
+    compiler_barrier();
+    q->write = next;
+    return 0;
+}
+
+static inline Mbuf *
+llq_read(Blq *q)
+{
+    Mbuf *m;
     if (q->read == q->write_shadow) {
         q->write_shadow = q->write;
     }
     if (q->read == q->write_shadow) {
         return NULL; /* queue empty */
     }
-#else
-    if (q->read == q->write) {
-        return NULL; /* queue empty */
-    }
-#endif
     compiler_barrier();
     m       = q->q[q->read];
     q->read = (q->read + 1) & q->qmask;
@@ -594,6 +608,81 @@ lq_consumer(Global *const g)
         blq_dump("C", blq);
 #endif
         m = lq_read(blq);
+        if (m) {
+            ++g->pkt_cnt;
+            ++batch_packets;
+            mbuf_put<kMbufMode>(m, &csum);
+            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
+            }
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            if (kRateLimitMode == RateLimitMode::Limit) {
+                tsc_sleep_till(rdtsc() + rate_limit);
+            }
+            if (unlikely(stop)) {
+                break;
+            }
+        }
+    }
+    g->consumer_batches = batches;
+    g->csum             = csum;
+    g->consumer_footer();
+}
+
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
+static void
+llq_producer(Global *const g)
+{
+    const uint64_t spin          = g->prod_spin_cycles;
+    const unsigned int pool_mask = g->blq->qmask;
+    Blq *const blq               = g->blq;
+    unsigned int pool_idx        = 0;
+    unsigned int batch_packets   = 0;
+    unsigned int batches         = 0;
+
+    g->producer_header();
+    while (!stop) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+#ifdef QDEBUG
+        blq_dump("P", blq);
+#endif
+        if (llq_write(blq, m) == 0) {
+            ++batch_packets;
+            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+                spin_cycles(spin);
+            }
+        } else {
+            batches += (batch_packets != 0) ? 1 : 0;
+            batch_packets = 0;
+            pool_idx--;
+        }
+    }
+    g->producer_batches = batches;
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
+          EmulatedOverhead kEmulatedOverhead>
+static void
+llq_consumer(Global *const g)
+{
+    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t rate_limit  = g->cons_rate_limit_cycles;
+    Blq *const blq             = g->blq;
+    unsigned int csum          = 0;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
+    Mbuf *m;
+
+    g->consumer_header();
+    for (;;) {
+#ifdef QDEBUG
+        blq_dump("C", blq);
+#endif
+        m = llq_read(blq);
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
@@ -1243,8 +1332,55 @@ out:
     g->consumer_footer();
 }
 
-#define blq_client lq_client
-#define blq_server lq_server
+template <MbufMode kMbufMode>
+void
+llq_client(Global *const g)
+{
+    const unsigned int pool_mask = g->blq->qmask;
+    Blq *const blq               = g->blq;
+    Blq *const blq_back          = g->blq_back;
+    unsigned int pool_idx        = 0;
+    int ret;
+
+    g->producer_header();
+    while (!stop) {
+        Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+        ret     = llq_write(blq, m);
+        assert(ret == 0);
+        while ((m = llq_read(blq_back)) == nullptr && !stop) {
+        }
+        ++g->pkt_cnt;
+    }
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+llq_server(Global *const g)
+{
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
+    unsigned int csum   = 0;
+    int ret;
+
+    g->consumer_header();
+    while (!stop) {
+        Mbuf *m;
+        while ((m = llq_read(blq)) == nullptr) {
+            if (unlikely(stop)) {
+                goto out;
+            }
+        }
+        mbuf_put<kMbufMode>(m, &csum);
+        ret = llq_write(blq_back, m);
+        assert(ret == 0);
+    }
+out:
+    g->csum = csum;
+    g->consumer_footer();
+}
+#define blq_client llq_client
+#define blq_server llq_server
 
 template <MbufMode kMbufMode>
 void
@@ -1506,6 +1642,7 @@ run_test(Global *g)
     /* Multi-section queue (Lamport-like) with legacy operation,
      * i.e. no batching. */
     MATRIX_ADD(lq);
+    MATRIX_ADD(llq);
     /* Multi-section queue (Lamport-like) with batching operation. */
     MATRIX_ADD(blq);
     /* Original fast-forward queue. */
@@ -1527,7 +1664,8 @@ run_test(Global *g)
     funcs = g->latency ? latency_matrix[g->test_type][g->mbuf_mode]
                        : throughput_matrix[g->test_type][g->mbuf_mode][rl][eo];
 
-    if (g->test_type == "lq" || g->test_type == "blq") {
+    if (g->test_type == "lq" || g->test_type == "llq" ||
+        g->test_type == "blq") {
         g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
         if (!g->blq) {
             exit(EXIT_FAILURE);
