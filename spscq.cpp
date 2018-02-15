@@ -729,7 +729,6 @@ struct Iffq {
     CACHELINE_ALIGNED
     unsigned int prod_write;
     unsigned int prod_check;
-    unsigned int prod_write_pub;
     unsigned int prod_cache_write;
 
     /* Consumer fields. */
@@ -886,11 +885,11 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
     printf("iffq: line_entries %u line_mask %x entry_mask %x\n",
            m->line_entries, m->line_mask, m->entry_mask);
 
-    m->cons_clear = 0;
-    m->cons_read  = m->line_entries;
-    m->prod_write = m->prod_write_pub = m->line_entries;
-    m->prod_check                     = 2 * m->line_entries;
-    m->prod_cache_write               = 0;
+    m->cons_clear       = 0;
+    m->cons_read        = m->line_entries;
+    m->prod_write       = m->line_entries;
+    m->prod_check       = 2 * m->line_entries;
+    m->prod_cache_write = 0;
 
     if (improved) {
         /* For iffq and biffq we need to have something different
@@ -1006,17 +1005,15 @@ static inline void
 iffq_insert_local(Iffq *ffq, Mbuf *m)
 {
     ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m;
-    ffq->prod_write++;
 }
 
 static inline void
 iffq_insert_publish(Iffq *ffq)
 {
-    unsigned int w = ffq->prod_write_pub;
-    for (unsigned int i = 0; i < ffq->prod_cache_write; i++, w++) {
-        ffq->q[w & ffq->entry_mask] = ffq->prod_cache[i];
+    for (unsigned int i = 0; i < ffq->prod_cache_write;
+         i++, ffq->prod_write++) {
+        ffq->q[ffq->prod_write & ffq->entry_mask] = ffq->prod_cache[i];
     }
-    ffq->prod_write_pub   = w;
     ffq->prod_cache_write = 0;
 }
 
