@@ -1093,14 +1093,31 @@ iffq_insert_local(Iffq *ffq, Mbuf *m)
     ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m;
 }
 
+#include <emmintrin.h>
+
 static inline void
 iffq_insert_publish(Iffq *ffq)
 {
-    for (unsigned int i = 0; i < ffq->prod_cache_write;
-         i++, ffq->prod_write++) {
-        ffq->q[ffq->prod_write & ffq->entry_mask] = ffq->prod_cache[i];
+#define K (CACHELINE_SIZE / sizeof(uintptr_t)) /* 64/8=8 */
+    for (unsigned int i = 0; i < ffq->prod_cache_write;) {
+        if (((ffq->prod_write & (K - 1)) == 0) &&
+            i + K <= ffq->prod_cache_write) {
+            for (unsigned int j = 0; j < K / 2;
+                 j += 2) { /* only valid for x86_64 */
+                int *arr = (int *)&ffq->prod_cache[i];
+                __m128i reg = _mm_set_epi32(arr[3], arr[2], arr[1], arr[0]);
+                _mm_stream_si128(
+                    (__m128i *)&ffq->q[ffq->prod_write & ffq->entry_mask], reg);
+                ffq->prod_write += 2;
+                i += 2;
+            }
+        } else {
+            ffq->q[ffq->prod_write & ffq->entry_mask] = ffq->prod_cache[i++];
+            ffq->prod_write++;
+        }
     }
     ffq->prod_cache_write = 0;
+#undef K
 }
 
 /**
