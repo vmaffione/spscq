@@ -43,7 +43,7 @@ try:
                     out = subprocess.check_output(cmd.split())
                 except subprocess.CalledProcessError:
                     print('Command "%s" failed' % cmd)
-                    quit()
+                    quit(1)
                 out = str(out, 'ascii')  # decode
                 for line in out.split('\n'):
                     m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
@@ -55,7 +55,8 @@ try:
         spin_p += args.delta_step
         spin_c -= args.delta_step
 except KeyboardInterrupt:
-    pass
+    print("Interrupted. Bye.")
+    quit(1)
 
 print(('%8s ' * 15) % ('P', 'C', 'delta', 'lq', 'std', 'llq', 'std', 'blq', 'std',
                     'ffq', 'std', 'iffq', 'std', 'biffq', 'std'))
