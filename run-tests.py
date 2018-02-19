@@ -23,6 +23,15 @@ argparser.add_argument('--duration', help = "Duration of a test run in seconds",
                        type = int, default = 10)
 argparser.add_argument('--trials', help = "How many test runs per point",
                        type = int, default = 10)
+argparser.add_argument('-M', '--indirect', action = 'store_true',
+                       help = "Use mbufs (indirect payload)")
+argparser.add_argument('--exp-type', type = str, default = 'throughput',
+                       choices = ['throughput', 'latency'],
+                       help = "Experiment type")
+argparser.add_argument('-l', '--queue-length', help = "Queue length",
+                       type = int, default = 256)
+argparser.add_argument('-b', '--batch-size', help = "Batch size",
+                       type = int, default = 32)
 
 args = argparser.parse_args()
 
@@ -35,7 +44,14 @@ try:
     while spin_p <= args.spin_min + args.delta_max:
         results[(spin_p, spin_c)] = {}
         for queue in queues:
-            cmd = './spscq -D %d -P %d -C %d -t %s' % (args.duration, spin_p, spin_c, queue)
+            cmd = './spscq -D %d -P %d -C %d -t %s -l %d '\
+                  '-L %d -b %d' % (args.duration, spin_p, spin_c, queue,
+                                args.queue_length, args.batch_size,
+                                args.batch_size)
+            if args.indirect:
+                cmd += ' -M'
+            if args.exp_type == 'latency':
+                cmd += ' -T'
             print("Running '%s'" % cmd)
             mpps_values = []
             for _ in range(0, args.trials):
