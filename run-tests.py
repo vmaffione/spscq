@@ -2,6 +2,7 @@
 #
 # Written by: Vincenzo Maffione <v.maffione@gmail.com>
 
+import statistics
 import subprocess
 import argparse
 import re
@@ -18,31 +19,53 @@ argparser.add_argument('--delta-step', help = "Step to use to increase delta",
                        type = int, default = 5)
 argparser.add_argument('--delta-max', help = "Max delta between P and C spins",
                        type = int, default = 50)
-argparser.add_argument('--duration', help = "Duration of each test run in seconds",
-                       type = int, default = 1)
+argparser.add_argument('--duration', help = "Duration of a test run in seconds",
+                       type = int, default = 10)
+argparser.add_argument('--trials', help = "How many test runs per point",
+                       type = int, default = 10)
 
 args = argparser.parse_args()
 
-spin_p = args.spin_min
-spin_c = args.spin_min + args.delta_max
+queues = ['lq', 'llq', 'blq', 'ffq', 'iffq', 'biffq']
+results = {}
+
 try:
-    queue = 'lq'
+    spin_p = args.spin_min
+    spin_c = args.spin_min + args.delta_max
     while spin_p <= args.spin_min + args.delta_max:
-        #print("P=%d C=%d" % (spin_p, spin_c))
-        cmd = './spscq -D %d -P %d -C %d -t %s' % (args.duration, spin_p, spin_c, queue)
-        print("Running '%s'" % cmd)
-        try:
-            out = subprocess.check_output(cmd.split())
-        except subprocess.CalledProcessError:
-            print('Command "%s" failed' % cmd)
-            quit()
-        out = str(out, 'ascii')  # decode
-        for line in out.split('\n'):
-            m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
-            if m:
-                mpps = float(m.group(1))
-                print(mpps)
+        results[(spin_p, spin_c)] = {}
+        for queue in queues:
+            cmd = './spscq -D %d -P %d -C %d -t %s' % (args.duration, spin_p, spin_c, queue)
+            print("Running '%s'" % cmd)
+            mpps_values = []
+            for _ in range(0, args.trials):
+                try:
+                    out = subprocess.check_output(cmd.split())
+                except subprocess.CalledProcessError:
+                    print('Command "%s" failed' % cmd)
+                    quit()
+                out = str(out, 'ascii')  # decode
+                for line in out.split('\n'):
+                    m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
+                    if m:
+                        mpps = float(m.group(1))
+                        mpps_values.append(mpps)
+                        print("Got %f Mpps" % mpps)
+            results[(spin_p, spin_c)][queue] = mpps_values
         spin_p += args.delta_step
         spin_c -= args.delta_step
 except KeyboardInterrupt:
     pass
+
+print(('%8s ' * 15) % ('P', 'C', 'delta', 'lq', 'std', 'llq', 'std', 'blq', 'std',
+                    'ffq', 'std', 'iffq', 'std', 'biffq', 'std'))
+for (p, c) in results:
+    row = [p, c, p-c]
+    for queue in queues:
+        avg = statistics.mean(results[(p, c)][queue])
+        std = statistics.stdev(results[(p, c)][queue])
+        row.append(avg)
+        row.append(std)
+    fmt = '%8s ' * 3
+    fmt += '%8.2f ' * 12
+    print(fmt % tuple(row))
