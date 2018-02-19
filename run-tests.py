@@ -5,6 +5,7 @@
 import statistics
 import subprocess
 import argparse
+import sys
 import re
 import os
 
@@ -100,6 +101,9 @@ try:
 except KeyboardInterrupt:
     print("Interrupted. Bye.")
     quit(1)
+
+# Command line invocation
+print(' '.join(sys.argv))
 
 print(('%8s ' * 15) % ('P', 'C', 'delta', 'lq', 'std', 'llq', 'std', 'blq', 'std',
                     'ffq', 'std', 'iffq', 'std', 'biffq', 'std'))
