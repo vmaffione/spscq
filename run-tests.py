@@ -35,7 +35,8 @@ argparser.add_argument('-l', '--queue-length', help = "Queue length",
 argparser.add_argument('-b', '--batch-size', help = "Batch size",
                        type = int, default = 32)
 argparser.add_argument('-S', '--sequencing', type = str, default = 'parallel',
-                       choices = ['parallel', 'crossed'],
+                       choices = ['parallel', 'crossed', 'ptriangle',
+                                  'ctriangle'],
                        help = "How P and C emulated load vary")
 
 args = argparser.parse_args()
@@ -60,13 +61,13 @@ if args.trials < 1:
     quit(1)
 
 try:
-    spin_p = args.spin_min
-    if args.sequencing == 'parallel':
-        spin_c = spin_p
-    else:
+    if args.sequencing == 'crossed':
+        spin_p = args.spin_min
         spin_c = args.spin_max
+    else:
+        spin_p = spin_c = args.spin_min
 
-    while spin_p <= args.spin_max:
+    while spin_p <= args.spin_max and spin_c <= args.spin_max:
         results[(spin_p, spin_c)] = {}
         for queue in queues:
             cmd = './spscq -D %d -l %d -L %d -b %d -P %d -C %d -t %s'\
@@ -93,11 +94,16 @@ try:
                         print("Got %f Mpps" % mpps)
             results[(spin_p, spin_c)][queue] = mpps_values
 
-        spin_p += args.spin_step
         if args.sequencing == 'parallel':
+            spin_p += args.spin_step
             spin_c = spin_p
-        else:
+        elif args.sequencing == 'crossed':
+            spin_p += args.spin_step
             spin_c -= args.spin_step
+        elif args.sequencing == 'ptriangle':
+            spin_p += args.spin_step
+        elif args.sequencing == 'ctriangle':
+            spin_c += args.spin_step
 except KeyboardInterrupt:
     print("Interrupted. Bye.")
     quit(1)
