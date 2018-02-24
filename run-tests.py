@@ -20,8 +20,6 @@ argparser = argparse.ArgumentParser(description = description,
                                     epilog = epilog)
 argparser.add_argument('--spin-min', help = "Minimum emulated load (cycles)",
                        type = int, default = 5)
-argparser.add_argument('--spin-step', help = "Step to use to increase spin",
-                       type = int, default = 5)
 argparser.add_argument('--spin-max', help = "Maximum emulated load (cycles)",
                        type = int, default = 50)
 argparser.add_argument('-D', '--duration',
@@ -56,22 +54,30 @@ if args.spin_min < 0:
     printfl("Error: spin_min < 1")
     quit(1)
 
-if args.spin_step < 1:
-    printfl("Error: spin_step < 1")
-    quit(1)
-
 if args.trials < 1:
     printfl("Error: trias < 1")
     quit(1)
 
+z = args.spin_min
+points = [x for x in range(z,z+11)]
+z += 11
+points += [x for x in range(z, z+18, 2)]
+z += 18
+points += [x for x in range(z, z+30, 10)]
+z += 30
+points += [x for x in range(z, max(z+90, args.spin_max), 20)]
+z += 90
+
 try:
     if args.sequencing == 'crossed':
-        spin_p = args.spin_min
-        spin_c = args.spin_max
+        pi = 0
+        ci = len(points) - 1
     else:
-        spin_p = spin_c = args.spin_min
+        pi = ci = 0
 
-    while spin_p <= args.spin_max and spin_c <= args.spin_max:
+    while pi < len(points) and ci < len(points):
+        spin_p = points[pi]
+        spin_c = points[ci]
         results[(spin_p, spin_c)] = {}
         for queue in queues:
             cmd = './spscq -D %d -l %d -L %d -b %d -P %d -C %d -t %s'\
@@ -99,15 +105,15 @@ try:
             results[(spin_p, spin_c)][queue] = mpps_values
 
         if args.sequencing == 'parallel':
-            spin_p += args.spin_step
-            spin_c = spin_p
+            pi += 1
+            ci = pi
         elif args.sequencing == 'crossed':
-            spin_p += args.spin_step
-            spin_c -= args.spin_step
+            pi += 1
+            ci -= 1
         elif args.sequencing == 'ptriangle':
-            spin_p += args.spin_step
+            pi += 1
         elif args.sequencing == 'ctriangle':
-            spin_c += args.spin_step
+            ci += 1
 except KeyboardInterrupt:
     printfl("Interrupted. Bye.")
     quit(1)
