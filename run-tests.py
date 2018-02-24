@@ -20,8 +20,8 @@ argparser = argparse.ArgumentParser(description = description,
                                     epilog = epilog)
 argparser.add_argument('--spin-min', help = "Minimum emulated load (cycles)",
                        type = int, default = 5)
-argparser.add_argument('--spin-max', help = "Maximum emulated load (cycles)",
-                       type = int, default = 50)
+argparser.add_argument('--num-points', help = "Number of points to take",
+                       type = int, default = 25)
 argparser.add_argument('-D', '--duration',
                        help = "Duration of a test run in seconds",
                        type = int, default = 10)
@@ -40,24 +40,27 @@ argparser.add_argument('-S', '--sequencing', type = str, default = 'parallel',
                        choices = ['parallel', 'crossed', 'ptriangle',
                                   'ctriangle'],
                        help = "How P and C emulated load vary")
+argparser.add_argument('--dry-run', action = 'store_true',
+                       help = "Don't actually run spscq")
 
 args = argparser.parse_args()
 
 queues = ['lq', 'llq', 'blq', 'ffq', 'iffq', 'biffq']
 results = {}
 
-if args.spin_min > args.spin_max:
-    printfl("Error: spin_min > spin_max")
+if args.spin_min < 0:
+    printfl("Error: spin_min < 0")
     quit(1)
 
-if args.spin_min < 0:
-    printfl("Error: spin_min < 1")
+if args.num_points < 1:
+    printfl("Error: min_points < 1")
     quit(1)
 
 if args.trials < 1:
     printfl("Error: trias < 1")
     quit(1)
 
+# Generate values for P and C spin
 z = args.spin_min
 points = [x for x in range(z,z+11)]
 z += 11
@@ -65,8 +68,15 @@ points += [x for x in range(z, z+18, 2)]
 z += 18
 points += [x for x in range(z, z+30, 10)]
 z += 30
-points += [x for x in range(z, max(z+90, args.spin_max), 20)]
+points += [x for x in range(z, z+90, 20)]
 z += 90
+
+inc = 30
+while len(points) < args.num_points:
+    points.append(points[-1] + inc)
+    inc += 5
+
+points = points[:args.num_points]
 
 try:
     if args.sequencing == 'crossed':
@@ -90,18 +100,21 @@ try:
             printfl("Running '%s'" % cmd)
             mpps_values = []
             for _ in range(0, args.trials):
-                try:
-                    out = subprocess.check_output(cmd.split())
-                except subprocess.CalledProcessError:
-                    printfl('Command "%s" failed' % cmd)
-                    quit(1)
-                out = str(out, 'ascii')  # decode
-                for line in out.split('\n'):
-                    m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
-                    if m:
-                        mpps = float(m.group(1))
-                        mpps_values.append(mpps)
-                        printfl("Got %f Mpps" % mpps)
+                if args.dry_run:
+                    mpps_values.append(0)  # mock it
+                else:
+                    try:
+                        out = subprocess.check_output(cmd.split())
+                    except subprocess.CalledProcessError:
+                        printfl('Command "%s" failed' % cmd)
+                        quit(1)
+                    out = str(out, 'ascii')  # decode
+                    for line in out.split('\n'):
+                        m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
+                        if m:
+                            mpps = float(m.group(1))
+                            mpps_values.append(mpps)
+                            printfl("Got %f Mpps" % mpps)
             results[(spin_p, spin_c)][queue] = mpps_values
 
         if args.sequencing == 'parallel':

@@ -1,18 +1,17 @@
 #!/bin/bash
 
-EXPDIR=exp
-SPIN_STEP_THR=3
-SPIN_MAX_THR=72
-SPIN_STEP_LAT=100
-SPIN_MAX_LAT=0
+EXPDIR=exp2
+NUM_POINTS_THR=30
+NUM_POINTS_LAT=1
+TRIALS=5
 
-./run-tests.py --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S parallel | tee $EXPDIR/001
-./run-tests.py --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S ptriangle | tee $EXPDIR/002
-./run-tests.py --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S ctriangle | tee $EXPDIR/003
+./run-tests.py --trials $TRIALS --spin-min 0 --num-points $NUM_POINTS_THR -S parallel | tee $EXPDIR/001
+./run-tests.py --trials $TRIALS --spin-min 0 --num-points $NUM_POINTS_THR -S ptriangle | tee $EXPDIR/002
+./run-tests.py --trials $TRIALS --spin-min 0 --num-points $NUM_POINTS_THR -S ctriangle | tee $EXPDIR/003
 
-./run-tests.py -M --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S parallel | tee $EXPDIR/004
-./run-tests.py -M --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S ptriangle | tee $EXPDIR/005
-./run-tests.py -M --spin-min 0 --spin-max $SPIN_MAX_THR --spin-step $SPIN_STEP_THR -S ctriangle | tee $EXPDIR/006
+./run-tests.py --trials $TRIALS -M --spin-min 0 --num-points $NUM_POINTS_THR -S parallel | tee $EXPDIR/004
+./run-tests.py --trials $TRIALS -M --spin-min 0 --num-points $NUM_POINTS_THR -S ptriangle | tee $EXPDIR/005
+./run-tests.py --trials $TRIALS -M --spin-min 0 --num-points $NUM_POINTS_THR -S ctriangle | tee $EXPDIR/006
 
-./run-tests.py --exp-type latency --spin-min 0 --spin-max $SPIN_MAX_LAT --spin-step $SPIN_STEP_LAT -S parallel | tee $EXPDIR/007
-./run-tests.py -M --exp-type latency --spin-min 0 --spin-max $SPIN_MAX_LAT --spin-step $SPIN_STEP_LAT -S parallel | tee $EXPDIR/008
+./run-tests.py --trials $TRIALS --exp-type latency --spin-min 0 --num-points $NUM_POINTS_LAT -S parallel | tee $EXPDIR/007
+./run-tests.py --trials $TRIALS -M --exp-type latency --spin-min 0 --num-points $NUM_POINTS_LAT -S parallel | tee $EXPDIR/008
