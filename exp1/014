@@ -1,3 +1,0 @@
-./run-tests.py -M --exp-type latency --spin-min 0 --spin-max 0 --spin-step 100 -S crossed
-       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
-       0        0        0     6.25     0.15     5.84     0.08     5.75     0.12     7.45     0.03     8.50     0.12     8.53     0.08 
