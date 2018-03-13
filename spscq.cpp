@@ -545,10 +545,14 @@ blq_free(Blq *blq)
 static inline void
 spin_cycles(uint64_t spin)
 {
+#if 0
     uint64_t j;
     for (j = 0; j < spin; j++) {
         compiler_barrier();
     }
+#else
+    tsc_sleep_till(rdtsc() + spin);
+#endif
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -1950,6 +1954,9 @@ main(int argc, char **argv)
     }
 
     tsc_init();
+    g->cons_rate_limit_cycles = ns2tsc(g->cons_rate_limit_cycles);
+    g->prod_spin_cycles       = ns2tsc(g->prod_spin_cycles);
+    g->cons_spin_cycles       = ns2tsc(g->cons_spin_cycles);
     run_test(g);
 
     return 0;
