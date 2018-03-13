@@ -165,8 +165,8 @@ struct Global {
     int p_core = 0, c_core = 1;
 
     /* Emulated per-packet load for the producer and consumer side,
-     * in nanoseconds and ticks. */
-    uint64_t prod_spin_cycles = 0, cons_spin_cycles = 0;
+     * in TSC ticks (initially in nanoseconds). */
+    uint64_t prod_spin_ticks = 0, cons_spin_ticks = 0;
     uint64_t cons_rate_limit_cycles = 0;
 
     bool online_rate   = false;
@@ -543,16 +543,9 @@ blq_free(Blq *blq)
 }
 
 static inline void
-spin_cycles(uint64_t spin)
+spin_for(uint64_t spin)
 {
-#if 0
-    uint64_t j;
-    for (j = 0; j < spin; j++) {
-        compiler_barrier();
-    }
-#else
     tsc_sleep_till(rdtsc() + spin);
-#endif
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -560,7 +553,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 lq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->blq->qmask;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
@@ -576,7 +569,7 @@ lq_producer(Global *const g)
         if (lq_write(blq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -593,7 +586,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 lq_consumer(Global *const g)
 {
-    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t spin        = g->cons_spin_ticks;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     Blq *const blq             = g->blq;
     unsigned int csum          = 0;
@@ -612,7 +605,7 @@ lq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -635,7 +628,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 llq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->blq->qmask;
     Blq *const blq               = g->blq;
     unsigned int pool_idx        = 0;
@@ -651,7 +644,7 @@ llq_producer(Global *const g)
         if (llq_write(blq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -668,7 +661,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 llq_consumer(Global *const g)
 {
-    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t spin        = g->cons_spin_ticks;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     Blq *const blq             = g->blq;
     unsigned int csum          = 0;
@@ -687,7 +680,7 @@ llq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -710,7 +703,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 blq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->blq->qmask;
     const unsigned int batch     = g->prod_batch;
     Blq *const blq               = g->blq;
@@ -735,7 +728,7 @@ blq_producer(Global *const g)
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 blq_write_local(blq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_cycles(spin);
+                    spin_for(spin);
                 }
             }
             blq_write_publish(blq);
@@ -753,7 +746,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 blq_consumer(Global *const g)
 {
-    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t spin        = g->cons_spin_ticks;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     const unsigned int batch   = g->cons_batch;
     Blq *const blq             = g->blq;
@@ -780,7 +773,7 @@ blq_consumer(Global *const g)
                 m = blq_read_local(blq);
                 mbuf_put<kMbufMode>(m, &csum);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_cycles(spin);
+                    spin_for(spin);
                 }
             }
             blq_read_publish(blq);
@@ -864,7 +857,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->ffq->entry_mask;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
@@ -881,7 +874,7 @@ ffq_producer(Global *const g)
         if (ffq_write(ffq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -898,7 +891,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_consumer(Global *const g)
 {
-    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t spin        = g->cons_spin_ticks;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     Iffq *const ffq            = g->ffq;
     unsigned int csum          = 0;
@@ -915,7 +908,7 @@ ffq_consumer(Global *const g)
             ++g->pkt_cnt;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -1151,7 +1144,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->qlen - 1;
     Iffq *const ffq              = g->ffq;
     unsigned int pool_idx        = 0;
@@ -1173,7 +1166,7 @@ iffq_producer(Global *const g)
         if (iffq_insert(ffq, m) == 0) {
             ++batch_packets;
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -1190,7 +1183,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_consumer(Global *const g)
 {
-    const uint64_t spin        = g->cons_spin_cycles;
+    const uint64_t spin        = g->cons_spin_ticks;
     const uint64_t rate_limit  = g->cons_rate_limit_cycles;
     Iffq *const ffq            = g->ffq;
     unsigned int csum          = 0;
@@ -1210,7 +1203,7 @@ iffq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_cycles(spin);
+                spin_for(spin);
             }
             iffq_clear(ffq);
         } else {
@@ -1234,7 +1227,7 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 biffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_cycles;
+    const uint64_t spin          = g->prod_spin_ticks;
     const unsigned int pool_mask = g->qlen - 1;
     const unsigned int batch     = g->prod_batch;
     Iffq *const ffq              = g->ffq;
@@ -1260,7 +1253,7 @@ biffq_producer(Global *const g)
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 iffq_insert_local(ffq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_cycles(spin);
+                    spin_for(spin);
                 }
             }
             if (kMbufMode != MbufMode::NoAccess) {
@@ -1657,7 +1650,7 @@ run_test(Global *g)
     }
     RateLimitMode rl = g->cons_rate_limit_cycles > 0 ? RateLimitMode::Limit
                                                      : RateLimitMode::None;
-    EmulatedOverhead eo = (g->prod_spin_cycles == 0 && g->cons_spin_cycles == 0)
+    EmulatedOverhead eo = (g->prod_spin_ticks == 0 && g->cons_spin_ticks == 0)
                               ? EmulatedOverhead::None
                               : EmulatedOverhead::SpinCycles;
     funcs = g->latency ? latency_matrix[g->test_type][g->mbuf_mode]
@@ -1886,16 +1879,16 @@ main(int argc, char **argv)
             break;
 
         case 'P':
-            g->prod_spin_cycles = atoi(optarg);
-            if (g->prod_spin_cycles < 0) {
+            g->prod_spin_ticks = atoi(optarg);
+            if (g->prod_spin_ticks < 0) {
                 printf("    Invalid producer spin '%s'\n", optarg);
                 return -1;
             }
             break;
 
         case 'C':
-            g->cons_spin_cycles = atoi(optarg);
-            if (g->cons_spin_cycles < 0) {
+            g->cons_spin_ticks = atoi(optarg);
+            if (g->cons_spin_ticks < 0) {
                 printf("    Invalid consumer spin '%s'\n", optarg);
                 return -1;
             }
@@ -1955,8 +1948,8 @@ main(int argc, char **argv)
 
     tsc_init();
     g->cons_rate_limit_cycles = ns2tsc(g->cons_rate_limit_cycles);
-    g->prod_spin_cycles       = ns2tsc(g->prod_spin_cycles);
-    g->cons_spin_cycles       = ns2tsc(g->cons_spin_cycles);
+    g->prod_spin_ticks        = ns2tsc(g->prod_spin_ticks);
+    g->cons_spin_ticks        = ns2tsc(g->cons_spin_ticks);
     run_test(g);
 
     return 0;
