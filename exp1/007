@@ -1,3 +1,0 @@
-./run-tests.py --trials 10 --exp-type latency --spin-min 0 --num-points 1 -S parallel
-       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
-       0        0        0     7.25     0.14     7.17     0.13     7.21     0.10     7.68     0.02    10.27     0.24    10.17     0.18 
