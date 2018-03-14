@@ -34,7 +34,11 @@ argparser.add_argument('--exp-type', type = str, default = 'throughput',
                        help = "Experiment type")
 argparser.add_argument('-l', '--queue-length', help = "Queue length",
                        type = int, default = 256)
-argparser.add_argument('-b', '--batch-size', help = "Batch size",
+argparser.add_argument('--Bp', dest = 'prod_batch', help = "Producer batch size",
+                       type = int, default = 32)
+argparser.add_argument('--Bc', dest = 'cons_batch', help = "Consumer batch size",
+                       type = int, default = 32)
+argparser.add_argument('-L', '--line-entries', help = "Number of entries per line",
                        type = int, default = 32)
 argparser.add_argument('-S', '--sequencing', type = str, default = 'parallel',
                        choices = ['parallel', 'crossed', 'ptriangle',
@@ -90,9 +94,10 @@ try:
         spin_c = points[ci]
         results[(spin_p, spin_c)] = {}
         for queue in queues:
-            cmd = './spscq -D %d -l %d -L %d -b %d -P %d -C %d -t %s'\
-                     % (args.duration, args.queue_length, args.batch_size,
-                        args.batch_size, spin_p, spin_c, queue)
+            cmd = './spscq -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
+                     % (args.duration, args.queue_length, args.line_entries,
+                        args.prod_batch, args.cons_batch, spin_p, spin_c,
+                        queue)
             if args.indirect:
                 cmd += ' -M'
             if args.exp_type == 'latency':
