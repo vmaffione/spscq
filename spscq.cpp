@@ -451,15 +451,15 @@ static inline Mbuf *
 llq_read(Blq *q)
 {
     Mbuf *m;
-    if (q->read == q->write_shadow) {
+    if (q->read_priv == q->write_shadow) {
         q->write_shadow = q->write;
-    }
-    if (q->read == q->write_shadow) {
-        return NULL; /* queue empty */
+        if (q->read_priv == q->write_shadow) {
+            return NULL; /* queue empty */
+        }
     }
     compiler_barrier();
-    m       = q->q[q->read];
-    q->read = (q->read + 1) & q->qmask;
+    m       = q->q[q->read_priv];
+    q->read = q->read_priv = (q->read_priv + 1) & q->qmask;
     return m;
 }
 #else
