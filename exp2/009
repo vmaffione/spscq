@@ -1,0 +1,69 @@
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t lq'
+Got 57.095000 Mpps
+Got 75.523000 Mpps
+Got 75.091000 Mpps
+Got 57.606000 Mpps
+Got 122.244000 Mpps
+Got 118.794000 Mpps
+Got 57.382000 Mpps
+Got 119.761000 Mpps
+Got 75.755000 Mpps
+Got 78.517000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t llq'
+Got 108.401000 Mpps
+Got 214.929000 Mpps
+Got 231.438000 Mpps
+Got 209.558000 Mpps
+Got 111.864000 Mpps
+Got 210.554000 Mpps
+Got 163.078000 Mpps
+Got 215.124000 Mpps
+Got 215.226000 Mpps
+Got 114.273000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t blq'
+Got 77.345000 Mpps
+Got 123.020000 Mpps
+Got 132.892000 Mpps
+Got 125.556000 Mpps
+Got 124.370000 Mpps
+Got 133.803000 Mpps
+Got 77.171000 Mpps
+Got 113.332000 Mpps
+Got 114.059000 Mpps
+Got 130.357000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t ffq'
+Got 156.583000 Mpps
+Got 191.723000 Mpps
+Got 142.897000 Mpps
+Got 166.344000 Mpps
+Got 138.198000 Mpps
+Got 134.356000 Mpps
+Got 187.007000 Mpps
+Got 176.636000 Mpps
+Got 150.048000 Mpps
+Got 165.723000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t iffq'
+Got 285.326000 Mpps
+Got 294.094000 Mpps
+Got 287.752000 Mpps
+Got 294.395000 Mpps
+Got 270.629000 Mpps
+Got 275.339000 Mpps
+Got 318.665000 Mpps
+Got 316.411000 Mpps
+Got 280.902000 Mpps
+Got 265.088000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t biffq'
+Got 113.875000 Mpps
+Got 113.723000 Mpps
+Got 120.872000 Mpps
+Got 124.441000 Mpps
+Got 122.628000 Mpps
+Got 109.734000 Mpps
+Got 114.772000 Mpps
+Got 124.557000 Mpps
+Got 118.398000 Mpps
+Got 110.642000 Mpps
+./run-tests.py --trials 10 --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel
+       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
+       0        0        0    83.78    26.52   179.44    50.02   115.19    21.15   160.95    20.03   288.86    17.83   117.36     5.56 
