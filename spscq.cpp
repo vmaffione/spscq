@@ -1314,7 +1314,7 @@ lq_server(Global *const g)
     int ret;
 
     g->consumer_header();
-    while (!stop) {
+    for (;;) {
         Mbuf *m;
         while ((m = lq_read(blq)) == nullptr) {
             if (unlikely(stop)) {
@@ -1362,7 +1362,7 @@ llq_server(Global *const g)
     int ret;
 
     g->consumer_header();
-    while (!stop) {
+    for (;;) {
         Mbuf *m;
         while ((m = llq_read(blq)) == nullptr) {
             if (unlikely(stop)) {
@@ -1412,7 +1412,7 @@ ffq_server(Global *const g)
     int ret;
 
     g->consumer_header();
-    while (!stop) {
+    for (;;) {
         Mbuf *m;
         while ((m = ffq_read(ffq)) == nullptr) {
             if (unlikely(stop)) {
@@ -1461,7 +1461,7 @@ iffq_server(Global *const g)
     int ret;
 
     g->consumer_header();
-    while (!stop) {
+    for (;;) {
         Mbuf *m;
         while ((m = iffq_extract(ffq)) == nullptr) {
             if (unlikely(stop)) {
