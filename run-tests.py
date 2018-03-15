@@ -25,8 +25,10 @@ argparser.add_argument('--num-points', help = "Number of points to take",
 argparser.add_argument('-D', '--duration',
                        help = "Duration of a test run in seconds",
                        type = int, default = 10)
-argparser.add_argument('--trials', help = "How many test runs per point",
+argparser.add_argument('--max-trials', help = "Max test runs per point",
                        type = int, default = 10)
+argparser.add_argument('--min-trials', help = "Min test runs per point",
+                       type = int, default = 5)
 argparser.add_argument('-M', '--indirect', action = 'store_true',
                        help = "Use mbufs (indirect payload)")
 argparser.add_argument('--exp-type', type = str, default = 'throughput',
@@ -60,8 +62,12 @@ if args.num_points < 1:
     printfl("Error: min_points < 1")
     quit(1)
 
-if args.trials < 1:
-    printfl("Error: trias < 1")
+if args.max_trials < 1 or args.min_trials < 1:
+    printfl("Error: trials < 1")
+    quit(1)
+
+if args.max_trials < args.min_trials:
+    printfl("Error: max_trials < min_trials")
     quit(1)
 
 # Generate values for P and C spin
@@ -104,7 +110,7 @@ try:
                 cmd += ' -T'
             printfl("Running '%s'" % cmd)
             mpps_values = []
-            for _ in range(0, args.trials):
+            for k in range(1, args.max_trials+1):
                 if args.dry_run:
                     mpps_values.append(0)  # mock it
                 else:
@@ -120,6 +126,14 @@ try:
                             mpps = float(m.group(1))
                             mpps_values.append(mpps)
                             printfl("Got %f Mpps" % mpps)
+                    if k >= args.min_trials:
+                        # We have reached the minimum number of trials. Let's
+                        # see if standard deviation is small enough that we
+                        # can stop.
+                        stddev = statistics.mean(mpps_values)
+                        mean = statistics.stdev(mpps_values)
+                        if stddev != 0 and mean / stddev  < 0.01:
+                            break
             results[(spin_p, spin_c)][queue] = mpps_values
 
         if args.sequencing == 'parallel':
@@ -145,7 +159,7 @@ for (p, c) in results:
     row = [p, c, p-c]
     for queue in queues:
         avg = statistics.mean(results[(p, c)][queue])
-        if args.trials > 1:
+        if args.min_trials > 1:
             std = statistics.stdev(results[(p, c)][queue])
         else:
             std = 0.0
