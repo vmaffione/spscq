@@ -1,7 +1,7 @@
 #!/bin/bash
 
-EXPDIR=exp1
-NUM_POINTS_THR=30
+EXPDIR=exp2
+NUM_POINTS_THR=29
 TRIALS=10
 SPIN_MIN=2
 
@@ -16,4 +16,5 @@ SPIN_MIN=2
 ./run-tests.py --trials $TRIALS --exp-type latency --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/007
 ./run-tests.py --trials $TRIALS -M --exp-type latency --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/008
 
-./run-tests.py --trials $TRIALS  --Bp 1 --spin-min $SPIN_MIN --num-points $NUM_POINTS_THR -S ctriangle | tee $EXPDIR/009
+./run-tests.py --trials $TRIALS  --Bp 1 --Bc 1 --spin-min $SPIN_MIN --num-points $NUM_POINTS_THR -S ctriangle | tee $EXPDIR/009
+./run-tests.py --trials $TRIALS  --Bp 1 --Bc 1 --spin-min $SPIN_MIN --num-points $NUM_POINTS_THR -S ptriangle | tee $EXPDIR/009
