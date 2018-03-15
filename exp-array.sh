@@ -17,6 +17,6 @@ SPIN_MIN=2
 ./run-tests.py --trials $TRIALS -M --exp-type latency --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/008
 
 ./run-tests.py --trials $TRIALS --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/009
-./run-tests.py --trials $TRIALS -M --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/010
+./run-tests.py --trials $TRIALS -M --Bp 1 --Bc 1 --spin-min 1 --num-points 1 -S parallel | tee $EXPDIR/010
 ./run-tests.py --trials $TRIALS --Bp 1 --Bc 1 --spin-min $SPIN_MIN --num-points $NUM_POINTS_THR -S ctriangle | tee $EXPDIR/011
 ./run-tests.py --trials $TRIALS --Bp 1 --Bc 1 --spin-min $SPIN_MIN --num-points $NUM_POINTS_THR -S ptriangle | tee $EXPDIR/012
