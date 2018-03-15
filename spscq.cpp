@@ -1,5 +1,5 @@
 /*
- * 2017 Vincenzo Maffione (Universita' di Pisa)
+ * 2017-2018 Vincenzo Maffione (Universita' di Pisa)
  */
 #include <stdio.h>
 #include <cstdlib>
@@ -446,6 +446,7 @@ llq_write(Blq *q, Mbuf *m)
     return 0;
 }
 
+#if 1
 static inline Mbuf *
 llq_read(Blq *q)
 {
@@ -461,6 +462,11 @@ llq_read(Blq *q)
     q->read = (q->read + 1) & q->qmask;
     return m;
 }
+#else
+/* For some reason this lets LLQ go faster in case of
+ * fast consumer (but not in the other case) ... */
+#define llq_read lq_read
+#endif
 
 static inline unsigned int
 blq_wspace(Blq *blq)
