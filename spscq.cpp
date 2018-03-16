@@ -1265,10 +1265,10 @@ biffq_producer(Global *const g)
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-                iffq_insert_local(ffq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_for<kMbufMode>(m, spin);
                 }
+                iffq_insert_local(ffq, m);
             }
             if (kMbufMode != MbufMode::NoAccess) {
                 compiler_barrier();
