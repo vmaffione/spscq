@@ -125,7 +125,7 @@ enum class MbufMode {
 struct Mbuf {
     unsigned int len;
     unsigned int __padding[7];
-#define MBUF_LEN_MAX 1500
+#define MBUF_LEN_MAX (4096-8*sizeof(unsigned int))
     char buf[MBUF_LEN_MAX];
 };
 
