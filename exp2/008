@@ -1,0 +1,54 @@
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t lq -M -T'
+Got 6.500000 Mpps
+Got 6.528000 Mpps
+Got 6.625000 Mpps
+Got 6.683000 Mpps
+Got 6.524000 Mpps
+Got 6.500000 Mpps
+Got 6.443000 Mpps
+Got 6.607000 Mpps
+Got 6.525000 Mpps
+Got 6.503000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t llq -M -T'
+Got 7.675000 Mpps
+Got 7.594000 Mpps
+Got 7.662000 Mpps
+Got 7.505000 Mpps
+Got 7.764000 Mpps
+Got 7.490000 Mpps
+Got 7.575000 Mpps
+Got 7.767000 Mpps
+Got 7.668000 Mpps
+Got 7.682000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t blq -M -T'
+Got 7.600000 Mpps
+Got 7.758000 Mpps
+Got 7.664000 Mpps
+Got 7.603000 Mpps
+Got 7.519000 Mpps
+Got 7.603000 Mpps
+Got 7.761000 Mpps
+Got 7.761000 Mpps
+Got 7.601000 Mpps
+Got 7.763000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t ffq -M -T'
+Got 7.537000 Mpps
+Got 7.545000 Mpps
+Got 7.530000 Mpps
+Got 7.532000 Mpps
+Got 7.558000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t iffq -M -T'
+Got 9.052000 Mpps
+Got 9.089000 Mpps
+Got 9.082000 Mpps
+Got 9.024000 Mpps
+Got 9.078000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t biffq -M -T'
+Got 9.057000 Mpps
+Got 9.074000 Mpps
+Got 9.067000 Mpps
+Got 9.068000 Mpps
+Got 9.022000 Mpps
+./run-tests.py -M --exp-type latency --spin-min 0 --num-points 1 -S parallel
+       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
+       0        0        0     6.54     0.07     7.64     0.10     7.66     0.09     7.54     0.01     9.06     0.03     9.06     0.02 

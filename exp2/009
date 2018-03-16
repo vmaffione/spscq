@@ -1,3 +1,69 @@
-./run-tests.py --trials 10 --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t lq'
+Got 74.425000 Mpps
+Got 105.956000 Mpps
+Got 100.290000 Mpps
+Got 102.039000 Mpps
+Got 109.683000 Mpps
+Got 74.213000 Mpps
+Got 86.627000 Mpps
+Got 72.159000 Mpps
+Got 94.922000 Mpps
+Got 103.150000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t llq'
+Got 153.573000 Mpps
+Got 309.457000 Mpps
+Got 271.718000 Mpps
+Got 303.702000 Mpps
+Got 264.463000 Mpps
+Got 302.499000 Mpps
+Got 301.828000 Mpps
+Got 265.784000 Mpps
+Got 308.944000 Mpps
+Got 286.019000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t blq'
+Got 106.382000 Mpps
+Got 89.710000 Mpps
+Got 123.453000 Mpps
+Got 87.588000 Mpps
+Got 104.618000 Mpps
+Got 106.470000 Mpps
+Got 143.577000 Mpps
+Got 104.854000 Mpps
+Got 94.541000 Mpps
+Got 107.098000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t ffq'
+Got 183.480000 Mpps
+Got 218.262000 Mpps
+Got 194.264000 Mpps
+Got 196.655000 Mpps
+Got 216.746000 Mpps
+Got 185.341000 Mpps
+Got 186.675000 Mpps
+Got 227.518000 Mpps
+Got 220.004000 Mpps
+Got 214.496000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t iffq'
+Got 386.295000 Mpps
+Got 378.684000 Mpps
+Got 377.336000 Mpps
+Got 375.349000 Mpps
+Got 369.518000 Mpps
+Got 321.812000 Mpps
+Got 345.905000 Mpps
+Got 363.666000 Mpps
+Got 381.286000 Mpps
+Got 375.007000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t biffq'
+Got 96.360000 Mpps
+Got 98.892000 Mpps
+Got 94.887000 Mpps
+Got 97.755000 Mpps
+Got 93.963000 Mpps
+Got 97.082000 Mpps
+Got 99.443000 Mpps
+Got 95.522000 Mpps
+Got 92.649000 Mpps
+Got 97.145000 Mpps
+./run-tests.py --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel
        P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
-       0        0        0    83.78    26.52   179.44    50.02   115.19    21.15   160.95    20.03   288.86    17.83   117.36     5.56 
+       0        0        0    92.35    14.36   276.80    46.76   106.83    16.50   204.34    16.67   367.49    19.59    96.37     2.14 

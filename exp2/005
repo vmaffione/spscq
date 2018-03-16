@@ -1,0 +1,1279 @@
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t lq -M'
+Got 17.131000 Mpps
+Got 19.907000 Mpps
+Got 18.701000 Mpps
+Got 18.692000 Mpps
+Got 18.924000 Mpps
+Got 19.319000 Mpps
+Got 17.897000 Mpps
+Got 18.942000 Mpps
+Got 16.952000 Mpps
+Got 19.955000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t llq -M'
+Got 18.741000 Mpps
+Got 19.146000 Mpps
+Got 18.742000 Mpps
+Got 19.372000 Mpps
+Got 19.375000 Mpps
+Got 18.708000 Mpps
+Got 18.750000 Mpps
+Got 19.149000 Mpps
+Got 18.725000 Mpps
+Got 20.265000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t blq -M'
+Got 29.927000 Mpps
+Got 29.964000 Mpps
+Got 29.937000 Mpps
+Got 29.938000 Mpps
+Got 30.044000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t ffq -M'
+Got 21.177000 Mpps
+Got 21.243000 Mpps
+Got 21.202000 Mpps
+Got 21.224000 Mpps
+Got 21.095000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t iffq -M'
+Got 30.718000 Mpps
+Got 30.791000 Mpps
+Got 30.861000 Mpps
+Got 30.738000 Mpps
+Got 30.808000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 2 -C 2 -t biffq -M'
+Got 30.667000 Mpps
+Got 30.822000 Mpps
+Got 30.704000 Mpps
+Got 30.724000 Mpps
+Got 30.724000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t lq -M'
+Got 18.906000 Mpps
+Got 19.937000 Mpps
+Got 19.971000 Mpps
+Got 18.963000 Mpps
+Got 19.369000 Mpps
+Got 19.999000 Mpps
+Got 18.987000 Mpps
+Got 19.343000 Mpps
+Got 19.981000 Mpps
+Got 18.655000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t llq -M'
+Got 20.201000 Mpps
+Got 19.338000 Mpps
+Got 19.085000 Mpps
+Got 20.236000 Mpps
+Got 19.084000 Mpps
+Got 19.087000 Mpps
+Got 19.114000 Mpps
+Got 18.717000 Mpps
+Got 19.302000 Mpps
+Got 18.713000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t blq -M'
+Got 29.973000 Mpps
+Got 29.944000 Mpps
+Got 29.999000 Mpps
+Got 29.967000 Mpps
+Got 29.935000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t ffq -M'
+Got 21.193000 Mpps
+Got 21.227000 Mpps
+Got 21.201000 Mpps
+Got 21.194000 Mpps
+Got 21.072000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t iffq -M'
+Got 30.803000 Mpps
+Got 30.699000 Mpps
+Got 30.792000 Mpps
+Got 30.639000 Mpps
+Got 30.709000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 3 -C 2 -t biffq -M'
+Got 30.710000 Mpps
+Got 30.703000 Mpps
+Got 30.658000 Mpps
+Got 30.705000 Mpps
+Got 30.700000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t lq -M'
+Got 19.320000 Mpps
+Got 18.654000 Mpps
+Got 19.293000 Mpps
+Got 18.939000 Mpps
+Got 18.618000 Mpps
+Got 19.319000 Mpps
+Got 19.931000 Mpps
+Got 19.934000 Mpps
+Got 19.264000 Mpps
+Got 19.935000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t llq -M'
+Got 19.119000 Mpps
+Got 19.082000 Mpps
+Got 19.123000 Mpps
+Got 19.126000 Mpps
+Got 20.272000 Mpps
+Got 18.752000 Mpps
+Got 18.761000 Mpps
+Got 19.348000 Mpps
+Got 19.111000 Mpps
+Got 19.141000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t blq -M'
+Got 29.933000 Mpps
+Got 29.937000 Mpps
+Got 29.934000 Mpps
+Got 29.887000 Mpps
+Got 29.936000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t ffq -M'
+Got 21.151000 Mpps
+Got 21.084000 Mpps
+Got 21.187000 Mpps
+Got 21.187000 Mpps
+Got 21.195000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t iffq -M'
+Got 30.670000 Mpps
+Got 30.915000 Mpps
+Got 30.869000 Mpps
+Got 30.672000 Mpps
+Got 30.796000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 4 -C 2 -t biffq -M'
+Got 30.725000 Mpps
+Got 30.630000 Mpps
+Got 30.747000 Mpps
+Got 30.705000 Mpps
+Got 30.617000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t lq -M'
+Got 18.654000 Mpps
+Got 19.394000 Mpps
+Got 18.656000 Mpps
+Got 18.951000 Mpps
+Got 18.716000 Mpps
+Got 19.403000 Mpps
+Got 19.335000 Mpps
+Got 18.837000 Mpps
+Got 18.661000 Mpps
+Got 18.678000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t llq -M'
+Got 20.249000 Mpps
+Got 20.235000 Mpps
+Got 19.132000 Mpps
+Got 19.322000 Mpps
+Got 19.139000 Mpps
+Got 19.330000 Mpps
+Got 19.363000 Mpps
+Got 20.272000 Mpps
+Got 19.203000 Mpps
+Got 18.724000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t blq -M'
+Got 29.902000 Mpps
+Got 29.900000 Mpps
+Got 29.891000 Mpps
+Got 30.016000 Mpps
+Got 29.910000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t ffq -M'
+Got 21.220000 Mpps
+Got 21.213000 Mpps
+Got 21.186000 Mpps
+Got 21.221000 Mpps
+Got 21.179000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t iffq -M'
+Got 30.618000 Mpps
+Got 30.851000 Mpps
+Got 30.796000 Mpps
+Got 30.707000 Mpps
+Got 30.888000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 5 -C 2 -t biffq -M'
+Got 30.716000 Mpps
+Got 30.618000 Mpps
+Got 30.658000 Mpps
+Got 30.632000 Mpps
+Got 30.749000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t lq -M'
+Got 19.972000 Mpps
+Got 19.966000 Mpps
+Got 19.967000 Mpps
+Got 18.902000 Mpps
+Got 19.349000 Mpps
+Got 18.706000 Mpps
+Got 18.943000 Mpps
+Got 18.988000 Mpps
+Got 19.969000 Mpps
+Got 19.868000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t llq -M'
+Got 19.343000 Mpps
+Got 19.291000 Mpps
+Got 18.729000 Mpps
+Got 18.745000 Mpps
+Got 20.270000 Mpps
+Got 19.348000 Mpps
+Got 19.375000 Mpps
+Got 20.216000 Mpps
+Got 19.129000 Mpps
+Got 18.706000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t blq -M'
+Got 29.915000 Mpps
+Got 29.911000 Mpps
+Got 30.093000 Mpps
+Got 29.938000 Mpps
+Got 29.937000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t ffq -M'
+Got 21.198000 Mpps
+Got 21.152000 Mpps
+Got 21.129000 Mpps
+Got 21.174000 Mpps
+Got 21.106000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t iffq -M'
+Got 30.705000 Mpps
+Got 30.775000 Mpps
+Got 30.940000 Mpps
+Got 30.829000 Mpps
+Got 30.819000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 6 -C 2 -t biffq -M'
+Got 30.972000 Mpps
+Got 30.670000 Mpps
+Got 30.678000 Mpps
+Got 30.593000 Mpps
+Got 30.572000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t lq -M'
+Got 19.970000 Mpps
+Got 18.712000 Mpps
+Got 18.953000 Mpps
+Got 19.948000 Mpps
+Got 18.676000 Mpps
+Got 18.661000 Mpps
+Got 18.956000 Mpps
+Got 20.010000 Mpps
+Got 18.896000 Mpps
+Got 19.965000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t llq -M'
+Got 19.095000 Mpps
+Got 19.324000 Mpps
+Got 18.686000 Mpps
+Got 18.754000 Mpps
+Got 20.272000 Mpps
+Got 19.417000 Mpps
+Got 19.264000 Mpps
+Got 20.258000 Mpps
+Got 19.342000 Mpps
+Got 18.697000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t blq -M'
+Got 29.937000 Mpps
+Got 30.078000 Mpps
+Got 29.980000 Mpps
+Got 29.932000 Mpps
+Got 29.931000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t ffq -M'
+Got 21.150000 Mpps
+Got 21.139000 Mpps
+Got 21.088000 Mpps
+Got 21.184000 Mpps
+Got 21.162000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t iffq -M'
+Got 30.796000 Mpps
+Got 30.766000 Mpps
+Got 30.787000 Mpps
+Got 30.861000 Mpps
+Got 30.858000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 7 -C 2 -t biffq -M'
+Got 30.768000 Mpps
+Got 30.640000 Mpps
+Got 30.703000 Mpps
+Got 30.612000 Mpps
+Got 30.705000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t lq -M'
+Got 18.699000 Mpps
+Got 19.081000 Mpps
+Got 19.401000 Mpps
+Got 18.887000 Mpps
+Got 18.953000 Mpps
+Got 19.895000 Mpps
+Got 18.643000 Mpps
+Got 19.309000 Mpps
+Got 19.952000 Mpps
+Got 19.318000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t llq -M'
+Got 20.204000 Mpps
+Got 20.233000 Mpps
+Got 18.746000 Mpps
+Got 18.743000 Mpps
+Got 19.086000 Mpps
+Got 18.697000 Mpps
+Got 19.086000 Mpps
+Got 20.162000 Mpps
+Got 20.254000 Mpps
+Got 19.086000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t blq -M'
+Got 30.054000 Mpps
+Got 29.922000 Mpps
+Got 29.944000 Mpps
+Got 29.970000 Mpps
+Got 29.782000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t ffq -M'
+Got 21.060000 Mpps
+Got 21.255000 Mpps
+Got 21.172000 Mpps
+Got 21.254000 Mpps
+Got 21.172000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t iffq -M'
+Got 30.738000 Mpps
+Got 30.729000 Mpps
+Got 30.680000 Mpps
+Got 30.645000 Mpps
+Got 30.672000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 8 -C 2 -t biffq -M'
+Got 30.819000 Mpps
+Got 30.703000 Mpps
+Got 30.636000 Mpps
+Got 30.671000 Mpps
+Got 30.735000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t lq -M'
+Got 19.876000 Mpps
+Got 18.628000 Mpps
+Got 19.215000 Mpps
+Got 19.230000 Mpps
+Got 19.834000 Mpps
+Got 17.324000 Mpps
+Got 19.877000 Mpps
+Got 18.657000 Mpps
+Got 18.826000 Mpps
+Got 18.673000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t llq -M'
+Got 19.409000 Mpps
+Got 20.073000 Mpps
+Got 19.423000 Mpps
+Got 18.731000 Mpps
+Got 18.823000 Mpps
+Got 20.064000 Mpps
+Got 19.000000 Mpps
+Got 19.335000 Mpps
+Got 18.776000 Mpps
+Got 19.362000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t blq -M'
+Got 30.167000 Mpps
+Got 29.948000 Mpps
+Got 29.937000 Mpps
+Got 29.983000 Mpps
+Got 29.931000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t ffq -M'
+Got 21.083000 Mpps
+Got 21.044000 Mpps
+Got 21.135000 Mpps
+Got 21.080000 Mpps
+Got 21.092000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t iffq -M'
+Got 30.944000 Mpps
+Got 30.858000 Mpps
+Got 30.784000 Mpps
+Got 30.855000 Mpps
+Got 30.797000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 9 -C 2 -t biffq -M'
+Got 30.893000 Mpps
+Got 30.917000 Mpps
+Got 30.983000 Mpps
+Got 30.941000 Mpps
+Got 30.905000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t lq -M'
+Got 18.665000 Mpps
+Got 18.646000 Mpps
+Got 18.847000 Mpps
+Got 19.192000 Mpps
+Got 19.858000 Mpps
+Got 18.857000 Mpps
+Got 18.820000 Mpps
+Got 18.801000 Mpps
+Got 19.872000 Mpps
+Got 18.638000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t llq -M'
+Got 18.780000 Mpps
+Got 18.806000 Mpps
+Got 19.053000 Mpps
+Got 19.357000 Mpps
+Got 19.046000 Mpps
+Got 20.080000 Mpps
+Got 20.021000 Mpps
+Got 19.040000 Mpps
+Got 19.062000 Mpps
+Got 18.988000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t blq -M'
+Got 29.948000 Mpps
+Got 29.942000 Mpps
+Got 29.878000 Mpps
+Got 30.026000 Mpps
+Got 29.938000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t ffq -M'
+Got 21.126000 Mpps
+Got 21.047000 Mpps
+Got 21.056000 Mpps
+Got 21.106000 Mpps
+Got 21.103000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t iffq -M'
+Got 30.832000 Mpps
+Got 30.776000 Mpps
+Got 30.712000 Mpps
+Got 30.768000 Mpps
+Got 30.798000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 10 -C 2 -t biffq -M'
+Got 30.956000 Mpps
+Got 30.947000 Mpps
+Got 30.860000 Mpps
+Got 31.068000 Mpps
+Got 30.927000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t lq -M'
+Got 18.814000 Mpps
+Got 19.228000 Mpps
+Got 19.828000 Mpps
+Got 18.669000 Mpps
+Got 19.859000 Mpps
+Got 18.706000 Mpps
+Got 19.898000 Mpps
+Got 18.854000 Mpps
+Got 19.194000 Mpps
+Got 18.641000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t llq -M'
+Got 19.012000 Mpps
+Got 18.798000 Mpps
+Got 18.763000 Mpps
+Got 19.082000 Mpps
+Got 19.009000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t blq -M'
+Got 30.022000 Mpps
+Got 29.967000 Mpps
+Got 29.939000 Mpps
+Got 29.934000 Mpps
+Got 29.940000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t ffq -M'
+Got 21.140000 Mpps
+Got 21.149000 Mpps
+Got 21.112000 Mpps
+Got 21.131000 Mpps
+Got 21.045000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t iffq -M'
+Got 30.865000 Mpps
+Got 30.874000 Mpps
+Got 30.716000 Mpps
+Got 30.785000 Mpps
+Got 30.848000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 11 -C 2 -t biffq -M'
+Got 30.882000 Mpps
+Got 30.911000 Mpps
+Got 31.000000 Mpps
+Got 30.852000 Mpps
+Got 30.935000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t lq -M'
+Got 19.171000 Mpps
+Got 18.661000 Mpps
+Got 19.898000 Mpps
+Got 19.852000 Mpps
+Got 19.225000 Mpps
+Got 19.193000 Mpps
+Got 18.816000 Mpps
+Got 18.657000 Mpps
+Got 18.827000 Mpps
+Got 19.816000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t llq -M'
+Got 19.395000 Mpps
+Got 19.384000 Mpps
+Got 19.441000 Mpps
+Got 19.373000 Mpps
+Got 19.002000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t blq -M'
+Got 29.936000 Mpps
+Got 29.872000 Mpps
+Got 30.043000 Mpps
+Got 29.938000 Mpps
+Got 30.020000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t ffq -M'
+Got 21.115000 Mpps
+Got 21.114000 Mpps
+Got 21.125000 Mpps
+Got 21.089000 Mpps
+Got 21.191000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t iffq -M'
+Got 30.833000 Mpps
+Got 30.703000 Mpps
+Got 30.834000 Mpps
+Got 30.793000 Mpps
+Got 30.767000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 12 -C 2 -t biffq -M'
+Got 30.832000 Mpps
+Got 30.831000 Mpps
+Got 30.872000 Mpps
+Got 31.079000 Mpps
+Got 30.830000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t lq -M'
+Got 18.823000 Mpps
+Got 18.840000 Mpps
+Got 19.203000 Mpps
+Got 19.214000 Mpps
+Got 19.142000 Mpps
+Got 18.624000 Mpps
+Got 18.831000 Mpps
+Got 19.153000 Mpps
+Got 18.695000 Mpps
+Got 19.780000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t llq -M'
+Got 18.840000 Mpps
+Got 19.376000 Mpps
+Got 19.946000 Mpps
+Got 19.969000 Mpps
+Got 19.687000 Mpps
+Got 19.944000 Mpps
+Got 18.793000 Mpps
+Got 18.468000 Mpps
+Got 19.948000 Mpps
+Got 19.008000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t blq -M'
+Got 30.008000 Mpps
+Got 30.071000 Mpps
+Got 30.046000 Mpps
+Got 29.891000 Mpps
+Got 30.045000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t ffq -M'
+Got 21.024000 Mpps
+Got 21.203000 Mpps
+Got 21.166000 Mpps
+Got 21.126000 Mpps
+Got 21.110000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t iffq -M'
+Got 30.883000 Mpps
+Got 30.703000 Mpps
+Got 30.755000 Mpps
+Got 30.717000 Mpps
+Got 30.797000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 13 -C 2 -t biffq -M'
+Got 30.958000 Mpps
+Got 30.959000 Mpps
+Got 30.931000 Mpps
+Got 30.929000 Mpps
+Got 30.879000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t lq -M'
+Got 18.812000 Mpps
+Got 19.186000 Mpps
+Got 18.792000 Mpps
+Got 18.591000 Mpps
+Got 18.600000 Mpps
+Got 19.738000 Mpps
+Got 19.734000 Mpps
+Got 18.334000 Mpps
+Got 18.583000 Mpps
+Got 19.202000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t llq -M'
+Got 18.958000 Mpps
+Got 18.995000 Mpps
+Got 19.017000 Mpps
+Got 18.983000 Mpps
+Got 19.371000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t blq -M'
+Got 29.932000 Mpps
+Got 29.852000 Mpps
+Got 30.060000 Mpps
+Got 29.930000 Mpps
+Got 29.941000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t ffq -M'
+Got 21.127000 Mpps
+Got 21.045000 Mpps
+Got 21.184000 Mpps
+Got 21.169000 Mpps
+Got 21.076000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t iffq -M'
+Got 30.697000 Mpps
+Got 30.801000 Mpps
+Got 30.665000 Mpps
+Got 30.795000 Mpps
+Got 30.771000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 15 -C 2 -t biffq -M'
+Got 30.961000 Mpps
+Got 31.048000 Mpps
+Got 30.961000 Mpps
+Got 30.955000 Mpps
+Got 30.960000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t lq -M'
+Got 18.883000 Mpps
+Got 17.192000 Mpps
+Got 17.236000 Mpps
+Got 18.560000 Mpps
+Got 19.754000 Mpps
+Got 18.995000 Mpps
+Got 19.754000 Mpps
+Got 18.547000 Mpps
+Got 18.911000 Mpps
+Got 18.870000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t llq -M'
+Got 19.264000 Mpps
+Got 19.145000 Mpps
+Got 19.276000 Mpps
+Got 19.066000 Mpps
+Got 19.121000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t blq -M'
+Got 30.011000 Mpps
+Got 29.930000 Mpps
+Got 29.936000 Mpps
+Got 30.003000 Mpps
+Got 29.953000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t ffq -M'
+Got 21.058000 Mpps
+Got 21.076000 Mpps
+Got 20.929000 Mpps
+Got 20.966000 Mpps
+Got 21.042000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t iffq -M'
+Got 30.957000 Mpps
+Got 30.817000 Mpps
+Got 30.896000 Mpps
+Got 30.780000 Mpps
+Got 30.735000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 17 -C 2 -t biffq -M'
+Got 30.962000 Mpps
+Got 30.898000 Mpps
+Got 30.928000 Mpps
+Got 30.920000 Mpps
+Got 30.961000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t lq -M'
+Got 18.880000 Mpps
+Got 19.190000 Mpps
+Got 18.565000 Mpps
+Got 19.753000 Mpps
+Got 19.213000 Mpps
+Got 18.849000 Mpps
+Got 18.595000 Mpps
+Got 19.688000 Mpps
+Got 19.733000 Mpps
+Got 19.204000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t llq -M'
+Got 19.104000 Mpps
+Got 18.766000 Mpps
+Got 19.255000 Mpps
+Got 20.056000 Mpps
+Got 19.130000 Mpps
+Got 20.029000 Mpps
+Got 19.208000 Mpps
+Got 18.710000 Mpps
+Got 19.068000 Mpps
+Got 19.198000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t blq -M'
+Got 29.932000 Mpps
+Got 29.938000 Mpps
+Got 30.035000 Mpps
+Got 30.000000 Mpps
+Got 29.933000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t ffq -M'
+Got 20.899000 Mpps
+Got 21.068000 Mpps
+Got 20.975000 Mpps
+Got 21.011000 Mpps
+Got 21.013000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t iffq -M'
+Got 30.829000 Mpps
+Got 30.937000 Mpps
+Got 30.864000 Mpps
+Got 30.880000 Mpps
+Got 30.838000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 19 -C 2 -t biffq -M'
+Got 30.953000 Mpps
+Got 30.942000 Mpps
+Got 30.920000 Mpps
+Got 30.978000 Mpps
+Got 30.952000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t lq -M'
+Got 19.729000 Mpps
+Got 19.654000 Mpps
+Got 17.368000 Mpps
+Got 19.720000 Mpps
+Got 17.160000 Mpps
+Got 19.789000 Mpps
+Got 18.887000 Mpps
+Got 19.120000 Mpps
+Got 19.214000 Mpps
+Got 19.061000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t llq -M'
+Got 19.757000 Mpps
+Got 18.707000 Mpps
+Got 19.251000 Mpps
+Got 18.297000 Mpps
+Got 18.925000 Mpps
+Got 18.713000 Mpps
+Got 18.705000 Mpps
+Got 18.730000 Mpps
+Got 18.717000 Mpps
+Got 18.955000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t blq -M'
+Got 29.937000 Mpps
+Got 30.112000 Mpps
+Got 29.980000 Mpps
+Got 29.872000 Mpps
+Got 30.060000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t ffq -M'
+Got 21.069000 Mpps
+Got 20.920000 Mpps
+Got 20.947000 Mpps
+Got 20.927000 Mpps
+Got 20.866000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t iffq -M'
+Got 30.916000 Mpps
+Got 30.803000 Mpps
+Got 30.758000 Mpps
+Got 30.828000 Mpps
+Got 30.834000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 21 -C 2 -t biffq -M'
+Got 30.936000 Mpps
+Got 30.931000 Mpps
+Got 30.922000 Mpps
+Got 30.944000 Mpps
+Got 30.911000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t lq -M'
+Got 18.893000 Mpps
+Got 22.526000 Mpps
+Got 19.180000 Mpps
+Got 18.867000 Mpps
+Got 18.869000 Mpps
+Got 19.187000 Mpps
+Got 18.493000 Mpps
+Got 18.474000 Mpps
+Got 23.499000 Mpps
+Got 24.195000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t llq -M'
+Got 19.869000 Mpps
+Got 18.724000 Mpps
+Got 19.252000 Mpps
+Got 18.934000 Mpps
+Got 18.727000 Mpps
+Got 18.776000 Mpps
+Got 18.775000 Mpps
+Got 18.949000 Mpps
+Got 19.856000 Mpps
+Got 19.266000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t blq -M'
+Got 30.130000 Mpps
+Got 29.931000 Mpps
+Got 29.899000 Mpps
+Got 29.956000 Mpps
+Got 29.948000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t ffq -M'
+Got 20.918000 Mpps
+Got 20.982000 Mpps
+Got 20.937000 Mpps
+Got 20.931000 Mpps
+Got 20.918000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t iffq -M'
+Got 30.875000 Mpps
+Got 30.877000 Mpps
+Got 30.647000 Mpps
+Got 30.787000 Mpps
+Got 30.990000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 23 -C 2 -t biffq -M'
+Got 30.961000 Mpps
+Got 30.961000 Mpps
+Got 30.961000 Mpps
+Got 30.939000 Mpps
+Got 30.972000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t lq -M'
+Got 25.268000 Mpps
+Got 24.183000 Mpps
+Got 25.321000 Mpps
+Got 24.595000 Mpps
+Got 18.236000 Mpps
+Got 25.165000 Mpps
+Got 24.859000 Mpps
+Got 24.123000 Mpps
+Got 24.398000 Mpps
+Got 24.872000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t llq -M'
+Got 25.751000 Mpps
+Got 25.738000 Mpps
+Got 25.754000 Mpps
+Got 25.759000 Mpps
+Got 25.742000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t blq -M'
+Got 25.771000 Mpps
+Got 25.782000 Mpps
+Got 25.770000 Mpps
+Got 25.771000 Mpps
+Got 25.784000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t ffq -M'
+Got 24.853000 Mpps
+Got 24.905000 Mpps
+Got 24.902000 Mpps
+Got 24.835000 Mpps
+Got 24.889000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t iffq -M'
+Got 25.660000 Mpps
+Got 25.684000 Mpps
+Got 25.671000 Mpps
+Got 25.655000 Mpps
+Got 25.662000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 25 -C 2 -t biffq -M'
+Got 25.068000 Mpps
+Got 25.068000 Mpps
+Got 25.093000 Mpps
+Got 25.104000 Mpps
+Got 25.045000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t lq -M'
+Got 25.210000 Mpps
+Got 23.504000 Mpps
+Got 24.329000 Mpps
+Got 25.266000 Mpps
+Got 24.380000 Mpps
+Got 18.164000 Mpps
+Got 17.214000 Mpps
+Got 24.408000 Mpps
+Got 24.387000 Mpps
+Got 25.244000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t llq -M'
+Got 25.694000 Mpps
+Got 25.692000 Mpps
+Got 25.695000 Mpps
+Got 25.697000 Mpps
+Got 25.692000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t blq -M'
+Got 25.766000 Mpps
+Got 25.763000 Mpps
+Got 25.762000 Mpps
+Got 25.760000 Mpps
+Got 25.769000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t ffq -M'
+Got 24.595000 Mpps
+Got 24.584000 Mpps
+Got 24.585000 Mpps
+Got 24.614000 Mpps
+Got 24.641000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t iffq -M'
+Got 25.624000 Mpps
+Got 25.643000 Mpps
+Got 25.645000 Mpps
+Got 25.647000 Mpps
+Got 25.657000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 27 -C 2 -t biffq -M'
+Got 25.035000 Mpps
+Got 25.026000 Mpps
+Got 25.064000 Mpps
+Got 25.081000 Mpps
+Got 25.042000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t lq -M'
+Got 22.353000 Mpps
+Got 22.345000 Mpps
+Got 22.975000 Mpps
+Got 23.078000 Mpps
+Got 17.482000 Mpps
+Got 23.256000 Mpps
+Got 22.361000 Mpps
+Got 22.356000 Mpps
+Got 22.354000 Mpps
+Got 23.068000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t llq -M'
+Got 25.657000 Mpps
+Got 25.666000 Mpps
+Got 25.668000 Mpps
+Got 25.663000 Mpps
+Got 25.671000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t blq -M'
+Got 25.754000 Mpps
+Got 25.761000 Mpps
+Got 25.762000 Mpps
+Got 25.764000 Mpps
+Got 25.758000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t ffq -M'
+Got 24.201000 Mpps
+Got 24.184000 Mpps
+Got 24.251000 Mpps
+Got 24.269000 Mpps
+Got 24.263000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t iffq -M'
+Got 25.601000 Mpps
+Got 25.625000 Mpps
+Got 25.611000 Mpps
+Got 25.614000 Mpps
+Got 25.602000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 29 -C 2 -t biffq -M'
+Got 25.073000 Mpps
+Got 25.010000 Mpps
+Got 25.016000 Mpps
+Got 24.998000 Mpps
+Got 25.016000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t lq -M'
+Got 21.961000 Mpps
+Got 16.690000 Mpps
+Got 21.756000 Mpps
+Got 21.851000 Mpps
+Got 21.749000 Mpps
+Got 21.964000 Mpps
+Got 16.553000 Mpps
+Got 21.744000 Mpps
+Got 21.965000 Mpps
+Got 21.868000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t llq -M'
+Got 25.693000 Mpps
+Got 25.660000 Mpps
+Got 25.651000 Mpps
+Got 25.646000 Mpps
+Got 25.649000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t blq -M'
+Got 25.759000 Mpps
+Got 25.750000 Mpps
+Got 25.715000 Mpps
+Got 25.758000 Mpps
+Got 25.761000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t ffq -M'
+Got 24.084000 Mpps
+Got 24.055000 Mpps
+Got 24.045000 Mpps
+Got 24.041000 Mpps
+Got 24.026000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t iffq -M'
+Got 25.581000 Mpps
+Got 25.579000 Mpps
+Got 25.592000 Mpps
+Got 25.593000 Mpps
+Got 25.599000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 31 -C 2 -t biffq -M'
+Got 25.035000 Mpps
+Got 25.011000 Mpps
+Got 25.050000 Mpps
+Got 25.039000 Mpps
+Got 25.035000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t lq -M'
+Got 18.666000 Mpps
+Got 17.977000 Mpps
+Got 17.919000 Mpps
+Got 18.646000 Mpps
+Got 17.986000 Mpps
+Got 18.636000 Mpps
+Got 18.661000 Mpps
+Got 18.004000 Mpps
+Got 18.018000 Mpps
+Got 18.671000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t llq -M'
+Got 18.266000 Mpps
+Got 18.293000 Mpps
+Got 18.263000 Mpps
+Got 18.344000 Mpps
+Got 18.272000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t blq -M'
+Got 18.432000 Mpps
+Got 18.429000 Mpps
+Got 18.431000 Mpps
+Got 18.429000 Mpps
+Got 18.430000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t ffq -M'
+Got 18.129000 Mpps
+Got 18.167000 Mpps
+Got 18.179000 Mpps
+Got 18.175000 Mpps
+Got 18.147000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t iffq -M'
+Got 18.346000 Mpps
+Got 18.322000 Mpps
+Got 18.335000 Mpps
+Got 18.355000 Mpps
+Got 18.351000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 41 -C 2 -t biffq -M'
+Got 18.045000 Mpps
+Got 18.044000 Mpps
+Got 18.031000 Mpps
+Got 18.066000 Mpps
+Got 18.062000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t lq -M'
+Got 15.297000 Mpps
+Got 15.584000 Mpps
+Got 15.504000 Mpps
+Got 15.595000 Mpps
+Got 15.574000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t llq -M'
+Got 16.002000 Mpps
+Got 15.937000 Mpps
+Got 16.023000 Mpps
+Got 15.993000 Mpps
+Got 16.021000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t blq -M'
+Got 16.124000 Mpps
+Got 16.123000 Mpps
+Got 16.123000 Mpps
+Got 16.122000 Mpps
+Got 16.120000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t ffq -M'
+Got 15.420000 Mpps
+Got 15.451000 Mpps
+Got 15.418000 Mpps
+Got 15.442000 Mpps
+Got 15.431000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t iffq -M'
+Got 16.052000 Mpps
+Got 16.055000 Mpps
+Got 16.066000 Mpps
+Got 16.056000 Mpps
+Got 16.055000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 51 -C 2 -t biffq -M'
+Got 15.839000 Mpps
+Got 15.846000 Mpps
+Got 15.836000 Mpps
+Got 15.850000 Mpps
+Got 15.846000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t lq -M'
+Got 13.094000 Mpps
+Got 13.166000 Mpps
+Got 13.088000 Mpps
+Got 13.407000 Mpps
+Got 13.092000 Mpps
+Got 13.410000 Mpps
+Got 13.245000 Mpps
+Got 13.346000 Mpps
+Got 13.159000 Mpps
+Got 13.160000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t llq -M'
+Got 14.216000 Mpps
+Got 14.248000 Mpps
+Got 14.245000 Mpps
+Got 14.247000 Mpps
+Got 14.245000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t blq -M'
+Got 14.337000 Mpps
+Got 14.337000 Mpps
+Got 14.337000 Mpps
+Got 14.337000 Mpps
+Got 14.334000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t ffq -M'
+Got 13.233000 Mpps
+Got 13.248000 Mpps
+Got 13.243000 Mpps
+Got 13.257000 Mpps
+Got 13.250000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t iffq -M'
+Got 14.289000 Mpps
+Got 14.290000 Mpps
+Got 14.285000 Mpps
+Got 14.285000 Mpps
+Got 14.287000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 61 -C 2 -t biffq -M'
+Got 14.099000 Mpps
+Got 14.103000 Mpps
+Got 14.102000 Mpps
+Got 14.104000 Mpps
+Got 14.102000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t lq -M'
+Got 10.737000 Mpps
+Got 10.718000 Mpps
+Got 10.617000 Mpps
+Got 10.372000 Mpps
+Got 10.362000 Mpps
+Got 10.381000 Mpps
+Got 10.733000 Mpps
+Got 10.377000 Mpps
+Got 10.360000 Mpps
+Got 10.353000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t llq -M'
+Got 10.723000 Mpps
+Got 10.718000 Mpps
+Got 10.716000 Mpps
+Got 10.723000 Mpps
+Got 10.715000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t blq -M'
+Got 10.764000 Mpps
+Got 10.761000 Mpps
+Got 10.764000 Mpps
+Got 10.760000 Mpps
+Got 10.761000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t ffq -M'
+Got 10.711000 Mpps
+Got 10.702000 Mpps
+Got 10.711000 Mpps
+Got 10.700000 Mpps
+Got 10.739000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t iffq -M'
+Got 10.744000 Mpps
+Got 10.740000 Mpps
+Got 10.740000 Mpps
+Got 10.744000 Mpps
+Got 10.742000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 81 -C 2 -t biffq -M'
+Got 10.637000 Mpps
+Got 10.637000 Mpps
+Got 10.636000 Mpps
+Got 10.639000 Mpps
+Got 10.635000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t lq -M'
+Got 8.887000 Mpps
+Got 8.573000 Mpps
+Got 8.888000 Mpps
+Got 8.546000 Mpps
+Got 8.875000 Mpps
+Got 8.577000 Mpps
+Got 8.866000 Mpps
+Got 8.546000 Mpps
+Got 8.547000 Mpps
+Got 8.888000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t llq -M'
+Got 8.609000 Mpps
+Got 8.611000 Mpps
+Got 8.609000 Mpps
+Got 8.597000 Mpps
+Got 8.598000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t blq -M'
+Got 8.616000 Mpps
+Got 8.617000 Mpps
+Got 8.616000 Mpps
+Got 8.616000 Mpps
+Got 8.617000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t ffq -M'
+Got 8.807000 Mpps
+Got 8.811000 Mpps
+Got 8.820000 Mpps
+Got 8.808000 Mpps
+Got 8.798000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t iffq -M'
+Got 8.598000 Mpps
+Got 8.602000 Mpps
+Got 8.603000 Mpps
+Got 8.599000 Mpps
+Got 8.602000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 101 -C 2 -t biffq -M'
+Got 8.537000 Mpps
+Got 8.537000 Mpps
+Got 8.537000 Mpps
+Got 8.538000 Mpps
+Got 8.537000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t lq -M'
+Got 7.340000 Mpps
+Got 7.606000 Mpps
+Got 7.342000 Mpps
+Got 7.607000 Mpps
+Got 7.342000 Mpps
+Got 7.342000 Mpps
+Got 7.341000 Mpps
+Got 7.608000 Mpps
+Got 7.348000 Mpps
+Got 7.340000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t llq -M'
+Got 7.590000 Mpps
+Got 7.584000 Mpps
+Got 7.591000 Mpps
+Got 7.585000 Mpps
+Got 7.583000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t blq -M'
+Got 7.602000 Mpps
+Got 7.603000 Mpps
+Got 7.602000 Mpps
+Got 7.601000 Mpps
+Got 7.603000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t ffq -M'
+Got 7.437000 Mpps
+Got 7.434000 Mpps
+Got 7.427000 Mpps
+Got 7.437000 Mpps
+Got 7.435000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t iffq -M'
+Got 7.589000 Mpps
+Got 7.585000 Mpps
+Got 7.588000 Mpps
+Got 7.587000 Mpps
+Got 7.587000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 121 -C 2 -t biffq -M'
+Got 7.537000 Mpps
+Got 7.538000 Mpps
+Got 7.538000 Mpps
+Got 7.537000 Mpps
+Got 7.538000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t lq -M'
+Got 6.487000 Mpps
+Got 6.609000 Mpps
+Got 6.609000 Mpps
+Got 6.460000 Mpps
+Got 6.611000 Mpps
+Got 6.611000 Mpps
+Got 6.495000 Mpps
+Got 6.610000 Mpps
+Got 6.605000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t llq -M'
+Got 6.457000 Mpps
+Got 6.457000 Mpps
+Got 6.455000 Mpps
+Got 6.457000 Mpps
+Got 6.455000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t blq -M'
+Got 6.464000 Mpps
+Got 6.464000 Mpps
+Got 6.464000 Mpps
+Got 6.461000 Mpps
+Got 6.464000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t ffq -M'
+Got 6.483000 Mpps
+Got 6.469000 Mpps
+Got 6.476000 Mpps
+Got 6.476000 Mpps
+Got 6.472000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t iffq -M'
+Got 6.457000 Mpps
+Got 6.459000 Mpps
+Got 6.458000 Mpps
+Got 6.456000 Mpps
+Got 6.458000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 141 -C 2 -t biffq -M'
+Got 6.419000 Mpps
+Got 6.418000 Mpps
+Got 6.419000 Mpps
+Got 6.419000 Mpps
+Got 6.419000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t lq -M'
+Got 5.488000 Mpps
+Got 5.486000 Mpps
+Got 5.488000 Mpps
+Got 5.349000 Mpps
+Got 5.351000 Mpps
+Got 5.349000 Mpps
+Got 5.487000 Mpps
+Got 5.351000 Mpps
+Got 5.489000 Mpps
+Got 5.354000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t llq -M'
+Got 5.382000 Mpps
+Got 5.388000 Mpps
+Got 5.389000 Mpps
+Got 5.389000 Mpps
+Got 5.381000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t blq -M'
+Got 5.389000 Mpps
+Got 5.387000 Mpps
+Got 5.388000 Mpps
+Got 5.388000 Mpps
+Got 5.389000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t ffq -M'
+Got 5.370000 Mpps
+Got 5.363000 Mpps
+Got 5.361000 Mpps
+Got 5.365000 Mpps
+Got 5.367000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t iffq -M'
+Got 5.383000 Mpps
+Got 5.383000 Mpps
+Got 5.382000 Mpps
+Got 5.383000 Mpps
+Got 5.382000 Mpps
+Running './spscq -D 10 -l 256 -L 32 -b 32 -b 32 -P 171 -C 2 -t biffq -M'
+Got 5.357000 Mpps
+Got 5.358000 Mpps
+Got 5.358000 Mpps
+Got 5.358000 Mpps
+Got 5.358000 Mpps
+./run-tests.py -M --spin-min 2 --num-points 29 -S ptriangle
+       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
+       2        2        0    18.64     1.04    19.10     0.49    29.96     0.05    21.19     0.06    30.78     0.06    30.73     0.06 
+       3        2        1    19.41     0.52    19.29     0.53    29.96     0.03    21.18     0.06    30.73     0.07    30.70     0.02 
+       4        2        2    19.32     0.50    19.18     0.42    29.93     0.02    21.16     0.05    30.78     0.11    30.68     0.06 
+       5        2        3    18.93     0.32    19.50     0.55    29.92     0.05    21.20     0.02    30.77     0.11    30.67     0.06 
+       6        2        4    19.46     0.54    19.32     0.56    29.96     0.08    21.15     0.04    30.81     0.09    30.70     0.16 
+       7        2        5    19.27     0.61    19.31     0.57    29.97     0.06    21.14     0.04    30.81     0.04    30.69     0.06 
+       8        2        6    19.21     0.45    19.43     0.69    29.93     0.10    21.18     0.08    30.69     0.04    30.71     0.07 
+       9        2        7    19.01     0.78    19.30     0.49    29.99     0.10    21.09     0.03    30.85     0.06    30.93     0.04 
+      10        2        8    19.02     0.47    19.22     0.46    29.95     0.05    21.09     0.03    30.78     0.04    30.95     0.08 
+      11        2        9    19.17     0.52    18.93     0.14    29.96     0.04    21.12     0.04    30.82     0.07    30.92     0.06 
+      12        2       10    19.21     0.49    19.32     0.18    29.96     0.07    21.13     0.04    30.79     0.05    30.89     0.11 
+      13        2       11    19.03     0.34    19.40     0.58    30.01     0.07    21.13     0.07    30.77     0.07    30.93     0.03 
+      15        2       13    18.96     0.49    19.06     0.17    29.94     0.07    21.12     0.06    30.75     0.06    30.98     0.04 
+      17        2       15    18.67     0.87    19.17     0.09    29.97     0.04    21.01     0.06    30.84     0.09    30.93     0.03 
+      19        2       17    19.17     0.45    19.25     0.45    29.97     0.05    20.99     0.06    30.87     0.04    30.95     0.02 
+      21        2       19    18.97     0.96    18.88     0.39    29.99     0.10    20.95     0.08    30.83     0.06    30.93     0.01 
+      23        2       21    20.22     2.25    19.11     0.44    29.97     0.09    20.94     0.03    30.84     0.13    30.96     0.01 
+      25        2       23    24.10     2.11    25.75     0.01    25.78     0.01    24.88     0.03    25.67     0.01    25.08     0.02 
+      27        2       25    23.21     2.97    25.69     0.00    25.76     0.00    24.60     0.02    25.64     0.01    25.05     0.02 
+      29        2       27    22.16     1.69    25.66     0.01    25.76     0.00    24.23     0.04    25.61     0.01    25.02     0.03 
+      31        2       29    20.81     2.21    25.66     0.02    25.75     0.02    24.05     0.02    25.59     0.01    25.03     0.01 
+      41        2       39    18.32     0.36    18.29     0.03    18.43     0.00    18.16     0.02    18.34     0.01    18.05     0.01 
+      51        2       49    15.51     0.12    16.00     0.03    16.12     0.00    15.43     0.01    16.06     0.01    15.84     0.01 
+      61        2       59    13.22     0.13    14.24     0.01    14.34     0.00    13.25     0.01    14.29     0.00    14.10     0.00 
+      81        2       79    10.50     0.18    10.72     0.00    10.76     0.00    10.71     0.02    10.74     0.00    10.64     0.00 
+     101        2       99     8.72     0.17     8.60     0.01     8.62     0.00     8.81     0.01     8.60     0.00     8.54     0.00 
+     121        2      119     7.42     0.13     7.59     0.00     7.60     0.00     7.43     0.00     7.59     0.00     7.54     0.00 
+     141        2      139     6.57     0.06     6.46     0.00     6.46     0.00     6.48     0.01     6.46     0.00     6.42     0.00 
+     171        2      169     5.42     0.07     5.39     0.00     5.39     0.00     5.37     0.00     5.38     0.00     5.36     0.00 
