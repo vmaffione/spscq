@@ -17,4 +17,4 @@ SPIN_MIN=2
 ./run-tests.py $DRY_RUN -M --exp-type latency --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/008
 
 ./run-tests.py $DRY_RUN --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/009
-./run-tests.py $DRY_RUN -M --Bp 1 --Bc 1 --spin-min 1 --num-points 1 -S parallel | tee $EXPDIR/010
+./run-tests.py $DRY_RUN -M --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel | tee $EXPDIR/010
