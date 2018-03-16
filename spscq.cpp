@@ -124,8 +124,9 @@ enum class MbufMode {
 
 struct Mbuf {
     unsigned int len;
-    unsigned int __padding[7];
-#define MBUF_LEN_MAX (4096-8*sizeof(unsigned int))
+    unsigned int x;
+    unsigned int __padding[6];
+#define MBUF_LEN_MAX (4096 - 8 * sizeof(unsigned int))
     char buf[MBUF_LEN_MAX];
 };
 
@@ -548,10 +549,21 @@ blq_free(Blq *blq)
     free(blq);
 }
 
+template <MbufMode kMbufMode>
 static inline void
-spin_for(uint64_t spin)
+spin_for(Mbuf *m, uint64_t spin)
 {
-    tsc_sleep_till(rdtsc() + spin);
+    uint64_t when = rdtsc() + spin;
+
+    if (kMbufMode != MbufMode::NoAccess) {
+        m->x = 0;
+    }
+    while (rdtsc() < when) {
+        if (kMbufMode != MbufMode::NoAccess) {
+            m->x++;
+        }
+        compiler_barrier();
+    }
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -569,19 +581,18 @@ lq_producer(Global *const g)
     g->producer_header();
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+
+        if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+            spin_for<kMbufMode>(m, spin);
+        }
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
-        if (lq_write(blq, m) == 0) {
-            ++batch_packets;
-            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
-            }
-        } else {
+        while (lq_write(blq, m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
-            pool_idx--;
         }
+        ++batch_packets;
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -611,7 +622,7 @@ lq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
+                spin_for<kMbufMode>(m, spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -644,19 +655,18 @@ llq_producer(Global *const g)
     g->producer_header();
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+
+        if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+            spin_for<kMbufMode>(m, spin);
+        }
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
-        if (llq_write(blq, m) == 0) {
-            ++batch_packets;
-            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
-            }
-        } else {
+        while (llq_write(blq, m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
-            pool_idx--;
         }
+        ++batch_packets;
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -686,7 +696,7 @@ llq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
+                spin_for<kMbufMode>(m, spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -732,10 +742,10 @@ blq_producer(Global *const g)
             batch_packets += avail;
             for (; avail > 0; avail--) {
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
-                blq_write_local(blq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for(spin);
+                    spin_for<kMbufMode>(m, spin);
                 }
+                blq_write_local(blq, m);
             }
             blq_write_publish(blq);
         } else {
@@ -779,7 +789,7 @@ blq_consumer(Global *const g)
                 m = blq_read_local(blq);
                 mbuf_put<kMbufMode>(m, &csum);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for(spin);
+                    spin_for<kMbufMode>(m, spin);
                 }
             }
             blq_read_publish(blq);
@@ -874,19 +884,18 @@ ffq_producer(Global *const g)
 
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+
+        if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+            spin_for<kMbufMode>(m, spin);
+        }
         if (kMbufMode != MbufMode::NoAccess) {
             compiler_barrier();
         }
-        if (ffq_write(ffq, m) == 0) {
-            ++batch_packets;
-            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
-            }
-        } else {
+        while (ffq_write(ffq, m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
-            pool_idx--;
         }
+        ++batch_packets;
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -914,7 +923,7 @@ ffq_consumer(Global *const g)
             ++g->pkt_cnt;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
+                spin_for<kMbufMode>(m, spin);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -1161,6 +1170,10 @@ iffq_producer(Global *const g)
 
     while (!stop) {
         Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
+
+        if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
+            spin_for<kMbufMode>(m, spin);
+        }
 #ifdef QDEBUG
         iffq_dump("P", ffq);
 #endif
@@ -1169,16 +1182,11 @@ iffq_producer(Global *const g)
              * mbufs to be reordered after the write to the queue slot. */
             compiler_barrier();
         }
-        if (iffq_insert(ffq, m) == 0) {
-            ++batch_packets;
-            if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
-            }
-        } else {
+        while (iffq_insert(ffq, m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
-            pool_idx--;
         }
+        ++batch_packets;
     }
     g->producer_batches = batches;
     g->producer_footer();
@@ -1209,7 +1217,7 @@ iffq_consumer(Global *const g)
             ++batch_packets;
             mbuf_put<kMbufMode>(m, &csum);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for(spin);
+                spin_for<kMbufMode>(m, spin);
             }
             iffq_clear(ffq);
         } else {
@@ -1259,7 +1267,7 @@ biffq_producer(Global *const g)
                 Mbuf *m = mbuf_get<kMbufMode>(g, &pool_idx, pool_mask);
                 iffq_insert_local(ffq, m);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for(spin);
+                    spin_for<kMbufMode>(m, spin);
                 }
             }
             if (kMbufMode != MbufMode::NoAccess) {
