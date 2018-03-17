@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXPDIR=exp2
+EXPDIR=exp1
 NUM_POINTS_THR=29
 SPIN_MIN=2
 #DRY_RUN=--dry-run
