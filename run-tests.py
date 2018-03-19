@@ -169,10 +169,15 @@ except KeyboardInterrupt:
 # Command line invocation
 printfl(' '.join(sys.argv))
 
-printfl(('%8s ' * 15) % ('P', 'C', 'delta', 'lq', 'std', 'llq', 'std', 'blq', 'std',
+printfl(('%8s ' * 15) % ('P', 'C', 'ideal', 'lq', 'std', 'llq', 'std', 'blq', 'std',
                     'ffq', 'std', 'iffq', 'std', 'biffq', 'std'))
 for (p, c) in results:
-    row = [p, c, p-c]
+    slo = max(p, c)
+    if slo != 0:
+        maxr = 1000.0/slo
+    else:
+        maxr = 1000.0
+    row = [p, c, maxr]
     for queue in queues:
         avg = statistics.mean(results[(p, c)][queue])
         if args.min_trials > 1:
@@ -181,6 +186,6 @@ for (p, c) in results:
             std = 0.0
         row.append(avg)
         row.append(std)
-    fmt = '%8s ' * 3
-    fmt += '%8.2f ' * 12
+    fmt = '%8s ' * 2
+    fmt += '%8.2f ' * 13
     printfl(fmt % tuple(row))
