@@ -154,9 +154,12 @@ try:
                         # We have reached the minimum number of trials. Let's
                         # see if standard deviation is small enough that we
                         # can stop.
-                        stddev = statistics.mean(mpps_values)
-                        mean = statistics.stdev(mpps_values)
-                        if stddev != 0 and mean / stddev  < 0.01:
+                        mean = statistics.mean(mpps_values)
+                        if k > 1:
+                            stddev = statistics.stdev(mpps_values)
+                        else:
+                            stddev = 0.0
+                        if mean != 0 and stddev / mean  < 0.01:
                             break
             results[(spin_p, spin_c)][queue] = mpps_values
 except KeyboardInterrupt:
