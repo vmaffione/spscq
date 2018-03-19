@@ -126,7 +126,7 @@ struct Mbuf {
     unsigned int len;
     unsigned int x;
     unsigned int __padding[6];
-#define MBUF_LEN_MAX (4096 - 8 * sizeof(unsigned int))
+#define MBUF_LEN_MAX (4096+CACHELINE_SIZE - 8 * sizeof(unsigned int))
     char buf[MBUF_LEN_MAX];
 };
 
