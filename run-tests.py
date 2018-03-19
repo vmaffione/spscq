@@ -8,6 +8,7 @@ import argparse
 import sys
 import re
 import os
+import itertools
 
 def printfl(*args):
     print(*args)
@@ -22,6 +23,8 @@ argparser.add_argument('--spin-min', help = "Minimum emulated load (cycles)",
                        type = int, default = 5)
 argparser.add_argument('--num-points', help = "Number of points to take",
                        type = int, default = 25)
+argparser.add_argument('--step', help = "How to generate steps (exp, 10, 20, ...)",
+                       type = str, default = 'exp')
 argparser.add_argument('-D', '--duration',
                        help = "Duration of a test run in seconds",
                        type = int, default = 10)
@@ -43,8 +46,8 @@ argparser.add_argument('--Bc', dest = 'cons_batch', help = "Consumer batch size"
 argparser.add_argument('-L', '--line-entries', help = "Number of entries per line",
                        type = int, default = 32)
 argparser.add_argument('-S', '--sequencing', type = str, default = 'parallel',
-                       choices = ['parallel', 'crossed', 'ptriangle',
-                                  'ctriangle'],
+                       choices = ['parallel', 'ptriangle', 'ctriangle',
+                                    'square'],
                        help = "How P and C emulated load vary")
 argparser.add_argument('--dry-run', action = 'store_true',
                        help = "Don't actually run spscq")
@@ -71,22 +74,46 @@ if args.max_trials < args.min_trials:
     quit(1)
 
 # Generate values for P and C spin
-z = args.spin_min
-points = [x for x in range(z,z+11)]
-z += 11
-points += [x for x in range(z, z+18, 2)]
-z += 18
-points += [x for x in range(z, z+30, 10)]
-z += 30
-points += [x for x in range(z, z+90, 20)]
-z += 90
+if args.step == 'exp':
+    # Exponential
+    z = args.spin_min
+    points = [x for x in range(z,z+11)]
+    z += 11
+    points += [x for x in range(z, z+18, 2)]
+    z += 18
+    points += [x for x in range(z, z+30, 10)]
+    z += 30
+    points += [x for x in range(z, z+90, 20)]
+    z += 90
+    inc = 30
+    while len(points) < args.num_points:
+        points.append(points[-1] + inc)
+        inc += 5
+    points = points[:args.num_points]
+else:
+    # Check args.step is a positive integer
+    try:
+        args.step = int(args.step)
+        if args.step < 1:
+            raise ValueError()
+    except ValueError:
+        print('Invalid --step value "%s"' % args.step)
+    points = []
+    z = args.spin_min
+    while len(points) < args.num_points:
+        points.append(z)
+        z += args.step
 
-inc = 30
-while len(points) < args.num_points:
-    points.append(points[-1] + inc)
-    inc += 5
-
-points = points[:args.num_points]
+if args.sequencing == 'parallel':
+    points = [(x, x) for x in points]
+elif args.sequencing == 'ptriangle':
+    points = [(x, args.spin_min) for x in points]
+elif args.sequencing == 'ctriangle':
+    points = [(args.spin_min, x) for x in points]
+elif args.sequencing == 'square':
+    points = [x for x in itertools.product(points, points)]
+else:
+    assert(False)
 
 try:
     if args.sequencing == 'crossed':
@@ -95,9 +122,7 @@ try:
     else:
         pi = ci = 0
 
-    while pi < len(points) and ci < len(points):
-        spin_p = points[pi]
-        spin_c = points[ci]
+    for (spin_p, spin_c) in points:
         results[(spin_p, spin_c)] = {}
         for queue in queues:
             cmd = './spscq -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
@@ -135,17 +160,6 @@ try:
                         if stddev != 0 and mean / stddev  < 0.01:
                             break
             results[(spin_p, spin_c)][queue] = mpps_values
-
-        if args.sequencing == 'parallel':
-            pi += 1
-            ci = pi
-        elif args.sequencing == 'crossed':
-            pi += 1
-            ci -= 1
-        elif args.sequencing == 'ptriangle':
-            pi += 1
-        elif args.sequencing == 'ctriangle':
-            ci += 1
 except KeyboardInterrupt:
     printfl("Interrupted. Bye.")
     quit(1)
