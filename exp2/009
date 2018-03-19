@@ -1,3 +1,0 @@
-./run-tests.py --Bp 1 --Bc 1 --spin-min 0 --num-points 1 -S parallel
-       P        C    delta       lq      std      llq      std      blq      std      ffq      std     iffq      std    biffq      std 
-       0        0        0    92.35    14.36   276.80    46.76   106.83    16.50   204.34    16.67   367.49    19.59    96.37     2.14 
