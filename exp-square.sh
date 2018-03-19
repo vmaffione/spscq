@@ -14,5 +14,5 @@ STEP=10
                 --spin-min $SPMIN --num-points $N -S square -M | tee $EXPDIR/002
 ./run-tests.py $DRY_RUN --duration $DURATION --max-trials $TRIALS  --step $STEP \
                 --spin-min $SPMIN --num-points $N -S square --Bp 1 --Bc 1 | tee $EXPDIR/003
-./run-tests.py $DRY_RUN --duration $DURATION --max-trials $MT --step $STEP \
+./run-tests.py $DRY_RUN --duration $DURATION --max-trials $TRIALS --step $STEP \
                 --spin-min $SPMIN --num-points $N -S square -M --Bp 1 --Bc 1 | tee $EXPDIR/004
