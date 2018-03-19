@@ -70,8 +70,7 @@ if args.max_trials < 1 or args.min_trials < 1:
     quit(1)
 
 if args.max_trials < args.min_trials:
-    printfl("Error: max_trials < min_trials")
-    quit(1)
+    args.min_trials = args.max_trials
 
 # Generate values for P and C spin
 if args.step == 'exp':
