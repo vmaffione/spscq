@@ -51,6 +51,8 @@ argparser.add_argument('-S', '--sequencing', type = str, default = 'parallel',
                        help = "How P and C emulated load vary")
 argparser.add_argument('--dry-run', action = 'store_true',
                        help = "Don't actually run spscq")
+argparser.add_argument('-v', '--verbose', action = 'store_true',
+                       help = "Be verbose")
 
 args = argparser.parse_args()
 
@@ -132,7 +134,8 @@ try:
                 cmd += ' -M'
             if args.exp_type == 'latency':
                 cmd += ' -T'
-            printfl("Running '%s'" % cmd)
+            if args.verbose:
+                printfl("Running '%s'" % cmd)
             mpps_values = []
             for k in range(1, args.max_trials+1):
                 if args.dry_run:
@@ -149,7 +152,8 @@ try:
                         if m:
                             mpps = float(m.group(1))
                             mpps_values.append(mpps)
-                            printfl("Got %f Mpps" % mpps)
+                            if args.verbose:
+                                printfl("Got %f Mpps" % mpps)
                     if k >= args.min_trials:
                         # We have reached the minimum number of trials. Let's
                         # see if standard deviation is small enough that we
