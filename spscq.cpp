@@ -181,6 +181,11 @@ struct Global {
     /* If true we do a latency test; if false we do a throughput test. */
     bool latency = false;
 
+    /* Try to keep hardware prefetcher disabled for the accesses to the
+     * queue slots. This should reduce the noise in the cache miss
+     * behaviour. */
+    bool deceive_hw_data_prefetcher = false;
+
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
     /* Timestamp to compute experiment statistics. */
@@ -327,8 +332,14 @@ mbuf_put(Mbuf *const m, unsigned int *csum)
 }
 
 static void
-qslotmap_init(unsigned short *qslotmap, unsigned qlen)
+qslotmap_init(unsigned short *qslotmap, unsigned qlen, bool shuffle)
 {
+    if (!shuffle) {
+        for (unsigned i = 0; i < qlen; i++) {
+            qslotmap[i] = i;
+        }
+        return;
+    }
     /* Prepare support for shuffled queue slots to disable the effect of hw
      * prefetching on the queue slots.
      * K is the number of entries per cacheline. */
@@ -404,7 +415,7 @@ struct Blq {
 };
 
 static Blq *
-blq_create(int qlen, int prod_batch, int cons_batch)
+blq_create(int qlen, int prod_batch, int cons_batch, bool shuffle)
 {
     Blq *blq =
         static_cast<Blq *>(szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0])));
@@ -416,7 +427,7 @@ blq_create(int qlen, int prod_batch, int cons_batch)
 
     blq->qslotmap =
         static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->qslotmap[0])));
-    qslotmap_init(blq->qslotmap, qlen);
+    qslotmap_init(blq->qslotmap, qlen, shuffle);
 
     blq->qlen       = qlen;
     blq->qmask      = qlen - 1;
@@ -1046,7 +1057,8 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
  * Both entries and line_size must be a power of 2.
  */
 Iffq *
-__iffq_create(unsigned int entries, unsigned int line_size, bool improved)
+__iffq_create(unsigned int entries, unsigned int line_size, bool improved,
+              bool shuffle)
 {
     Iffq *ffq;
     int err;
@@ -1055,7 +1067,7 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
 
     ffq->qslotmap = static_cast<unsigned short *>(
         szalloc(entries * sizeof(ffq->qslotmap[0])));
-    qslotmap_init(ffq->qslotmap, entries);
+    qslotmap_init(ffq->qslotmap, entries, shuffle);
 
     err = iffq_init(ffq, entries, line_size, improved);
     if (err) {
@@ -1076,15 +1088,15 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
 }
 
 Iffq *
-iffq_create(unsigned int entries, unsigned int line_size)
+iffq_create(unsigned int entries, unsigned int line_size, bool shuffle)
 {
-    return __iffq_create(entries, line_size, /*improved=*/true);
+    return __iffq_create(entries, line_size, /*improved=*/true, shuffle);
 }
 
 Iffq *
-ffq_create(unsigned int entries, unsigned int line_size)
+ffq_create(unsigned int entries, unsigned int line_size, bool shuffle)
 {
-    return __iffq_create(entries, line_size, /*improved=*/false);
+    return __iffq_create(entries, line_size, /*improved=*/false, shuffle);
 }
 
 /**
@@ -1703,20 +1715,23 @@ run_test(Global *g)
 
     if (g->test_type == "lq" || g->test_type == "llq" ||
         g->test_type == "blq") {
-        g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
+        g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch,
+                            g->deceive_hw_data_prefetcher);
         if (!g->blq) {
             exit(EXIT_FAILURE);
         }
         blq_dump("P", g->blq);
         if (g->latency) {
-            g->blq_back = blq_create(g->qlen, g->prod_batch, g->cons_batch);
+            g->blq_back = blq_create(g->qlen, g->prod_batch, g->cons_batch,
+                                     g->deceive_hw_data_prefetcher);
             if (!g->blq_back) {
                 exit(EXIT_FAILURE);
             }
         }
     } else if (g->test_type == "ffq") {
         g->ffq = ffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                            g->deceive_hw_data_prefetcher);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
@@ -1724,7 +1739,8 @@ run_test(Global *g)
         if (g->latency) {
             g->ffq_back =
                 ffq_create(g->qlen,
-                           /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                           /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                           g->deceive_hw_data_prefetcher);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
             }
@@ -1732,7 +1748,8 @@ run_test(Global *g)
     } else if (g->test_type == "iffq" || g->test_type == "biffq") {
         (void)iffq_prefetch;
         g->ffq = iffq_create(g->qlen,
-                             /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                             /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                             g->deceive_hw_data_prefetcher);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
@@ -1740,7 +1757,8 @@ run_test(Global *g)
         if (g->latency) {
             g->ffq_back =
                 iffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                            g->deceive_hw_data_prefetcher);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
             }
@@ -1793,26 +1811,28 @@ run_test(Global *g)
 static void
 usage(const char *progname)
 {
-    printf("%s [-h]\n"
-           "    [-n NUM_PACKETS (in millions) = inf]\n"
-           "    [-D DURATION (in seconds) = %d]\n"
-           "    [-b MAX_PRODUCER_BATCH = %d]\n"
-           "    [-b MAX_CONSUMER_BATCH = %d]\n"
-           "    [-l QUEUE_LENGTH = %d]\n"
-           "    [-L LINE_ENTRIES (iffq) = %d]\n"
-           "    [-c PRODUCER_CORE_ID = 0]\n"
-           "    [-c CONSUMER_CORE_ID = 1]\n"
-           "    [-P PRODUCER_SPIN (cycles, ns) = 0]\n"
-           "    [-C CONSUMER_SPIN (cycles, ns) = 0]\n"
-           "    [-t TEST_TYPE (lq,blq,ffq,iffq,biffq)]\n"
-           "    [-M (access mbuf content)]\n"
-           "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
-           "    [-R (use online rating)]\n"
-           "    [-p (use CPU performance counters)]\n"
-           "    [-T (carry out latency tests rather than throughput tests)]\n"
-           "\n",
-           progname, Global::DFLT_D, Global::DFLT_BATCH, Global::DFLT_BATCH,
-           Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
+    printf(
+        "%s [-h]\n"
+        "    [-n NUM_PACKETS (in millions) = inf]\n"
+        "    [-D DURATION (in seconds) = %d]\n"
+        "    [-b MAX_PRODUCER_BATCH = %d]\n"
+        "    [-b MAX_CONSUMER_BATCH = %d]\n"
+        "    [-l QUEUE_LENGTH = %d]\n"
+        "    [-L LINE_ENTRIES (iffq) = %d]\n"
+        "    [-c PRODUCER_CORE_ID = 0]\n"
+        "    [-c CONSUMER_CORE_ID = 1]\n"
+        "    [-P PRODUCER_SPIN (cycles, ns) = 0]\n"
+        "    [-C CONSUMER_SPIN (cycles, ns) = 0]\n"
+        "    [-t TEST_TYPE (lq,blq,ffq,iffq,biffq)]\n"
+        "    [-M (access mbuf content)]\n"
+        "    [-r CONSUMER_RATE_LIMIT_NS = 0]\n"
+        "    [-R (use online rating)]\n"
+        "    [-p (use CPU performance counters)]\n"
+        "    [-T (carry out latency tests rather than throughput tests)]\n"
+        "    [-w (try to prevent the hw prefetcher to prefetch queue slots)]\n"
+        "\n",
+        progname, Global::DFLT_D, Global::DFLT_BATCH, Global::DFLT_BATCH,
+        Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
 }
 
 int
@@ -1833,7 +1853,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:T")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:Tw")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1957,6 +1977,10 @@ main(int argc, char **argv)
 
         case 'T':
             g->latency = true;
+            break;
+
+        case 'w':
+            g->deceive_hw_data_prefetcher = true;
             break;
 
         default:
