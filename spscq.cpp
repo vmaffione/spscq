@@ -407,7 +407,7 @@ struct Blq {
     unsigned int qmask;
     unsigned int prod_batch;
     unsigned int cons_batch;
-    unsigned short *qslotmap;
+    unsigned short *smap;
 
     /* The queue. */
     CACHELINE_ALIGNED
@@ -425,9 +425,9 @@ blq_create(int qlen, int prod_batch, int cons_batch, bool shuffle)
         return NULL;
     }
 
-    blq->qslotmap =
-        static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->qslotmap[0])));
-    qslotmap_init(blq->qslotmap, qlen, shuffle);
+    blq->smap =
+        static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->smap[0])));
+    qslotmap_init(blq->smap, qlen, shuffle);
 
     blq->qlen       = qlen;
     blq->qmask      = qlen - 1;
@@ -462,7 +462,7 @@ lq_write(Blq *q, Mbuf *m)
     if (next == q->read) {
         return -1; /* no space */
     }
-    q->q[q->write] = m;
+    q->q[q->smap[q->write]] = m;
     compiler_barrier();
     q->write = next;
     return 0;
@@ -476,7 +476,7 @@ lq_read(Blq *q)
         return NULL; /* queue empty */
     }
     compiler_barrier();
-    m       = q->q[q->read];
+    m       = q->q[q->smap[q->read]];
     q->read = (q->read + 1) & q->qmask;
     return m;
 }
@@ -492,7 +492,7 @@ llq_write(Blq *q, Mbuf *m)
     if (next == q->read_shadow) {
         return -1; /* no space */
     }
-    q->q[q->write] = m;
+    q->q[q->smap[q->write]] = m;
     compiler_barrier();
     q->write = next;
     return 0;
@@ -510,7 +510,7 @@ llq_read(Blq *q)
         }
     }
     compiler_barrier();
-    m       = q->q[q->read_priv];
+    m       = q->q[q->smap[q->read_priv]];
     q->read = q->read_priv = (q->read_priv + 1) & q->qmask;
     return m;
 }
@@ -537,7 +537,7 @@ blq_wspace(Blq *blq)
 static inline void
 blq_write_local(Blq *blq, Mbuf *m)
 {
-    blq->q[blq->write_priv & blq->qmask] = m;
+    blq->q[blq->smap[blq->write_priv & blq->qmask]] = m;
     blq->write_priv++;
 }
 
@@ -574,7 +574,7 @@ blq_rspace(Blq *blq)
 static inline Mbuf *
 blq_read_local(Blq *blq)
 {
-    Mbuf *m = blq->q[blq->read_priv & blq->qmask];
+    Mbuf *m = blq->q[blq->smap[blq->read_priv & blq->qmask]];
     blq->read_priv++;
     return m;
 }
@@ -871,7 +871,7 @@ struct Iffq {
     unsigned int entry_mask;
     unsigned int line_entries;
     unsigned int line_mask;
-    unsigned short *qslotmap;
+    unsigned short *smap;
 
     /* Producer fields. */
     CACHELINE_ALIGNED
@@ -892,7 +892,8 @@ struct Iffq {
 static inline int
 ffq_write(Iffq *ffq, Mbuf *m)
 {
-    volatile uintptr_t *qslot = &ffq->q[ffq->prod_write & ffq->entry_mask];
+    volatile uintptr_t *qslot =
+        &ffq->q[ffq->smap[ffq->prod_write & ffq->entry_mask]];
 
     if (*qslot != 0) {
         return -1; /* no space */
@@ -906,8 +907,9 @@ ffq_write(Iffq *ffq, Mbuf *m)
 static inline Mbuf *
 ffq_read(Iffq *ffq)
 {
-    volatile uintptr_t *qslot = &ffq->q[ffq->cons_read & ffq->entry_mask];
-    Mbuf *m                   = reinterpret_cast<Mbuf *>(*qslot);
+    volatile uintptr_t *qslot =
+        &ffq->q[ffq->smap[ffq->cons_read & ffq->entry_mask]];
+    Mbuf *m = reinterpret_cast<Mbuf *>(*qslot);
 
     if (m != nullptr) {
         *qslot = 0; /* clear */
@@ -1042,7 +1044,7 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
          * from nullptr in [cons_clear, cons_read[, or the producer
          * can get confused. */
         for (i = m->cons_clear; i != m->cons_read; i++) {
-            m->q[i] = (uintptr_t)1; /* garbage */
+            m->q[m->smap[i]] = (uintptr_t)1; /* garbage */
         }
     }
 
@@ -1065,9 +1067,9 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved,
 
     ffq = static_cast<Iffq *>(szalloc(iffq_size(entries)));
 
-    ffq->qslotmap = static_cast<unsigned short *>(
-        szalloc(entries * sizeof(ffq->qslotmap[0])));
-    qslotmap_init(ffq->qslotmap, entries, shuffle);
+    ffq->smap =
+        static_cast<unsigned short *>(szalloc(entries * sizeof(ffq->smap[0])));
+    qslotmap_init(ffq->smap, entries, shuffle);
 
     err = iffq_init(ffq, entries, line_size, improved);
     if (err) {
@@ -1128,11 +1130,12 @@ iffq_insert(Iffq *ffq, Mbuf *m)
 {
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
-        if (ffq->q[(ffq->prod_check + ffq->line_entries) & ffq->entry_mask])
+        if (ffq->q[ffq->smap[(ffq->prod_check + ffq->line_entries) &
+                             ffq->entry_mask]])
             return -ENOBUFS;
         ffq->prod_check += ffq->line_entries;
     }
-    ffq->q[ffq->prod_write & ffq->entry_mask] = (uintptr_t)m;
+    ffq->q[ffq->smap[ffq->prod_write & ffq->entry_mask]] = (uintptr_t)m;
     ffq->prod_write++;
     return 0;
 }
@@ -1142,7 +1145,8 @@ iffq_wspace(Iffq *ffq)
 {
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
-        if (ffq->q[(ffq->prod_check + ffq->line_entries) & ffq->entry_mask])
+        if (ffq->q[ffq->smap[(ffq->prod_check + ffq->line_entries) &
+                             ffq->entry_mask]])
             return 0;
         ffq->prod_check += ffq->line_entries;
     }
@@ -1160,7 +1164,8 @@ iffq_insert_publish(Iffq *ffq)
 {
     for (unsigned int i = 0; i < ffq->prod_cache_write;
          i++, ffq->prod_write++) {
-        ffq->q[ffq->prod_write & ffq->entry_mask] = ffq->prod_cache[i];
+        ffq->q[ffq->smap[ffq->prod_write & ffq->entry_mask]] =
+            ffq->prod_cache[i];
     }
     ffq->prod_cache_write = 0;
 }
@@ -1176,7 +1181,7 @@ iffq_insert_publish(Iffq *ffq)
 static inline Mbuf *
 iffq_extract(Iffq *ffq)
 {
-    uintptr_t m = ffq->q[ffq->cons_read & ffq->entry_mask];
+    uintptr_t m = ffq->q[ffq->smap[ffq->cons_read & ffq->entry_mask]];
     if (m) {
         ffq->cons_read++;
     }
@@ -1194,14 +1199,15 @@ iffq_clear(Iffq *ffq)
     unsigned int s = (ffq->cons_read - ffq->line_entries) & ffq->line_mask;
 
     for (; (ffq->cons_clear /* & ffq->line_mask */) != s; ffq->cons_clear++) {
-        ffq->q[ffq->cons_clear & ffq->entry_mask] = 0;
+        ffq->q[ffq->smap[ffq->cons_clear & ffq->entry_mask]] = 0;
     }
 }
 
 static inline void
 iffq_prefetch(Iffq *ffq)
 {
-    __builtin_prefetch((void *)ffq->q[ffq->cons_read & ffq->entry_mask]);
+    __builtin_prefetch(
+        (void *)ffq->q[ffq->smap[ffq->cons_read & ffq->entry_mask]]);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
