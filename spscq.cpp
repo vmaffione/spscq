@@ -336,6 +336,43 @@ mbuf_put(Mbuf *const m, unsigned int *csum)
     }
 }
 
+static void
+qslotmap_init(unsigned short *qslotmap, unsigned qlen)
+{
+    /* Prepare support for shuffled queue slots to disable the effect of hw
+     * prefetching.
+     * First create a vector of qlen elements, containing a random permutation
+     * of [0..qlen[. */
+    /* K is the number of entries per cacheline. */
+    unsigned int K = CACHELINE_SIZE / sizeof(uintptr_t);
+    std::vector<unsigned short> v(qlen/K);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    for (size_t i = 0; i < v.size(); i++) {
+        v[i] = i;
+    }
+    std::shuffle(v.begin(), v.end(), gen);
+
+    for (unsigned j = 0; j < qlen/K; j++) {
+        std::vector<unsigned short> u(K);
+
+        for (size_t i = 0; i < K; i++) {
+            u[i] = v[j]*K + i;
+        }
+        std::shuffle(u.begin(), u.end(), gen);
+        for (size_t i = 0; i < K; i++) {
+            qslotmap[j*K + i] = u[i];
+        }
+    }
+#if 0
+    for (unsigned i = 0; i < qlen; i++) {
+        printf("%d ", qslotmap[i]);
+    }
+    printf("\n");
+#endif
+}
+
 /*
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
@@ -366,6 +403,7 @@ struct Blq {
     unsigned int qmask;
     unsigned int prod_batch;
     unsigned int cons_batch;
+    unsigned short *qslotmap;
 
     /* The queue. */
     CACHELINE_ALIGNED
@@ -382,6 +420,9 @@ blq_create(int qlen, int prod_batch, int cons_batch)
         printf("Error: queue length %d is not a power of two\n", qlen);
         return NULL;
     }
+
+    blq->qslotmap = static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->qslotmap[0])));
+    qslotmap_init(blq->qslotmap, qlen);
 
     blq->qlen       = qlen;
     blq->qmask      = qlen - 1;
@@ -825,6 +866,7 @@ struct Iffq {
     unsigned int entry_mask;
     unsigned int line_entries;
     unsigned int line_mask;
+    unsigned short *qslotmap;
 
     /* Producer fields. */
     CACHELINE_ALIGNED
@@ -1016,9 +1058,9 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
     int err;
 
     ffq = static_cast<Iffq *>(szalloc(iffq_size(entries)));
-    if (ffq == NULL) {
-        return NULL;
-    }
+
+    ffq->qslotmap = static_cast<unsigned short *>(szalloc(entries * sizeof(ffq->qslotmap[0])));
+    qslotmap_init(ffq->qslotmap, entries);
 
     err = iffq_init(ffq, entries, line_size, improved);
     if (err) {
