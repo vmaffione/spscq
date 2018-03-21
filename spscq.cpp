@@ -42,7 +42,7 @@ static void *
 szalloc(size_t size)
 {
     void *p;
-    int ret = posix_memalign(&p, CACHELINE_SIZE, size);
+    int ret = posix_memalign(&p, ALIGN_SIZE, size);
     if (ret) {
         printf("allocation failure: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
@@ -433,22 +433,22 @@ blq_create(int qlen, int prod_batch, int cons_batch)
     blq->prod_batch = prod_batch;
     blq->cons_batch = cons_batch;
 
-    assert(reinterpret_cast<uintptr_t>(blq) % CACHELINE_SIZE == 0);
+    assert(reinterpret_cast<uintptr_t>(blq) % ALIGN_SIZE == 0);
     assert((reinterpret_cast<uintptr_t>(&blq->write)) -
                (reinterpret_cast<uintptr_t>(&blq->write_priv)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->read_priv)) -
                (reinterpret_cast<uintptr_t>(&blq->write)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->read)) -
                (reinterpret_cast<uintptr_t>(&blq->read_priv)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->qlen)) -
                (reinterpret_cast<uintptr_t>(&blq->read)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->q[0])) -
                (reinterpret_cast<uintptr_t>(&blq->qlen)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
 
     return blq;
 }
@@ -1073,14 +1073,14 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
         return NULL;
     }
 
-    assert(reinterpret_cast<uintptr_t>(ffq) % CACHELINE_SIZE == 0);
+    assert(reinterpret_cast<uintptr_t>(ffq) % ALIGN_SIZE == 0);
     assert(((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
             (reinterpret_cast<uintptr_t>(&ffq->prod_write))) %
-               CACHELINE_SIZE ==
+               ALIGN_SIZE ==
            0);
     assert((reinterpret_cast<uintptr_t>(&ffq->q[0])) -
                (reinterpret_cast<uintptr_t>(&ffq->cons_clear)) ==
-           CACHELINE_SIZE);
+           ALIGN_SIZE);
 
     return ffq;
 }
