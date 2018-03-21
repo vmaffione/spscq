@@ -340,29 +340,32 @@ static void
 qslotmap_init(unsigned short *qslotmap, unsigned qlen)
 {
     /* Prepare support for shuffled queue slots to disable the effect of hw
-     * prefetching.
-     * First create a vector of qlen elements, containing a random permutation
-     * of [0..qlen[. */
-    /* K is the number of entries per cacheline. */
+     * prefetching on the queue slots.
+     * K is the number of entries per cacheline. */
     unsigned int K = CACHELINE_SIZE / sizeof(uintptr_t);
-    std::vector<unsigned short> v(qlen/K);
+    std::vector<unsigned short> v(qlen / K);
     std::random_device rd;
     std::mt19937 gen(rd());
 
+    /* First create a vector of qlen/K elements (i.e. the number of cache
+     * lines in the queue), containing a random permutation of
+     * K*[0..qlen/K[. */
     for (size_t i = 0; i < v.size(); i++) {
-        v[i] = i;
+        v[i] = K * i;
     }
     std::shuffle(v.begin(), v.end(), gen);
 
-    for (unsigned j = 0; j < qlen/K; j++) {
+    for (unsigned j = 0; j < qlen / K; j++) {
         std::vector<unsigned short> u(K);
 
+        /* Generate slot indices for the #j cacheline, as a random
+         * permutation of [v[j]..v[j]+K[ */
         for (size_t i = 0; i < K; i++) {
-            u[i] = v[j]*K + i;
+            u[i] = v[j] + i;
         }
         std::shuffle(u.begin(), u.end(), gen);
         for (size_t i = 0; i < K; i++) {
-            qslotmap[j*K + i] = u[i];
+            qslotmap[j * K + i] = u[i];
         }
     }
 #if 0
@@ -421,7 +424,8 @@ blq_create(int qlen, int prod_batch, int cons_batch)
         return NULL;
     }
 
-    blq->qslotmap = static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->qslotmap[0])));
+    blq->qslotmap =
+        static_cast<unsigned short *>(szalloc(qlen * sizeof(blq->qslotmap[0])));
     qslotmap_init(blq->qslotmap, qlen);
 
     blq->qlen       = qlen;
@@ -1059,7 +1063,8 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
 
     ffq = static_cast<Iffq *>(szalloc(iffq_size(entries)));
 
-    ffq->qslotmap = static_cast<unsigned short *>(szalloc(entries * sizeof(ffq->qslotmap[0])));
+    ffq->qslotmap = static_cast<unsigned short *>(
+        szalloc(entries * sizeof(ffq->qslotmap[0])));
     qslotmap_init(ffq->qslotmap, entries);
 
     err = iffq_init(ffq, entries, line_size, improved);
