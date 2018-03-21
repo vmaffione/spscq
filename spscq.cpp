@@ -119,7 +119,6 @@ struct RateLimitedStats {
 enum class MbufMode {
     NoAccess = 0,
     LinearAccess,
-    ScatteredAccess,
 };
 
 struct Mbuf {
@@ -219,10 +218,6 @@ struct Global {
     /* A pool of preallocated mbufs (only accessed by P). */
     Mbuf *pool = nullptr;
 
-    /* Indirect pool of mbufs, used in MbufMode::ScatteredAccess
-     * (only accessed by P). */
-    Mbuf **spool = nullptr;
-
     /* Index in the pool array (only accessed by P). */
     unsigned int pool_idx = 0;
 
@@ -316,13 +311,8 @@ mbuf_get(Global *const g, const unsigned int pool_mask)
     if (kMbufMode == MbufMode::NoAccess) {
         return &gm;
     } else {
-        Mbuf *m;
-        if (kMbufMode == MbufMode::LinearAccess) {
-            m = &g->pool[g->pool_idx & pool_mask];
-        } else { /* MbufMode::ScatteredAccess */
-            m = g->spool[g->pool_idx & pool_mask];
-        }
-        m->len = g->pool_idx++;
+        Mbuf *m = &g->pool[g->pool_idx & pool_mask];
+        m->len  = g->pool_idx++;
         return m;
     }
 }
@@ -1684,7 +1674,6 @@ run_test(Global *g)
     do {                                                                       \
         __MATRIX_ADD_MBUFMODE(qname, MbufMode::NoAccess);                      \
         __MATRIX_ADD_MBUFMODE(qname, MbufMode::LinearAccess);                  \
-        __MATRIX_ADD_MBUFMODE(qname, MbufMode::ScatteredAccess);               \
     } while (0)
 
     /* Multi-section queue (Lamport-like) with legacy operation,
@@ -1762,28 +1751,6 @@ run_test(Global *g)
 
     /* Allocate mbuf pool. */
     g->pool = static_cast<Mbuf *>(szalloc(g->qlen * sizeof(g->pool[0])));
-
-    if (g->mbuf_mode == MbufMode::ScatteredAccess) {
-        /* Prepare support for scattered mbufs. First create a vector
-         * of qlen elements, containing a random permutation of
-         * [0..qlen[. */
-        std::vector<int> v(g->qlen);
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
-        for (size_t i = 0; i < v.size(); i++) {
-            v[i] = i;
-        }
-        std::shuffle(v.begin(), v.end(), gen);
-
-        /* Then allocate and initialize g->spool, whose slots points at the
-         * mbufs in the pool following the random pattern. */
-        g->spool =
-            static_cast<Mbuf **>(szalloc(v.size() * sizeof(g->spool[0])));
-        for (size_t i = 0; i < v.size(); i++) {
-            g->spool[i] = g->pool + v[i];
-        }
-    }
 
     pth = std::thread(funcs.first, g);
     cth = std::thread(funcs.second, g);
@@ -1953,11 +1920,8 @@ main(int argc, char **argv)
         case 'M':
             switch (g->mbuf_mode) {
             case MbufMode::NoAccess:
-                g->mbuf_mode = MbufMode::LinearAccess;
-                break;
             case MbufMode::LinearAccess:
-            case MbufMode::ScatteredAccess:
-                g->mbuf_mode = MbufMode::ScatteredAccess;
+                g->mbuf_mode = MbufMode::LinearAccess;
                 break;
             }
             break;
