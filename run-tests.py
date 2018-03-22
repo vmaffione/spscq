@@ -148,7 +148,7 @@ try:
                         quit(1)
                     out = str(out, 'ascii')  # decode
                     for line in out.split('\n'):
-                        m = re.match(r'^Throughput\s+([0-9]+\.[0-9]+)\s+Mpps', line)
+                        m = re.match(r'^([0-9]+\.[0-9]+)\s+Mpps', line)
                         if m:
                             mpps = float(m.group(1))
                             mpps_values.append(mpps)
