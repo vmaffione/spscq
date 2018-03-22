@@ -205,8 +205,8 @@ struct Global {
     long long int consumer_batches = 0;
 
     /* L1 dcache miss rates in M/sec. */
-    float prod_read_miss_rate = 0.0;
-    float cons_read_miss_rate = 0.0;
+    float prod_read_miss_rate  = 0.0;
+    float cons_read_miss_rate  = 0.0;
     float prod_write_miss_rate = 0.0;
     float cons_write_miss_rate = 0.0;
 
@@ -243,11 +243,12 @@ static unsigned short *smap = nullptr;
 #endif
 
 static void
-miss_rate_print(const char *prefix, double mpps, float read_miss_rate, float write_miss_rate)
+miss_rate_print(const char *prefix, double mpps, float read_miss_rate,
+                float write_miss_rate)
 {
     printf("[%s] L1 d-cache %.3f rmisses/packet,"
-                "%.3f wmisses/packet\n", prefix,
-           read_miss_rate/mpps, write_miss_rate/mpps);
+           "%.3f wmisses/packet\n",
+           prefix, read_miss_rate / mpps, write_miss_rate / mpps);
 }
 
 void
@@ -287,8 +288,8 @@ Global::print_results()
     miss_rate_print("P", mpps, prod_read_miss_rate, prod_write_miss_rate);
     miss_rate_print("C", mpps, cons_read_miss_rate, cons_write_miss_rate);
     printf("%3.3f Mpps %2.3f Pmpp %2.3f Cmpp\n", mpps,
-            (prod_read_miss_rate+prod_write_miss_rate)/mpps,
-            (cons_read_miss_rate+cons_write_miss_rate)/mpps);
+           (prod_read_miss_rate + prod_write_miss_rate) / mpps,
+           (cons_read_miss_rate + cons_write_miss_rate) / mpps);
 }
 
 void
@@ -1578,10 +1579,13 @@ perf_measure(Global *const g, bool producer)
     }
 
     std::ifstream fin(filename);
-    float &read_miss_rate = producer ? g->prod_read_miss_rate : g->cons_read_miss_rate;
-    float &write_miss_rate = producer ? g->prod_write_miss_rate : g->cons_write_miss_rate;
+    float &read_miss_rate =
+        producer ? g->prod_read_miss_rate : g->cons_read_miss_rate;
+    float &write_miss_rate =
+        producer ? g->prod_write_miss_rate : g->cons_write_miss_rate;
     float &insn_rate = producer ? g->prod_insn_rate : g->cons_insn_rate;
-    read_miss_rate        = 0.0;
+    read_miss_rate   = 0.0;
+    write_miss_rate  = 0.0;
     insn_rate        = 0.0;
     /* Miss rates are in M/sec, instruction rate is in B/sec. */
     fin >> read_miss_rate >> write_miss_rate >> insn_rate;
