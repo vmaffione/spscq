@@ -53,6 +53,9 @@ argparser.add_argument('--dry-run', action = 'store_true',
                        help = "Don't actually run spscq")
 argparser.add_argument('-v', '--verbose', action = 'store_true',
                        help = "Be verbose")
+argparser.add_argument('-w', '--disable-queue-prefetch', action = 'store_true',
+                       help = "Try to prevent hw prefetcher from being effective "
+                                "on prefetching queue slots")
 
 args = argparser.parse_args()
 
@@ -126,8 +129,11 @@ try:
     for (spin_p, spin_c) in points:
         results[(spin_p, spin_c)] = {}
         for queue in queues:
-            cmd = './spscq -p -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
-                     % (args.duration, args.queue_length, args.line_entries,
+            flags = '-p'
+            if args.disable_queue_prefetch:
+                flags += 'w'
+            cmd = './spscq %s -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
+                     % (flags, args.duration, args.queue_length, args.line_entries,
                         args.prod_batch, args.cons_batch, spin_p, spin_c,
                         queue)
             if args.indirect:
@@ -142,6 +148,8 @@ try:
             for k in range(1, args.max_trials+1):
                 if args.dry_run:
                     mpps_values.append(0)  # mock it
+                    pmpp_values.append(0)  # mock it
+                    cmpp_values.append(0)  # mock it
                 else:
                     try:
                         out = subprocess.check_output(cmd.split())
