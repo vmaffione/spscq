@@ -29,12 +29,15 @@
 
 #define ONEBILLION (1000LL * 1000000LL) /* 1 billion */
 
-static volatile int stop = 0;
+static int stop = 0;
+
+#define ACCESS_ONCE(x)                                                         \
+    (*static_cast<std::remove_reference<decltype(x)>::type volatile *>(&(x)))
 
 static void
 sigint_handler(int signum)
 {
-    stop = 1;
+    ACCESS_ONCE(stop) = 1;
 }
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
@@ -385,7 +388,7 @@ qslotmap_init(unsigned short *qslotmap, unsigned qlen, bool shuffle)
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
  */
-typedef Mbuf *blq_entry_t; /* trick to use volatile */
+typedef Mbuf *blq_entry_t;
 struct Blq {
     /* Producer private data. */
     CACHELINE_ALIGNED
@@ -394,7 +397,7 @@ struct Blq {
 
     /* Producer write, consumer read. */
     CACHELINE_ALIGNED
-    volatile unsigned int write;
+    unsigned int write;
 
     /* Consumer private data. */
     CACHELINE_ALIGNED
@@ -403,7 +406,7 @@ struct Blq {
 
     /* Producer read, consumer write. */
     CACHELINE_ALIGNED
-    volatile unsigned int read;
+    unsigned int read;
 
     /* Shared read only data. */
     CACHELINE_ALIGNED
@@ -414,7 +417,7 @@ struct Blq {
 
     /* The queue. */
     CACHELINE_ALIGNED
-    volatile blq_entry_t q[0];
+    blq_entry_t q[0];
 };
 
 static Blq *
@@ -456,44 +459,48 @@ blq_create(int qlen, int prod_batch, int cons_batch)
 static inline int
 lq_write(Blq *q, Mbuf *m)
 {
-    unsigned int next = (q->write + 1) & q->qmask;
+    unsigned write    = q->write;
+    unsigned int next = (write + 1) & q->qmask;
 
-    if (next == q->read) {
+    if (next == ACCESS_ONCE(q->read)) {
         return -1; /* no space */
     }
-    q->q[SMAP(q->write)] = m;
+    ACCESS_ONCE(q->q[SMAP(write)]) = m;
     compiler_barrier();
-    q->write = next;
+    ACCESS_ONCE(q->write) = next;
     return 0;
 }
 
 static inline Mbuf *
 lq_read(Blq *q)
 {
+    unsigned read = q->read;
     Mbuf *m;
-    if (q->read == q->write) {
+
+    if (read == ACCESS_ONCE(q->write)) {
         return NULL; /* queue empty */
     }
     compiler_barrier();
-    m       = q->q[SMAP(q->read)];
-    q->read = (q->read + 1) & q->qmask;
+    m                    = ACCESS_ONCE(q->q[SMAP(read)]);
+    ACCESS_ONCE(q->read) = (read + 1) & q->qmask;
     return m;
 }
 
 static inline int
 llq_write(Blq *q, Mbuf *m)
 {
-    unsigned int next = (q->write + 1) & q->qmask;
+    unsigned int write = q->write;
+    unsigned int next  = (write + 1) & q->qmask;
 
     if (next == q->read_shadow) {
-        q->read_shadow = q->read;
+        q->read_shadow = ACCESS_ONCE(q->read);
     }
     if (next == q->read_shadow) {
         return -1; /* no space */
     }
-    q->q[SMAP(q->write)] = m;
+    ACCESS_ONCE(q->q[SMAP(write)]) = m;
     compiler_barrier();
-    q->write = next;
+    ACCESS_ONCE(q->write) = next;
     return 0;
 }
 
@@ -501,16 +508,17 @@ llq_write(Blq *q, Mbuf *m)
 static inline Mbuf *
 llq_read(Blq *q)
 {
+    unsigned read = q->read_priv;
     Mbuf *m;
-    if (q->read_priv == q->write_shadow) {
-        q->write_shadow = q->write;
-        if (q->read_priv == q->write_shadow) {
+    if (read == q->write_shadow) {
+        q->write_shadow = ACCESS_ONCE(q->write);
+        if (read == q->write_shadow) {
             return NULL; /* queue empty */
         }
     }
     compiler_barrier();
-    m       = q->q[SMAP(q->read_priv)];
-    q->read = q->read_priv = (q->read_priv + 1) & q->qmask;
+    m                    = ACCESS_ONCE(q->q[SMAP(read)]);
+    ACCESS_ONCE(q->read) = q->read_priv = (read + 1) & q->qmask;
     return m;
 }
 #else
@@ -527,7 +535,7 @@ blq_wspace(Blq *blq)
     if (space) {
         return space;
     }
-    blq->read_shadow = blq->read;
+    blq->read_shadow = ACCESS_ONCE(blq->read);
 
     return (blq->read_shadow - 1 - blq->write_priv) & blq->qmask;
 }
@@ -536,7 +544,7 @@ blq_wspace(Blq *blq)
 static inline void
 blq_write_local(Blq *blq, Mbuf *m)
 {
-    blq->q[SMAP(blq->write_priv & blq->qmask)] = m;
+    ACCESS_ONCE(blq->q[SMAP(blq->write_priv & blq->qmask)]) = m;
     blq->write_priv++;
 }
 
@@ -548,7 +556,7 @@ blq_write_publish(Blq *blq)
      * blq->write. On x86 a compiler barrier suffices, because stores have
      * release semantic (preventing StoreStore and LoadStore reordering). */
     compiler_barrier();
-    blq->write = blq->write_priv;
+    ACCESS_ONCE(blq->write) = blq->write_priv;
 }
 
 static inline unsigned int
@@ -559,7 +567,7 @@ blq_rspace(Blq *blq)
     if (space) {
         return space;
     }
-    blq->write_shadow = blq->write;
+    blq->write_shadow = ACCESS_ONCE(blq->write);
     /* Here we need a LoadLoad barrier to prevent upcoming loads to the queue
      * slot and mbuf content to be reordered before the load of blq->write. On
      * x86 a compiler barrier suffices, because loads have acquire semantic
@@ -573,7 +581,7 @@ blq_rspace(Blq *blq)
 static inline Mbuf *
 blq_read_local(Blq *blq)
 {
-    Mbuf *m = blq->q[SMAP(blq->read_priv & blq->qmask)];
+    Mbuf *m = ACCESS_ONCE(blq->q[SMAP(blq->read_priv & blq->qmask)]);
     blq->read_priv++;
     return m;
 }
@@ -581,7 +589,7 @@ blq_read_local(Blq *blq)
 static inline void
 blq_read_publish(Blq *blq)
 {
-    blq->read = blq->read_priv;
+    ACCESS_ONCE(blq->read) = blq->read_priv;
 }
 
 static void
@@ -628,7 +636,7 @@ lq_producer(Global *const g)
     unsigned int batches         = 0;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -679,7 +687,7 @@ lq_consumer(Global *const g)
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
             }
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 break;
             }
         }
@@ -701,7 +709,7 @@ llq_producer(Global *const g)
     unsigned int batches         = 0;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -752,7 +760,7 @@ llq_consumer(Global *const g)
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
             }
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 break;
             }
         }
@@ -776,7 +784,7 @@ blq_producer(Global *const g)
 
     g->producer_header();
 
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         unsigned int avail = blq_wspace(blq);
 
 #ifdef QDEBUG
@@ -846,7 +854,7 @@ blq_consumer(Global *const g)
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
             }
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 break;
             }
         }
@@ -884,19 +892,18 @@ struct Iffq {
 
     /* The queue. */
     CACHELINE_ALIGNED
-    volatile uintptr_t q[0];
+    uintptr_t q[0];
 };
 
 static inline int
 ffq_write(Iffq *ffq, Mbuf *m)
 {
-    volatile uintptr_t *qslot =
-        &ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)];
+    uintptr_t *qslot = &ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)];
 
-    if (*qslot != 0) {
+    if (ACCESS_ONCE(*qslot) != 0) {
         return -1; /* no space */
     }
-    *qslot = reinterpret_cast<uintptr_t>(m);
+    ACCESS_ONCE(*qslot) = reinterpret_cast<uintptr_t>(m);
     ffq->prod_write++;
 
     return 0;
@@ -905,11 +912,11 @@ ffq_write(Iffq *ffq, Mbuf *m)
 static inline Mbuf *
 ffq_read(Iffq *ffq)
 {
-    volatile uintptr_t *qslot = &ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)];
-    Mbuf *m                   = reinterpret_cast<Mbuf *>(*qslot);
+    uintptr_t *qslot = &ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)];
+    Mbuf *m          = reinterpret_cast<Mbuf *>(ACCESS_ONCE(*qslot));
 
     if (m != nullptr) {
-        *qslot = 0; /* clear */
+        ACCESS_ONCE(*qslot) = 0; /* clear */
         ffq->cons_read++;
     }
 
@@ -929,7 +936,7 @@ ffq_producer(Global *const g)
 
     g->producer_header();
 
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -978,7 +985,7 @@ ffq_consumer(Global *const g)
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
             }
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 break;
             }
         }
@@ -1041,7 +1048,7 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
          * from nullptr in [cons_clear, cons_read[, or the producer
          * can get confused. */
         for (i = m->cons_clear; i != m->cons_read; i++) {
-            m->q[SMAP(i)] = (uintptr_t)1; /* garbage */
+            ACCESS_ONCE(m->q[SMAP(i)]) = (uintptr_t)1; /* garbage */
         }
     }
 
@@ -1122,12 +1129,12 @@ iffq_insert(Iffq *ffq, Mbuf *m)
 {
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
-        if (ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                        ffq->entry_mask)])
+        if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
+                                    ffq->entry_mask)]))
             return -ENOBUFS;
         ffq->prod_check += ffq->line_entries;
     }
-    ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)] = (uintptr_t)m;
+    ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) = (uintptr_t)m;
     ffq->prod_write++;
     return 0;
 }
@@ -1137,8 +1144,8 @@ iffq_wspace(Iffq *ffq)
 {
     if (unlikely(ffq->prod_write == ffq->prod_check)) {
         /* Leave a cache line empty. */
-        if (ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                        ffq->entry_mask)])
+        if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
+                                    ffq->entry_mask)]))
             return 0;
         ffq->prod_check += ffq->line_entries;
     }
@@ -1156,7 +1163,8 @@ iffq_insert_publish(Iffq *ffq)
 {
     for (unsigned int i = 0; i < ffq->prod_cache_write;
          i++, ffq->prod_write++) {
-        ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)] = ffq->prod_cache[i];
+        ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) =
+            ffq->prod_cache[i];
     }
     ffq->prod_cache_write = 0;
 }
@@ -1172,7 +1180,7 @@ iffq_insert_publish(Iffq *ffq)
 static inline Mbuf *
 iffq_extract(Iffq *ffq)
 {
-    uintptr_t m = ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)];
+    uintptr_t m = ACCESS_ONCE(ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)]);
     if (m) {
         ffq->cons_read++;
     }
@@ -1190,7 +1198,7 @@ iffq_clear(Iffq *ffq)
     unsigned int s = (ffq->cons_read - ffq->line_entries) & ffq->line_mask;
 
     for (; (ffq->cons_clear /* & ffq->line_mask */) != s; ffq->cons_clear++) {
-        ffq->q[SMAP(ffq->cons_clear & ffq->entry_mask)] = 0;
+        ACCESS_ONCE(ffq->q[SMAP(ffq->cons_clear & ffq->entry_mask)]) = 0;
     }
 }
 
@@ -1213,7 +1221,7 @@ iffq_producer(Global *const g)
 
     g->producer_header();
 
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
@@ -1271,7 +1279,7 @@ iffq_consumer(Global *const g)
             if (kRateLimitMode == RateLimitMode::Limit) {
                 tsc_sleep_till(rdtsc() + rate_limit);
             }
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 break;
             }
         }
@@ -1295,7 +1303,7 @@ biffq_producer(Global *const g)
 
     g->producer_header();
 
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         unsigned int avail = iffq_wspace(ffq);
 
 #ifdef QDEBUG
@@ -1344,11 +1352,11 @@ lq_client(Global *const g)
     int ret;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
         ret     = lq_write(blq, m);
         assert(ret == 0);
-        while ((m = lq_read(blq_back)) == nullptr && !stop) {
+        while ((m = lq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1368,7 +1376,7 @@ lq_server(Global *const g)
     for (;;) {
         Mbuf *m;
         while ((m = lq_read(blq)) == nullptr) {
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
@@ -1391,11 +1399,11 @@ llq_client(Global *const g)
     int ret;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
         ret     = llq_write(blq, m);
         assert(ret == 0);
-        while ((m = llq_read(blq_back)) == nullptr && !stop) {
+        while ((m = llq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1415,7 +1423,7 @@ llq_server(Global *const g)
     for (;;) {
         Mbuf *m;
         while ((m = llq_read(blq)) == nullptr) {
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
@@ -1440,11 +1448,11 @@ ffq_client(Global *const g)
     int ret;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
         ret     = ffq_write(ffq, m);
         assert(ret == 0);
-        while ((m = ffq_read(ffq_back)) == nullptr && !stop) {
+        while ((m = ffq_read(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1464,7 +1472,7 @@ ffq_server(Global *const g)
     for (;;) {
         Mbuf *m;
         while ((m = ffq_read(ffq)) == nullptr) {
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
@@ -1487,11 +1495,11 @@ iffq_client(Global *const g)
     int ret;
 
     g->producer_header();
-    while (!stop) {
+    while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
         ret     = iffq_insert(ffq, m);
         assert(ret == 0);
-        while ((m = iffq_extract(ffq_back)) == nullptr && !stop) {
+        while ((m = iffq_extract(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
         }
         iffq_clear(ffq_back);
         ++g->pkt_cnt;
@@ -1512,7 +1520,7 @@ iffq_server(Global *const g)
     for (;;) {
         Mbuf *m;
         while ((m = iffq_extract(ffq)) == nullptr) {
-            if (unlikely(stop)) {
+            if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
@@ -1600,7 +1608,7 @@ control_thread(Global *const g)
     auto t_first                        = t_last;
     long long unsigned int pkt_cnt_last = 0;
 
-    for (unsigned int loopcnt = 1; !stop; loopcnt++) {
+    for (unsigned int loopcnt = 1; !ACCESS_ONCE(stop); loopcnt++) {
         usleep(250000);
 
         if (loopcnt % 8 == 0) {
@@ -1617,14 +1625,14 @@ control_thread(Global *const g)
 
             if (g->num_packets > 0 && pkt_cnt_now > g->num_packets) {
                 /* Packet threshold reached. */
-                stop = 1;
+                ACCESS_ONCE(stop) = 1;
             }
 
             if (std::chrono::duration_cast<std::chrono::seconds>(t_now -
                                                                  t_first)
                     .count() >= g->duration) {
                 /* We ran out of time. */
-                stop = 1;
+                ACCESS_ONCE(stop) = 1;
             }
 
             t_last       = t_now;

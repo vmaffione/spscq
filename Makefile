@@ -9,6 +9,8 @@ LDFLAGS=-lpthread -std=c++11 -g
 all: $(PROGS)
 
 spscq: spscq.o mlib.o
+mlib.o: mlib.h
+spscq.o: mlib.h
 
 clean:
 	-rm -rf *.o $(PROGS)
