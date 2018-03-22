@@ -1585,7 +1585,6 @@ perf_measure(Global *const g, bool producer)
     insn_rate        = 0.0;
     /* Miss rates are in M/sec, instruction rate is in B/sec. */
     fin >> read_miss_rate >> write_miss_rate >> insn_rate;
-    printf("%f %f %f\n", read_miss_rate, write_miss_rate, insn_rate); //TODO remove
     fin.close();
     remove(filename);
 }

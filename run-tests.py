@@ -126,7 +126,7 @@ try:
     for (spin_p, spin_c) in points:
         results[(spin_p, spin_c)] = {}
         for queue in queues:
-            cmd = './spscq -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
+            cmd = './spscq -p -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
                      % (args.duration, args.queue_length, args.line_entries,
                         args.prod_batch, args.cons_batch, spin_p, spin_c,
                         queue)
@@ -137,6 +137,8 @@ try:
             if args.verbose:
                 printfl("Running '%s'" % cmd)
             mpps_values = []
+            pmpp_values = []
+            cmpp_values = []
             for k in range(1, args.max_trials+1):
                 if args.dry_run:
                     mpps_values.append(0)  # mock it
@@ -148,12 +150,16 @@ try:
                         quit(1)
                     out = str(out, 'ascii')  # decode
                     for line in out.split('\n'):
-                        m = re.match(r'^([0-9]+\.[0-9]+)\s+Mpps', line)
+                        m = re.match(r'^([0-9]+\.[0-9]+)\s+Mpps\s+([0-9]+\.[0-9]+)\s+Pmpp\s+([0-9]+\.[0-9]+)\s+Cmpp', line)
                         if m:
                             mpps = float(m.group(1))
+                            pmpp = float(m.group(2))
+                            cmpp = float(m.group(3))
                             mpps_values.append(mpps)
+                            pmpp_values.append(pmpp)
+                            cmpp_values.append(cmpp)
                             if args.verbose:
-                                printfl("Got %f Mpps" % mpps)
+                                printfl("Got %f Mpps, %f Pmpp, %f Cmpp" % (mpps, pmpp, cmpp))
                     if k >= args.min_trials:
                         # We have reached the minimum number of trials. Let's
                         # see if standard deviation is small enough that we
@@ -165,7 +171,7 @@ try:
                             stddev = 0.0
                         if mean != 0 and stddev / mean  < 0.01:
                             break
-            results[(spin_p, spin_c)][queue] = mpps_values
+            results[(spin_p, spin_c)][queue] = (mpps_values, pmpp_values, cmpp_values)
 except KeyboardInterrupt:
     printfl("Interrupted. Bye.")
     quit(1)
@@ -173,23 +179,33 @@ except KeyboardInterrupt:
 # Command line invocation
 printfl(' '.join(sys.argv))
 
-printfl(('%8s ' * 15) % ('P', 'C', 'ideal', 'lq', 'std', 'llq', 'std', 'blq', 'std',
-                    'ffq', 'std', 'iffq', 'std', 'biffq', 'std'))
+printfl((('%3s '*2) + ('%8s '*18)) % ('P', 'C',
+                    'lq.T', 'llq.T', 'blq.T', 'ffq.T', 'iffq.T', 'biffq.T',
+                    'lq.P', 'llq.P', 'blq.P', 'ffq.P', 'iffq.P', 'biffq.P',
+                    'lq.C', 'llq.C', 'blq.C', 'ffq.C', 'iffq.C', 'biffq.C'
+        ))
 for (p, c) in results:
-    slo = max(p, c)
-    if slo != 0:
-        maxr = 1000.0/slo
-    else:
-        maxr = 1000.0
-    row = [p, c, maxr]
+    row = [p, c]
+    # Throughput
     for queue in queues:
-        avg = statistics.mean(results[(p, c)][queue])
+        avg = statistics.mean(results[(p, c)][queue][0])
         if args.min_trials > 1:
-            std = statistics.stdev(results[(p, c)][queue])
+            std = statistics.stdev(results[(p, c)][queue][0])
         else:
             std = 0.0
         row.append(avg)
-        row.append(std)
-    fmt = '%8s ' * 2
-    fmt += '%8.2f ' * 13
+        # std (standard deviation) is unused
+
+    # Producer r/w cache misses
+    for queue in queues:
+        avg = statistics.mean(results[(p, c)][queue][1])
+        row.append(avg)
+
+    # Consumer r/w cache misses
+    for queue in queues:
+        avg = statistics.mean(results[(p, c)][queue][2])
+        row.append(avg)
+
+    fmt = '%3s ' * 2
+    fmt += '%8.2f ' * 18
     printfl(fmt % tuple(row))
