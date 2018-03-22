@@ -10,14 +10,15 @@ DUR=${2:-2}
 OUTF=${3:-cms.out}
 
 TMPF=$(mktemp)
-sudo perf stat -d -C $CORE sleep $DUR > $TMPF 2>&1
-# -e cycles,instructions,L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses
+sudo perf stat -C $CORE -e cycles,instructions,L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses sleep $DUR > $TMPF 2>&1
 #cat $TMPF
-LDRATE=$(grep "L1-dcache-loads" $TMPF | awk '{print $4}')
-MISSPERC=$(grep "L1-dcache-load-misses" $TMPF | awk '{print $4}'|rev|cut -c 2- | rev)
-GHZ=$(grep "\<cycles\>" $TMPF | grep GHz | awk '{print $4}')
-INSNPC=$(grep "\<instructions\>" $TMPF | grep "insn per cycle" | awk '{print $4}')
-rm $TMPF
-# Print L1 dcache miss rate in M/sec, instructions per second in B/sec
-awk "BEGIN {print $LDRATE * $MISSPERC / 100.0, $INSNPC * $GHZ}" > $OUTF
-
+LD=$(grep "L1-dcache-loads" $TMPF | awk '{print $1}')
+LDMISS=$(grep "L1-dcache-load-misses" $TMPF | awk '{print $1}')
+ST=$(grep "L1-dcache-stores" $TMPF | awk '{print $1}')
+STMISS=$(grep "L1-dcache-store-misses" $TMPF | awk '{print $1}')
+CYCLE=$(grep "cycles" $TMPF | awk '{print $1}')
+INSN=$(grep "instructions" $TMPF | awk '{print $1}')
+SECS=$(grep "seconds time elapsed" $TMPF | awk '{print $1}')
+#rm $TMPF
+# Print L1 dcache miss rates in M/sec, instructions per second in B/sec
+awk "BEGIN {print $LDMISS / $SECS / 1000000, $STMISS / $SECS / 1000000, $INSN / $SECS / 1000000000.0}" > $OUTF

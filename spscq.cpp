@@ -204,9 +204,11 @@ struct Global {
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
-    /* L1 dcache miss rate in M/sec. */
-    float prod_miss_rate = 0.0;
-    float cons_miss_rate = 0.0;
+    /* L1 dcache miss rates in M/sec. */
+    float prod_read_miss_rate = 0.0;
+    float cons_read_miss_rate = 0.0;
+    float prod_write_miss_rate = 0.0;
+    float cons_write_miss_rate = 0.0;
 
     /* CPU instruction rate in B/sec. */
     float prod_insn_rate = 0.0;
@@ -241,13 +243,11 @@ static unsigned short *smap = nullptr;
 #endif
 
 static void
-miss_rate_print(const char *prefix, double mpps, float miss_rate)
+miss_rate_print(const char *prefix, double mpps, float read_miss_rate, float write_miss_rate)
 {
-    double ratio     = miss_rate / mpps;
-    const char *unit = "misses/packet";
-
-    printf("[%s] L1 d-cache miss rate %5.2f M/sec, %.2f %s\n", prefix,
-           miss_rate, ratio, unit);
+    printf("[%s] L1 d-cache %.3f rmisses/packet,"
+                "%.3f wmisses/packet\n", prefix,
+           read_miss_rate/mpps, write_miss_rate/mpps);
 }
 
 void
@@ -284,9 +284,11 @@ Global::print_results()
                static_cast<double>(pkt_cnt) /
                    static_cast<double>(consumer_batches));
     }
-    miss_rate_print("P", mpps, prod_miss_rate);
-    miss_rate_print("C", mpps, cons_miss_rate);
-    printf("Throughput %3.3f Mpps\n", mpps);
+    miss_rate_print("P", mpps, prod_read_miss_rate, prod_write_miss_rate);
+    miss_rate_print("C", mpps, cons_read_miss_rate, cons_write_miss_rate);
+    printf("%3.3f Mpps %2.3f Pmpp %2.3f Cmpp\n", mpps,
+            (prod_read_miss_rate+prod_write_miss_rate)/mpps,
+            (cons_read_miss_rate+cons_write_miss_rate)/mpps);
 }
 
 void
@@ -1576,11 +1578,14 @@ perf_measure(Global *const g, bool producer)
     }
 
     std::ifstream fin(filename);
-    float &miss_rate = producer ? g->prod_miss_rate : g->cons_miss_rate;
+    float &read_miss_rate = producer ? g->prod_read_miss_rate : g->cons_read_miss_rate;
+    float &write_miss_rate = producer ? g->prod_write_miss_rate : g->cons_write_miss_rate;
     float &insn_rate = producer ? g->prod_insn_rate : g->cons_insn_rate;
-    miss_rate        = 0.0;
+    read_miss_rate        = 0.0;
     insn_rate        = 0.0;
-    fin >> miss_rate >> insn_rate;
+    /* Miss rates are in M/sec, instruction rate is in B/sec. */
+    fin >> read_miss_rate >> write_miss_rate >> insn_rate;
+    printf("%f %f %f\n", read_miss_rate, write_miss_rate, insn_rate); //TODO remove
     fin.close();
     remove(filename);
 }
@@ -1982,7 +1987,7 @@ main(int argc, char **argv)
         smap =
             static_cast<unsigned short *>(szalloc(g->qlen * sizeof(SMAP(0))));
         qslotmap_init(smap, g->qlen, g->deceive_hw_data_prefetcher);
-#if 1
+#if 0
         for (unsigned i = 0; i < g->qlen; i++) {
             printf("%d ", SMAP(i));
         }
