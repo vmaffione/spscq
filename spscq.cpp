@@ -126,8 +126,7 @@ enum class MbufMode {
 
 struct Mbuf {
     unsigned int len;
-    unsigned int x;
-    unsigned int __padding[6];
+    unsigned int __padding[7];
 #define MBUF_LEN_MAX (4096 + CACHELINE_SIZE - 8 * sizeof(unsigned int))
     char buf[MBUF_LEN_MAX];
 };
@@ -196,6 +195,15 @@ struct Global {
 
     /* Checksum for when -M is used. */
     unsigned int csum;
+
+    /* When -M is used, we need a variable to increment that depends on
+     * something contained inside the mbuf; this is needed to make sure
+     * that spin_for() has a data dependency on the mbuf_get() or
+     * mbuf_put(), so that spin_for() does not run in the parallel
+     * with mbuf_put() or mbuf_get().
+     * To avoid the compiler optimizing out this variable, P and C
+     * save it to the 'trash' global variable here. */
+    unsigned int trash;
 
     /* Packet count written back by consumers. It's safer for it
      * to have its own cacheline. */
@@ -327,23 +335,27 @@ static Mbuf gm;
 
 template <MbufMode kMbufMode>
 static inline Mbuf *
-mbuf_get(Global *const g)
+mbuf_get(Global *const g, unsigned int trash)
 {
     if (kMbufMode == MbufMode::NoAccess) {
         return &gm;
     } else {
         Mbuf *m = &g->pool[g->pool_idx & g->pool_mask];
-        m->len  = g->pool_idx++;
+        if (trash != 0xdeadbeef) {
+            /* highly likely */
+            m->len = g->pool_idx++;
+        }
         return m;
     }
 }
 
 template <MbufMode kMbufMode>
 static inline void
-mbuf_put(Mbuf *const m, unsigned int *csum)
+mbuf_put(Mbuf *const m, unsigned int *csum, unsigned int *trash)
 {
     if (kMbufMode != MbufMode::NoAccess) {
         *csum += m->len;
+        *trash += *csum;
     }
 }
 
@@ -612,16 +624,13 @@ blq_free(Blq *blq)
 
 template <MbufMode kMbufMode>
 static inline void
-spin_for(Mbuf *m, uint64_t spin)
+spin_for(uint64_t spin, unsigned int *trash)
 {
     uint64_t when = rdtsc() + spin;
 
-    if (kMbufMode != MbufMode::NoAccess) {
-        m->x = 0;
-    }
     while (rdtsc() < when) {
         if (kMbufMode != MbufMode::NoAccess) {
-            m->x++;
+            (*trash)++;
         }
         compiler_barrier();
     }
@@ -636,14 +645,15 @@ lq_producer(Global *const g)
     Blq *const blq             = g->blq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
-
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-            spin_for<kMbufMode>(m, spin);
+            spin_for<kMbufMode>(spin, &trash);
         }
+
+        Mbuf *m = mbuf_get<kMbufMode>(g, trash);
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
@@ -668,6 +678,7 @@ lq_consumer(Global *const g)
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
     Mbuf *m;
 
     g->consumer_header();
@@ -679,9 +690,9 @@ lq_consumer(Global *const g)
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &csum);
+            mbuf_put<kMbufMode>(m, &csum, &trash);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for<kMbufMode>(m, spin);
+                spin_for<kMbufMode>(spin, &trash);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -696,6 +707,7 @@ lq_consumer(Global *const g)
     }
     g->consumer_batches = batches;
     g->csum             = csum;
+    g->trash            = trash;
     g->consumer_footer();
 }
 
@@ -708,14 +720,15 @@ llq_producer(Global *const g)
     Blq *const blq             = g->blq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
-
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-            spin_for<kMbufMode>(m, spin);
+            spin_for<kMbufMode>(spin, &trash);
         }
+
+        Mbuf *m = mbuf_get<kMbufMode>(g, trash);
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
@@ -740,6 +753,7 @@ llq_consumer(Global *const g)
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
     Mbuf *m;
 
     g->consumer_header();
@@ -751,9 +765,9 @@ llq_consumer(Global *const g)
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &csum);
+            mbuf_put<kMbufMode>(m, &csum, &trash);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for<kMbufMode>(m, spin);
+                spin_for<kMbufMode>(spin, &trash);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -768,6 +782,7 @@ llq_consumer(Global *const g)
     }
     g->consumer_batches = batches;
     g->csum             = csum;
+    g->trash            = trash;
     g->consumer_footer();
 }
 
@@ -781,6 +796,7 @@ blq_producer(Global *const g)
     Blq *const blq             = g->blq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
 
@@ -796,10 +812,10 @@ blq_producer(Global *const g)
             }
             batch_packets += avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get<kMbufMode>(g);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for<kMbufMode>(m, spin);
+                    spin_for<kMbufMode>(spin, &trash);
                 }
+                Mbuf *m = mbuf_get<kMbufMode>(g, trash);
                 blq_write_local(blq, m);
             }
             blq_write_publish(blq);
@@ -824,6 +840,7 @@ blq_consumer(Global *const g)
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
     Mbuf *m;
 
     g->consumer_header();
@@ -842,9 +859,9 @@ blq_consumer(Global *const g)
             g->pkt_cnt += avail;
             for (; avail > 0; avail--) {
                 m = blq_read_local(blq);
-                mbuf_put<kMbufMode>(m, &csum);
+                mbuf_put<kMbufMode>(m, &csum, &trash);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for<kMbufMode>(m, spin);
+                    spin_for<kMbufMode>(spin, &trash);
                 }
             }
             blq_read_publish(blq);
@@ -860,6 +877,7 @@ blq_consumer(Global *const g)
         }
     }
     g->csum             = csum;
+    g->trash            = trash;
     g->consumer_batches = batches;
     g->consumer_footer();
 }
@@ -932,15 +950,17 @@ ffq_producer(Global *const g)
     Iffq *const ffq            = g->ffq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
-
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-            spin_for<kMbufMode>(m, spin);
+            spin_for<kMbufMode>(spin, &trash);
         }
+
+        Mbuf *m = mbuf_get<kMbufMode>(g, trash);
+
         if (kMbufMode != MbufMode::NoAccess) {
             compiler_barrier();
         }
@@ -965,6 +985,7 @@ ffq_consumer(Global *const g)
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
     Mbuf *m;
 
     g->consumer_header();
@@ -974,9 +995,9 @@ ffq_consumer(Global *const g)
         if (m) {
             ++batch_packets;
             ++g->pkt_cnt;
-            mbuf_put<kMbufMode>(m, &csum);
+            mbuf_put<kMbufMode>(m, &csum, &trash);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for<kMbufMode>(m, spin);
+                spin_for<kMbufMode>(spin, &trash);
             }
         } else {
             batches += (batch_packets != 0) ? 1 : 0;
@@ -990,6 +1011,7 @@ ffq_consumer(Global *const g)
         }
     }
     g->csum             = csum;
+    g->trash            = trash;
     g->consumer_batches = batches;
     g->consumer_footer();
 }
@@ -1216,15 +1238,16 @@ iffq_producer(Global *const g)
     Iffq *const ffq            = g->ffq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
-
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-            spin_for<kMbufMode>(m, spin);
+            spin_for<kMbufMode>(spin, &trash);
         }
+
+        Mbuf *m = mbuf_get<kMbufMode>(g, trash);
 #ifdef QDEBUG
         iffq_dump("P", ffq);
 #endif
@@ -1254,6 +1277,7 @@ iffq_consumer(Global *const g)
     unsigned int csum          = 0;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
     Mbuf *m;
 
     g->consumer_header();
@@ -1266,9 +1290,9 @@ iffq_consumer(Global *const g)
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
-            mbuf_put<kMbufMode>(m, &csum);
+            mbuf_put<kMbufMode>(m, &csum, &trash);
             if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                spin_for<kMbufMode>(m, spin);
+                spin_for<kMbufMode>(spin, &trash);
             }
             iffq_clear(ffq);
         } else {
@@ -1283,6 +1307,7 @@ iffq_consumer(Global *const g)
         }
     }
     g->csum             = csum;
+    g->trash            = trash;
     g->consumer_batches = batches;
     g->consumer_footer();
 }
@@ -1297,6 +1322,7 @@ biffq_producer(Global *const g)
     Iffq *const ffq            = g->ffq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
+    unsigned int trash         = 0;
 
     g->producer_header();
 
@@ -1313,10 +1339,10 @@ biffq_producer(Global *const g)
             }
             batch_packets += avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get<kMbufMode>(g);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
-                    spin_for<kMbufMode>(m, spin);
+                    spin_for<kMbufMode>(spin, &trash);
                 }
+                Mbuf *m = mbuf_get<kMbufMode>(g, trash);
                 iffq_insert_local(ffq, m);
             }
             if (kMbufMode != MbufMode::NoAccess) {
@@ -1349,7 +1375,7 @@ lq_client(Global *const g)
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
+        Mbuf *m = mbuf_get<kMbufMode>(g, 0);
         ret     = lq_write(blq, m);
         assert(ret == 0);
         while ((m = lq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1366,6 +1392,7 @@ lq_server(Global *const g)
     Blq *const blq      = g->blq;
     Blq *const blq_back = g->blq_back;
     unsigned int csum   = 0;
+    unsigned int trash  = 0;
     int ret;
 
     g->consumer_header();
@@ -1376,12 +1403,13 @@ lq_server(Global *const g)
                 goto out;
             }
         }
-        mbuf_put<kMbufMode>(m, &csum);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
         ret = lq_write(blq_back, m);
         assert(ret == 0);
     }
 out:
-    g->csum = csum;
+    g->csum  = csum;
+    g->trash = trash;
     g->consumer_footer();
 }
 
@@ -1395,7 +1423,7 @@ llq_client(Global *const g)
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
+        Mbuf *m = mbuf_get<kMbufMode>(g, 0);
         ret     = llq_write(blq, m);
         assert(ret == 0);
         while ((m = llq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1412,6 +1440,7 @@ llq_server(Global *const g)
     Blq *const blq      = g->blq;
     Blq *const blq_back = g->blq_back;
     unsigned int csum   = 0;
+    unsigned int trash  = 0;
     int ret;
 
     g->consumer_header();
@@ -1422,12 +1451,13 @@ llq_server(Global *const g)
                 goto out;
             }
         }
-        mbuf_put<kMbufMode>(m, &csum);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
         ret = llq_write(blq_back, m);
         assert(ret == 0);
     }
 out:
-    g->csum = csum;
+    g->csum  = csum;
+    g->trash = trash;
     g->consumer_footer();
 }
 #define blq_client llq_client
@@ -1443,7 +1473,7 @@ ffq_client(Global *const g)
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
+        Mbuf *m = mbuf_get<kMbufMode>(g, 0);
         ret     = ffq_write(ffq, m);
         assert(ret == 0);
         while ((m = ffq_read(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1460,6 +1490,7 @@ ffq_server(Global *const g)
     Iffq *const ffq      = g->ffq;
     Iffq *const ffq_back = g->ffq_back;
     unsigned int csum    = 0;
+    unsigned int trash   = 0;
     int ret;
 
     g->consumer_header();
@@ -1470,12 +1501,13 @@ ffq_server(Global *const g)
                 goto out;
             }
         }
-        mbuf_put<kMbufMode>(m, &csum);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
         ret = ffq_write(ffq_back, m);
         assert(ret == 0);
     }
 out:
-    g->csum = csum;
+    g->csum  = csum;
+    g->trash = trash;
     g->consumer_footer();
 }
 
@@ -1489,7 +1521,7 @@ iffq_client(Global *const g)
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g);
+        Mbuf *m = mbuf_get<kMbufMode>(g, 0);
         ret     = iffq_insert(ffq, m);
         assert(ret == 0);
         while ((m = iffq_extract(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1507,6 +1539,7 @@ iffq_server(Global *const g)
     Iffq *const ffq      = g->ffq;
     Iffq *const ffq_back = g->ffq_back;
     unsigned int csum    = 0;
+    unsigned int trash   = 0;
     int ret;
 
     g->consumer_header();
@@ -1518,12 +1551,13 @@ iffq_server(Global *const g)
             }
         }
         iffq_clear(ffq);
-        mbuf_put<kMbufMode>(m, &csum);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
         ret = iffq_insert(ffq_back, m);
         assert(ret == 0);
     }
 out:
-    g->csum = csum;
+    g->csum  = csum;
+    g->trash = trash;
     g->consumer_footer();
 }
 
