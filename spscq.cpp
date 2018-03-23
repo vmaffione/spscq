@@ -329,7 +329,7 @@ mbuf_get(Global *const g, const unsigned int pool_mask)
     if (kMbufMode == MbufMode::NoAccess) {
         return &gm;
     } else {
-        Mbuf *m = &g->pool[g->pool_idx & pool_mask];
+        Mbuf *m = &g->pool[SMAP(g->pool_idx & pool_mask)];
         m->len  = g->pool_idx++;
         return m;
     }
