@@ -341,10 +341,10 @@ mbuf_get(Global *const g, unsigned int trash)
         return &gm;
     } else {
         Mbuf *m = &g->pool[g->pool_idx & g->pool_mask];
-        if (trash != 0xdeadbeef) {
-            /* highly likely */
-            m->len = g->pool_idx++;
-        }
+        /* We want that m->len depends on trash but we
+         * don't want to put trash inside m->len (to
+         * preserve the checksum). */
+        m->len = g->pool_idx++ + !!(trash == 0xdeadbeef);
         return m;
     }
 }
