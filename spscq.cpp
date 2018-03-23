@@ -228,8 +228,11 @@ struct Global {
     /* A pool of preallocated mbufs (only accessed by P). */
     Mbuf *pool = nullptr;
 
-    /* Index in the pool array (only accessed by P). */
+    /* Index in the mbuf pool array (only accessed by P). */
     unsigned int pool_idx = 0;
+
+    /* Maks for the mbuf pool array (only accessed by P). */
+    unsigned int pool_mask;
 
     void producer_header();
     void producer_footer();
@@ -324,12 +327,12 @@ static Mbuf gm;
 
 template <MbufMode kMbufMode>
 static inline Mbuf *
-mbuf_get(Global *const g, const unsigned int pool_mask)
+mbuf_get(Global *const g)
 {
     if (kMbufMode == MbufMode::NoAccess) {
         return &gm;
     } else {
-        Mbuf *m = &g->pool[SMAP(g->pool_idx & pool_mask)];
+        Mbuf *m = &g->pool[g->pool_idx & g->pool_mask];
         m->len  = g->pool_idx++;
         return m;
     }
@@ -629,15 +632,14 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 lq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->blq->qmask;
-    Blq *const blq               = g->blq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    Blq *const blq             = g->blq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
             spin_for<kMbufMode>(m, spin);
@@ -702,15 +704,14 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 llq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->blq->qmask;
-    Blq *const blq               = g->blq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    Blq *const blq             = g->blq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
             spin_for<kMbufMode>(m, spin);
@@ -775,12 +776,11 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 blq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->blq->qmask;
-    const unsigned int batch     = g->prod_batch;
-    Blq *const blq               = g->blq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    const unsigned int batch   = g->prod_batch;
+    Blq *const blq             = g->blq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
 
@@ -796,7 +796,7 @@ blq_producer(Global *const g)
             }
             batch_packets += avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+                Mbuf *m = mbuf_get<kMbufMode>(g);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_for<kMbufMode>(m, spin);
                 }
@@ -928,16 +928,15 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 ffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->ffq->entry_mask;
-    Iffq *const ffq              = g->ffq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    Iffq *const ffq            = g->ffq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
             spin_for<kMbufMode>(m, spin);
@@ -1213,16 +1212,15 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 iffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->qlen - 1;
-    Iffq *const ffq              = g->ffq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    Iffq *const ffq            = g->ffq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
 
         if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
             spin_for<kMbufMode>(m, spin);
@@ -1294,12 +1292,11 @@ template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
 static void
 biffq_producer(Global *const g)
 {
-    const uint64_t spin          = g->prod_spin_ticks;
-    const unsigned int pool_mask = g->qlen - 1;
-    const unsigned int batch     = g->prod_batch;
-    Iffq *const ffq              = g->ffq;
-    unsigned int batch_packets   = 0;
-    unsigned int batches         = 0;
+    const uint64_t spin        = g->prod_spin_ticks;
+    const unsigned int batch   = g->prod_batch;
+    Iffq *const ffq            = g->ffq;
+    unsigned int batch_packets = 0;
+    unsigned int batches       = 0;
 
     g->producer_header();
 
@@ -1316,7 +1313,7 @@ biffq_producer(Global *const g)
             }
             batch_packets += avail;
             for (; avail > 0; avail--) {
-                Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+                Mbuf *m = mbuf_get<kMbufMode>(g);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_for<kMbufMode>(m, spin);
                 }
@@ -1346,14 +1343,13 @@ template <MbufMode kMbufMode>
 void
 lq_client(Global *const g)
 {
-    const unsigned int pool_mask = g->blq->qmask;
-    Blq *const blq               = g->blq;
-    Blq *const blq_back          = g->blq_back;
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
     int ret;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
         ret     = lq_write(blq, m);
         assert(ret == 0);
         while ((m = lq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1393,14 +1389,13 @@ template <MbufMode kMbufMode>
 void
 llq_client(Global *const g)
 {
-    const unsigned int pool_mask = g->blq->qmask;
-    Blq *const blq               = g->blq;
-    Blq *const blq_back          = g->blq_back;
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
     int ret;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
         ret     = llq_write(blq, m);
         assert(ret == 0);
         while ((m = llq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1442,14 +1437,13 @@ template <MbufMode kMbufMode>
 void
 ffq_client(Global *const g)
 {
-    const unsigned int pool_mask = g->ffq->entry_mask;
-    Iffq *const ffq              = g->ffq;
-    Iffq *const ffq_back         = g->ffq_back;
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
     int ret;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
         ret     = ffq_write(ffq, m);
         assert(ret == 0);
         while ((m = ffq_read(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1489,14 +1483,13 @@ template <MbufMode kMbufMode>
 void
 iffq_client(Global *const g)
 {
-    const unsigned int pool_mask = g->ffq->entry_mask;
-    Iffq *const ffq              = g->ffq;
-    Iffq *const ffq_back         = g->ffq_back;
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
     int ret;
 
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
-        Mbuf *m = mbuf_get<kMbufMode>(g, pool_mask);
+        Mbuf *m = mbuf_get<kMbufMode>(g);
         ret     = iffq_insert(ffq, m);
         assert(ret == 0);
         while ((m = iffq_extract(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
@@ -1770,8 +1763,9 @@ run_test(Global *g)
         assert(0);
     }
 
-    /* Allocate mbuf pool. */
-    g->pool = static_cast<Mbuf *>(szalloc(g->qlen * sizeof(g->pool[0])));
+    /* Allocate mbuf pool and init the mask. */
+    g->pool = static_cast<Mbuf *>(szalloc(2 * g->qlen * sizeof(g->pool[0])));
+    g->pool_mask = (2 * g->qlen) - 1;
 
     pth = std::thread(funcs.first, g);
     cth = std::thread(funcs.second, g);
