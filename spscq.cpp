@@ -505,17 +505,18 @@ static inline int
 llq_write(Blq *q, Mbuf *m)
 {
     unsigned int write = q->write;
-    unsigned int next  = (write + 1) & q->qmask;
+    unsigned int check =
+        (write + (CACHELINE_SIZE / sizeof(uintptr_t))) & q->qmask;
 
-    if (next == q->read_shadow) {
+    if (check == q->read_shadow) {
         q->read_shadow = ACCESS_ONCE(q->read);
     }
-    if (next == q->read_shadow) {
+    if (check == q->read_shadow) {
         return -1; /* no space */
     }
     ACCESS_ONCE(q->q[SMAP(write)]) = m;
     compiler_barrier();
-    ACCESS_ONCE(q->write) = next;
+    ACCESS_ONCE(q->write) = (write + 1) & q->qmask;
     return 0;
 }
 
