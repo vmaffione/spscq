@@ -2,7 +2,6 @@
 #
 # Written by: Vincenzo Maffione <v.maffione@gmail.com>
 
-import statistics
 import subprocess
 import argparse
 import sys
@@ -10,8 +9,24 @@ import re
 import os
 import itertools
 
-def printfl(*args):
-    print(*args)
+def cmean(vec):
+    try:
+        import statistics
+        return statistics.mean(vec)
+    except:
+        import numpy
+        return numpy.mean(vec)
+
+def cstddev(vec):
+    try:
+        import statistics
+        return statistics.stdev(vec)
+    except:
+        import numpy
+        return numpy.std(vec)
+
+def printfl(s):
+    print(s)
     sys.stdout.flush()
 
 description = "Experiment with SPSC queues"
@@ -172,9 +187,9 @@ try:
                         # We have reached the minimum number of trials. Let's
                         # see if standard deviation is small enough that we
                         # can stop.
-                        mean = statistics.mean(mpps_values)
+                        mean = cmean(mpps_values)
                         if k > 1:
-                            stddev = statistics.stdev(mpps_values)
+                            stddev = cstddev(mpps_values)
                         else:
                             stddev = 0.0
                         if mean != 0 and stddev / mean  < 0.01:
@@ -192,13 +207,13 @@ printfl((('%3s '*2) + ('%8s '*18)) % ('P', 'C',
                     'lq.P', 'llq.P', 'blq.P', 'ffq.P', 'iffq.P', 'biffq.P',
                     'lq.C', 'llq.C', 'blq.C', 'ffq.C', 'iffq.C', 'biffq.C'
         ))
-for (p, c) in results:
+for (p, c) in sorted(results):
     row = [p, c]
     # Throughput
     for queue in queues:
-        avg = statistics.mean(results[(p, c)][queue][0])
+        avg = cmean(results[(p, c)][queue][0])
         if args.min_trials > 1:
-            std = statistics.stdev(results[(p, c)][queue][0])
+            std = cstddev(results[(p, c)][queue][0])
         else:
             std = 0.0
         row.append(avg)
@@ -206,12 +221,12 @@ for (p, c) in results:
 
     # Producer r/w cache misses
     for queue in queues:
-        avg = statistics.mean(results[(p, c)][queue][1])
+        avg = cmean(results[(p, c)][queue][1])
         row.append(avg)
 
     # Consumer r/w cache misses
     for queue in queues:
-        avg = statistics.mean(results[(p, c)][queue][2])
+        avg = cmean(results[(p, c)][queue][2])
         row.append(avg)
 
     fmt = '%3s ' * 2
