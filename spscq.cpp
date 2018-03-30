@@ -1870,6 +1870,7 @@ int
 main(int argc, char **argv)
 {
     bool got_b_option = false;
+    bool got_c_option = false;
     struct sigaction sa;
     int opt, ret;
     Global _g;
@@ -1940,10 +1941,13 @@ main(int argc, char **argv)
 
         case 'c': {
             int val = atoi(optarg);
-            if (g->p_core < 0) {
-                g->p_core = val;
-            } else if (g->c_core < 0) {
-                g->c_core = val;
+            if (val >= 0) {
+                if (got_c_option) {
+                    g->c_core = val;
+                } else {
+                    g->p_core    = val;
+                    got_c_option = true;
+                }
             }
             break;
         }
