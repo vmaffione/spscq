@@ -171,7 +171,11 @@ try:
                     except subprocess.CalledProcessError:
                         printfl('Command "%s" failed' % cmd)
                         quit(1)
-                    out = str(out, 'ascii')  # decode
+                    try:
+                        tmp = str(out, 'ascii')  # decode
+                        out = tmp
+                    except:
+                        pass
                     for line in out.split('\n'):
                         m = re.match(r'^([0-9]+\.[0-9]+)\s+Mpps\s+([0-9]+\.[0-9]+)\s+Pmpp\s+([0-9]+\.[0-9]+)\s+Cmpp', line)
                         if m:
