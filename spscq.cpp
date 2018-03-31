@@ -546,14 +546,19 @@ llq_read(Blq *q)
 static inline unsigned int
 blq_wspace(Blq *blq)
 {
-    unsigned int space = (blq->read_shadow - 1 - blq->write_priv) & blq->qmask;
+    unsigned int space =
+        (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
+         blq->write_priv) &
+        blq->qmask;
 
     if (space) {
         return space;
     }
     blq->read_shadow = ACCESS_ONCE(blq->read);
 
-    return (blq->read_shadow - 1 - blq->write_priv) & blq->qmask;
+    return (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
+            blq->write_priv) &
+           blq->qmask;
 }
 
 /* No boundary checks, to be called after blq_wspace(). */
