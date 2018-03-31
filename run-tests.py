@@ -71,6 +71,9 @@ argparser.add_argument('-v', '--verbose', action = 'store_true',
 argparser.add_argument('-w', '--disable-queue-prefetch', action = 'store_true',
                        help = "Try to prevent hw prefetcher from being effective "
                                 "on prefetching queue slots")
+argparser.add_argument('--only-queue', type = str, default = '',
+                       choices = ['lq', 'llq', 'blq', 'ffq', 'iffq', 'biffq'],
+                       help = "Test only a given queue")
 
 args = argparser.parse_args()
 
@@ -161,7 +164,7 @@ try:
             pmpp_values = []
             cmpp_values = []
             for k in range(1, args.max_trials+1):
-                if args.dry_run:
+                if args.dry_run or (args.only_queue != '' and queue != args.only_queue):
                     mpps_values.append(0)  # mock it
                     pmpp_values.append(0)  # mock it
                     cmpp_values.append(0)  # mock it
