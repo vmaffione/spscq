@@ -1,102 +1,2502 @@
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t lq -M'
+Got 25.887000 Mpps, 3.445000 Pmpp, 3.823000 Cmpp
+Got 26.029000 Mpps, 3.450000 Pmpp, 3.823000 Cmpp
+Got 26.087000 Mpps, 3.510000 Pmpp, 4.080000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t llq -M'
+Got 25.568000 Mpps, 2.786000 Pmpp, 3.051000 Cmpp
+Got 25.912000 Mpps, 2.778000 Pmpp, 2.993000 Cmpp
+Got 25.943000 Mpps, 2.757000 Pmpp, 3.137000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t blq -M'
+Got 22.605000 Mpps, 2.749000 Pmpp, 2.865000 Cmpp
+Got 24.704000 Mpps, 2.675000 Pmpp, 2.776000 Cmpp
+Got 24.702000 Mpps, 2.675000 Pmpp, 2.779000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t ffq -M'
+Got 29.141000 Mpps, 2.119000 Pmpp, 2.192000 Cmpp
+Got 29.180000 Mpps, 2.115000 Pmpp, 2.178000 Cmpp
+Got 29.063000 Mpps, 2.123000 Pmpp, 2.181000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t iffq -M'
+Got 29.817000 Mpps, 1.978000 Pmpp, 2.093000 Cmpp
+Got 29.855000 Mpps, 1.987000 Pmpp, 2.103000 Cmpp
+Got 30.209000 Mpps, 1.967000 Pmpp, 2.090000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 0 -t biffq -M'
+Got 27.661000 Mpps, 1.919000 Pmpp, 2.031000 Cmpp
+Got 27.680000 Mpps, 1.919000 Pmpp, 2.029000 Cmpp
+Got 27.795000 Mpps, 1.918000 Pmpp, 2.028000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t lq -M'
+Got 19.147000 Mpps, 3.559000 Pmpp, 3.395000 Cmpp
+Got 19.987000 Mpps, 3.540000 Pmpp, 3.349000 Cmpp
+Got 19.060000 Mpps, 3.580000 Pmpp, 3.395000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t llq -M'
+Got 25.506000 Mpps, 2.277000 Pmpp, 2.139000 Cmpp
+Got 25.316000 Mpps, 2.266000 Pmpp, 2.119000 Cmpp
+Got 26.192000 Mpps, 2.281000 Pmpp, 2.144000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t blq -M'
+Got 19.582000 Mpps, 2.785000 Pmpp, 2.634000 Cmpp
+Got 19.717000 Mpps, 2.715000 Pmpp, 2.604000 Cmpp
+Got 19.769000 Mpps, 2.751000 Pmpp, 2.617000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t ffq -M'
+Got 20.484000 Mpps, 2.559000 Pmpp, 2.520000 Cmpp
+Got 20.448000 Mpps, 2.541000 Pmpp, 2.510000 Cmpp
+Got 20.277000 Mpps, 2.584000 Pmpp, 2.528000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t iffq -M'
+Got 26.701000 Mpps, 1.238000 Pmpp, 1.271000 Cmpp
+Got 26.735000 Mpps, 1.234000 Pmpp, 1.271000 Cmpp
+Got 26.606000 Mpps, 1.227000 Pmpp, 1.270000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 10 -t biffq -M'
+Got 26.757000 Mpps, 1.254000 Pmpp, 1.272000 Cmpp
+Got 26.824000 Mpps, 1.256000 Pmpp, 1.271000 Cmpp
+Got 26.866000 Mpps, 1.264000 Pmpp, 1.272000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t lq -M'
+Got 19.019000 Mpps, 3.577000 Pmpp, 3.408000 Cmpp
+Got 19.482000 Mpps, 3.516000 Pmpp, 3.339000 Cmpp
+Got 19.455000 Mpps, 3.527000 Pmpp, 3.335000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t llq -M'
+Got 25.441000 Mpps, 2.269000 Pmpp, 2.123000 Cmpp
+Got 26.313000 Mpps, 2.284000 Pmpp, 2.144000 Cmpp
+Got 25.936000 Mpps, 2.255000 Pmpp, 2.126000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t blq -M'
+Got 19.680000 Mpps, 2.762000 Pmpp, 2.618000 Cmpp
+Got 19.808000 Mpps, 2.759000 Pmpp, 2.620000 Cmpp
+Got 19.996000 Mpps, 2.750000 Pmpp, 2.624000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t ffq -M'
+Got 20.387000 Mpps, 2.561000 Pmpp, 2.514000 Cmpp
+Got 20.520000 Mpps, 2.566000 Pmpp, 2.515000 Cmpp
+Got 20.310000 Mpps, 2.569000 Pmpp, 2.523000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t iffq -M'
+Got 26.589000 Mpps, 1.235000 Pmpp, 1.270000 Cmpp
+Got 26.538000 Mpps, 1.234000 Pmpp, 1.269000 Cmpp
+Got 26.892000 Mpps, 1.233000 Pmpp, 1.276000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 20 -t biffq -M'
+Got 26.592000 Mpps, 1.261000 Pmpp, 1.271000 Cmpp
+Got 26.548000 Mpps, 1.256000 Pmpp, 1.272000 Cmpp
+Got 26.790000 Mpps, 1.273000 Pmpp, 1.273000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t lq -M'
+Got 18.088000 Mpps, 3.665000 Pmpp, 3.473000 Cmpp
+Got 18.195000 Mpps, 3.652000 Pmpp, 3.490000 Cmpp
+Got 18.106000 Mpps, 3.642000 Pmpp, 3.475000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t llq -M'
+Got 22.474000 Mpps, 2.298000 Pmpp, 2.148000 Cmpp
+Got 22.470000 Mpps, 2.280000 Pmpp, 2.147000 Cmpp
+Got 22.217000 Mpps, 2.291000 Pmpp, 2.142000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t blq -M'
+Got 19.250000 Mpps, 2.748000 Pmpp, 2.630000 Cmpp
+Got 19.119000 Mpps, 2.774000 Pmpp, 2.638000 Cmpp
+Got 19.127000 Mpps, 2.752000 Pmpp, 2.627000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t ffq -M'
+Got 19.921000 Mpps, 2.602000 Pmpp, 2.520000 Cmpp
+Got 19.769000 Mpps, 2.596000 Pmpp, 2.524000 Cmpp
+Got 19.626000 Mpps, 2.651000 Pmpp, 2.532000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t iffq -M'
+Got 22.043000 Mpps, 1.234000 Pmpp, 1.273000 Cmpp
+Got 22.251000 Mpps, 1.240000 Pmpp, 1.277000 Cmpp
+Got 21.371000 Mpps, 1.245000 Pmpp, 1.273000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 30 -t biffq -M'
+Got 22.191000 Mpps, 1.275000 Pmpp, 1.278000 Cmpp
+Got 22.047000 Mpps, 1.271000 Pmpp, 1.277000 Cmpp
+Got 22.102000 Mpps, 1.271000 Pmpp, 1.274000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t lq -M'
+Got 16.692000 Mpps, 3.523000 Pmpp, 3.385000 Cmpp
+Got 16.422000 Mpps, 3.700000 Pmpp, 3.550000 Cmpp
+Got 16.431000 Mpps, 3.687000 Pmpp, 3.545000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t llq -M'
+Got 19.010000 Mpps, 2.300000 Pmpp, 2.149000 Cmpp
+Got 18.807000 Mpps, 2.286000 Pmpp, 2.148000 Cmpp
+Got 18.828000 Mpps, 2.281000 Pmpp, 2.149000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t blq -M'
+Got 16.997000 Mpps, 2.791000 Pmpp, 2.655000 Cmpp
+Got 17.043000 Mpps, 2.782000 Pmpp, 2.647000 Cmpp
+Got 16.818000 Mpps, 2.796000 Pmpp, 2.662000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t ffq -M'
+Got 17.691000 Mpps, 2.621000 Pmpp, 2.478000 Cmpp
+Got 17.723000 Mpps, 2.665000 Pmpp, 2.464000 Cmpp
+Got 17.698000 Mpps, 2.609000 Pmpp, 2.480000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t iffq -M'
+Got 18.577000 Mpps, 1.245000 Pmpp, 1.280000 Cmpp
+Got 18.584000 Mpps, 1.241000 Pmpp, 1.275000 Cmpp
+Got 18.569000 Mpps, 1.246000 Pmpp, 1.278000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 40 -t biffq -M'
+Got 18.538000 Mpps, 1.271000 Pmpp, 1.274000 Cmpp
+Got 18.554000 Mpps, 1.278000 Pmpp, 1.277000 Cmpp
+Got 18.588000 Mpps, 1.279000 Pmpp, 1.277000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t lq -M'
+Got 15.814000 Mpps, 3.210000 Pmpp, 3.090000 Cmpp
+Got 15.339000 Mpps, 3.287000 Pmpp, 3.169000 Cmpp
+Got 15.404000 Mpps, 3.280000 Pmpp, 3.156000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t llq -M'
+Got 16.354000 Mpps, 2.284000 Pmpp, 2.148000 Cmpp
+Got 16.325000 Mpps, 2.315000 Pmpp, 2.156000 Cmpp
+Got 16.319000 Mpps, 2.303000 Pmpp, 2.150000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t blq -M'
+Got 15.668000 Mpps, 2.891000 Pmpp, 2.737000 Cmpp
+Got 15.198000 Mpps, 2.810000 Pmpp, 2.669000 Cmpp
+Got 15.506000 Mpps, 2.814000 Pmpp, 2.661000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t ffq -M'
+Got 15.522000 Mpps, 2.951000 Pmpp, 2.574000 Cmpp
+Got 15.459000 Mpps, 2.994000 Pmpp, 2.540000 Cmpp
+Got 15.467000 Mpps, 2.976000 Pmpp, 2.533000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t iffq -M'
+Got 15.715000 Mpps, 1.242000 Pmpp, 1.286000 Cmpp
+Got 15.634000 Mpps, 1.249000 Pmpp, 1.278000 Cmpp
+Got 15.649000 Mpps, 1.246000 Pmpp, 1.280000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 50 -t biffq -M'
+Got 15.680000 Mpps, 1.276000 Pmpp, 1.279000 Cmpp
+Got 15.726000 Mpps, 1.282000 Pmpp, 1.278000 Cmpp
+Got 15.771000 Mpps, 1.292000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t lq -M'
+Got 12.930000 Mpps, 3.530000 Pmpp, 3.393000 Cmpp
+Got 12.567000 Mpps, 3.469000 Pmpp, 3.379000 Cmpp
+Got 12.841000 Mpps, 3.394000 Pmpp, 3.295000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t llq -M'
+Got 13.322000 Mpps, 2.308000 Pmpp, 2.152000 Cmpp
+Got 13.480000 Mpps, 2.310000 Pmpp, 2.160000 Cmpp
+Got 13.357000 Mpps, 2.297000 Pmpp, 2.153000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t blq -M'
+Got 13.525000 Mpps, 2.927000 Pmpp, 2.779000 Cmpp
+Got 13.536000 Mpps, 2.920000 Pmpp, 2.775000 Cmpp
+Got 13.452000 Mpps, 2.938000 Pmpp, 2.779000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t ffq -M'
+Got 13.378000 Mpps, 3.242000 Pmpp, 2.843000 Cmpp
+Got 13.336000 Mpps, 3.236000 Pmpp, 2.854000 Cmpp
+Got 13.344000 Mpps, 3.234000 Pmpp, 2.828000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t iffq -M'
+Got 13.334000 Mpps, 1.246000 Pmpp, 1.283000 Cmpp
+Got 13.305000 Mpps, 1.250000 Pmpp, 1.283000 Cmpp
+Got 13.328000 Mpps, 1.248000 Pmpp, 1.284000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 60 -t biffq -M'
+Got 13.262000 Mpps, 1.303000 Pmpp, 1.286000 Cmpp
+Got 13.263000 Mpps, 1.277000 Pmpp, 1.284000 Cmpp
+Got 13.343000 Mpps, 1.279000 Pmpp, 1.280000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t lq -M'
+Got 11.565000 Mpps, 3.638000 Pmpp, 3.490000 Cmpp
+Got 11.762000 Mpps, 3.852000 Pmpp, 3.696000 Cmpp
+Got 11.454000 Mpps, 3.759000 Pmpp, 3.597000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t llq -M'
+Got 11.907000 Mpps, 2.316000 Pmpp, 2.156000 Cmpp
+Got 11.883000 Mpps, 2.319000 Pmpp, 2.155000 Cmpp
+Got 11.926000 Mpps, 2.303000 Pmpp, 2.156000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t blq -M'
+Got 11.901000 Mpps, 2.922000 Pmpp, 2.786000 Cmpp
+Got 11.691000 Mpps, 2.937000 Pmpp, 2.787000 Cmpp
+Got 11.909000 Mpps, 2.936000 Pmpp, 2.784000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t ffq -M'
+Got 11.918000 Mpps, 3.280000 Pmpp, 3.016000 Cmpp
+Got 11.940000 Mpps, 3.290000 Pmpp, 3.004000 Cmpp
+Got 11.953000 Mpps, 3.284000 Pmpp, 3.014000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t iffq -M'
+Got 11.729000 Mpps, 1.251000 Pmpp, 1.287000 Cmpp
+Got 11.726000 Mpps, 1.251000 Pmpp, 1.286000 Cmpp
+Got 11.703000 Mpps, 1.254000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 70 -t biffq -M'
+Got 11.727000 Mpps, 1.290000 Pmpp, 1.281000 Cmpp
+Got 11.719000 Mpps, 1.305000 Pmpp, 1.286000 Cmpp
+Got 11.796000 Mpps, 1.299000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t lq -M'
+Got 10.630000 Mpps, 4.079000 Pmpp, 3.905000 Cmpp
+Got 10.643000 Mpps, 4.088000 Pmpp, 3.904000 Cmpp
+Got 10.461000 Mpps, 3.970000 Pmpp, 3.807000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t llq -M'
+Got 10.894000 Mpps, 2.306000 Pmpp, 2.160000 Cmpp
+Got 10.929000 Mpps, 2.327000 Pmpp, 2.174000 Cmpp
+Got 10.950000 Mpps, 2.315000 Pmpp, 2.156000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t blq -M'
+Got 10.720000 Mpps, 2.947000 Pmpp, 2.785000 Cmpp
+Got 10.666000 Mpps, 2.948000 Pmpp, 2.783000 Cmpp
+Got 10.653000 Mpps, 2.934000 Pmpp, 2.786000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t ffq -M'
+Got 10.773000 Mpps, 3.281000 Pmpp, 3.028000 Cmpp
+Got 10.786000 Mpps, 3.309000 Pmpp, 3.025000 Cmpp
+Got 10.780000 Mpps, 3.312000 Pmpp, 3.026000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t iffq -M'
+Got 10.782000 Mpps, 1.255000 Pmpp, 1.286000 Cmpp
+Got 10.776000 Mpps, 1.250000 Pmpp, 1.290000 Cmpp
+Got 10.770000 Mpps, 1.258000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 80 -t biffq -M'
+Got 10.777000 Mpps, 1.290000 Pmpp, 1.291000 Cmpp
+Got 10.772000 Mpps, 1.294000 Pmpp, 1.289000 Cmpp
+Got 10.764000 Mpps, 1.305000 Pmpp, 1.297000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t lq -M'
+Got 9.763000 Mpps, 4.082000 Pmpp, 3.914000 Cmpp
+Got 9.642000 Mpps, 4.087000 Pmpp, 3.901000 Cmpp
+Got 9.761000 Mpps, 4.081000 Pmpp, 3.906000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t llq -M'
+Got 9.794000 Mpps, 2.310000 Pmpp, 2.161000 Cmpp
+Got 9.693000 Mpps, 2.319000 Pmpp, 2.170000 Cmpp
+Got 9.731000 Mpps, 2.321000 Pmpp, 2.162000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t blq -M'
+Got 9.637000 Mpps, 2.959000 Pmpp, 2.788000 Cmpp
+Got 9.639000 Mpps, 2.945000 Pmpp, 2.789000 Cmpp
+Got 9.618000 Mpps, 2.945000 Pmpp, 2.787000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t ffq -M'
+Got 9.653000 Mpps, 3.311000 Pmpp, 3.024000 Cmpp
+Got 9.657000 Mpps, 3.323000 Pmpp, 3.031000 Cmpp
+Got 9.655000 Mpps, 3.321000 Pmpp, 3.028000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t iffq -M'
+Got 9.556000 Mpps, 1.268000 Pmpp, 1.290000 Cmpp
+Got 9.568000 Mpps, 1.268000 Pmpp, 1.295000 Cmpp
+Got 9.586000 Mpps, 1.255000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 0 -C 90 -t biffq -M'
+Got 9.577000 Mpps, 1.316000 Pmpp, 1.294000 Cmpp
+Got 9.566000 Mpps, 1.306000 Pmpp, 1.289000 Cmpp
+Got 9.591000 Mpps, 1.323000 Pmpp, 1.294000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t lq -M'
+Got 19.612000 Mpps, 3.460000 Pmpp, 3.317000 Cmpp
+Got 19.982000 Mpps, 3.510000 Pmpp, 3.371000 Cmpp
+Got 19.532000 Mpps, 3.460000 Pmpp, 3.311000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t llq -M'
+Got 25.730000 Mpps, 2.235000 Pmpp, 2.105000 Cmpp
+Got 25.054000 Mpps, 2.253000 Pmpp, 2.129000 Cmpp
+Got 25.256000 Mpps, 2.238000 Pmpp, 2.090000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t blq -M'
+Got 20.253000 Mpps, 2.676000 Pmpp, 2.559000 Cmpp
+Got 20.219000 Mpps, 2.745000 Pmpp, 2.607000 Cmpp
+Got 20.180000 Mpps, 2.718000 Pmpp, 2.596000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t ffq -M'
+Got 20.587000 Mpps, 2.516000 Pmpp, 2.513000 Cmpp
+Got 20.546000 Mpps, 2.541000 Pmpp, 2.513000 Cmpp
+Got 20.628000 Mpps, 2.529000 Pmpp, 2.512000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t iffq -M'
+Got 27.140000 Mpps, 1.225000 Pmpp, 1.272000 Cmpp
+Got 26.542000 Mpps, 1.224000 Pmpp, 1.277000 Cmpp
+Got 26.790000 Mpps, 1.235000 Pmpp, 1.269000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 0 -t biffq -M'
+Got 26.409000 Mpps, 1.265000 Pmpp, 1.274000 Cmpp
+Got 26.760000 Mpps, 1.252000 Pmpp, 1.273000 Cmpp
+Got 26.714000 Mpps, 1.247000 Pmpp, 1.273000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t lq -M'
+Got 20.086000 Mpps, 3.484000 Pmpp, 3.345000 Cmpp
+Got 19.643000 Mpps, 3.458000 Pmpp, 3.312000 Cmpp
+Got 19.294000 Mpps, 3.565000 Pmpp, 3.407000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t llq -M'
+Got 25.310000 Mpps, 2.263000 Pmpp, 2.127000 Cmpp
+Got 25.725000 Mpps, 2.244000 Pmpp, 2.108000 Cmpp
+Got 25.479000 Mpps, 2.255000 Pmpp, 2.112000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t blq -M'
+Got 20.226000 Mpps, 2.737000 Pmpp, 2.600000 Cmpp
+Got 20.564000 Mpps, 2.546000 Pmpp, 2.430000 Cmpp
+Got 20.137000 Mpps, 2.699000 Pmpp, 2.556000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t ffq -M'
+Got 20.481000 Mpps, 2.535000 Pmpp, 2.509000 Cmpp
+Got 20.330000 Mpps, 2.551000 Pmpp, 2.528000 Cmpp
+Got 20.509000 Mpps, 2.570000 Pmpp, 2.528000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t iffq -M'
+Got 26.816000 Mpps, 1.234000 Pmpp, 1.273000 Cmpp
+Got 26.555000 Mpps, 1.230000 Pmpp, 1.271000 Cmpp
+Got 26.696000 Mpps, 1.221000 Pmpp, 1.270000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 10 -t biffq -M'
+Got 26.257000 Mpps, 1.255000 Pmpp, 1.273000 Cmpp
+Got 26.830000 Mpps, 1.255000 Pmpp, 1.273000 Cmpp
+Got 26.543000 Mpps, 1.248000 Pmpp, 1.272000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t lq -M'
+Got 20.273000 Mpps, 3.489000 Pmpp, 3.352000 Cmpp
+Got 19.513000 Mpps, 3.453000 Pmpp, 3.314000 Cmpp
+Got 19.385000 Mpps, 3.605000 Pmpp, 3.482000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t llq -M'
+Got 25.783000 Mpps, 2.257000 Pmpp, 2.120000 Cmpp
+Got 25.206000 Mpps, 2.268000 Pmpp, 2.119000 Cmpp
+Got 26.216000 Mpps, 2.277000 Pmpp, 2.138000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t blq -M'
+Got 20.148000 Mpps, 2.714000 Pmpp, 2.589000 Cmpp
+Got 20.613000 Mpps, 2.533000 Pmpp, 2.422000 Cmpp
+Got 18.828000 Mpps, 2.763000 Pmpp, 2.626000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t ffq -M'
+Got 20.297000 Mpps, 2.529000 Pmpp, 2.519000 Cmpp
+Got 20.248000 Mpps, 2.548000 Pmpp, 2.520000 Cmpp
+Got 20.265000 Mpps, 2.573000 Pmpp, 2.524000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t iffq -M'
+Got 26.553000 Mpps, 1.232000 Pmpp, 1.278000 Cmpp
+Got 26.457000 Mpps, 1.233000 Pmpp, 1.270000 Cmpp
+Got 26.709000 Mpps, 1.227000 Pmpp, 1.271000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 20 -t biffq -M'
+Got 26.729000 Mpps, 1.253000 Pmpp, 1.274000 Cmpp
+Got 26.736000 Mpps, 1.246000 Pmpp, 1.273000 Cmpp
+Got 26.645000 Mpps, 1.254000 Pmpp, 1.277000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t lq -M'
+Got 18.764000 Mpps, 3.615000 Pmpp, 3.470000 Cmpp
+Got 18.779000 Mpps, 3.607000 Pmpp, 3.471000 Cmpp
+Got 18.076000 Mpps, 3.636000 Pmpp, 3.466000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t llq -M'
+Got 22.381000 Mpps, 2.280000 Pmpp, 2.146000 Cmpp
+Got 22.487000 Mpps, 2.287000 Pmpp, 2.148000 Cmpp
+Got 22.528000 Mpps, 2.281000 Pmpp, 2.141000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t blq -M'
+Got 18.684000 Mpps, 2.749000 Pmpp, 2.617000 Cmpp
+Got 19.202000 Mpps, 2.780000 Pmpp, 2.633000 Cmpp
+Got 19.147000 Mpps, 2.759000 Pmpp, 2.614000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t ffq -M'
+Got 19.588000 Mpps, 2.599000 Pmpp, 2.517000 Cmpp
+Got 19.627000 Mpps, 2.628000 Pmpp, 2.521000 Cmpp
+Got 19.596000 Mpps, 2.624000 Pmpp, 2.519000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t iffq -M'
+Got 22.164000 Mpps, 1.241000 Pmpp, 1.273000 Cmpp
+Got 21.180000 Mpps, 1.237000 Pmpp, 1.278000 Cmpp
+Got 22.192000 Mpps, 1.238000 Pmpp, 1.276000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 30 -t biffq -M'
+Got 22.136000 Mpps, 1.256000 Pmpp, 1.277000 Cmpp
+Got 22.180000 Mpps, 1.275000 Pmpp, 1.273000 Cmpp
+Got 22.065000 Mpps, 1.284000 Pmpp, 1.278000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t lq -M'
+Got 16.622000 Mpps, 3.582000 Pmpp, 3.447000 Cmpp
+Got 16.692000 Mpps, 3.481000 Pmpp, 3.347000 Cmpp
+Got 16.592000 Mpps, 3.590000 Pmpp, 3.451000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t llq -M'
+Got 18.838000 Mpps, 2.290000 Pmpp, 2.148000 Cmpp
+Got 19.029000 Mpps, 2.289000 Pmpp, 2.149000 Cmpp
+Got 18.768000 Mpps, 2.305000 Pmpp, 2.147000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t blq -M'
+Got 17.047000 Mpps, 2.785000 Pmpp, 2.653000 Cmpp
+Got 17.131000 Mpps, 2.750000 Pmpp, 2.613000 Cmpp
+Got 17.031000 Mpps, 2.743000 Pmpp, 2.611000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t ffq -M'
+Got 17.690000 Mpps, 2.609000 Pmpp, 2.487000 Cmpp
+Got 17.688000 Mpps, 2.615000 Pmpp, 2.487000 Cmpp
+Got 17.724000 Mpps, 2.601000 Pmpp, 2.486000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t iffq -M'
+Got 18.543000 Mpps, 1.252000 Pmpp, 1.282000 Cmpp
+Got 18.553000 Mpps, 1.238000 Pmpp, 1.274000 Cmpp
+Got 18.562000 Mpps, 1.242000 Pmpp, 1.284000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 40 -t biffq -M'
+Got 18.614000 Mpps, 1.286000 Pmpp, 1.279000 Cmpp
+Got 18.532000 Mpps, 1.260000 Pmpp, 1.275000 Cmpp
+Got 18.544000 Mpps, 1.267000 Pmpp, 1.281000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t lq -M'
+Got 15.207000 Mpps, 3.263000 Pmpp, 3.188000 Cmpp
+Got 15.183000 Mpps, 3.314000 Pmpp, 3.213000 Cmpp
+Got 15.591000 Mpps, 3.248000 Pmpp, 3.131000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t llq -M'
+Got 16.244000 Mpps, 2.292000 Pmpp, 2.157000 Cmpp
+Got 16.276000 Mpps, 2.321000 Pmpp, 2.155000 Cmpp
+Got 16.430000 Mpps, 2.299000 Pmpp, 2.148000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t blq -M'
+Got 15.682000 Mpps, 2.889000 Pmpp, 2.740000 Cmpp
+Got 15.538000 Mpps, 2.799000 Pmpp, 2.659000 Cmpp
+Got 15.486000 Mpps, 2.808000 Pmpp, 2.657000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t ffq -M'
+Got 15.493000 Mpps, 2.951000 Pmpp, 2.540000 Cmpp
+Got 15.531000 Mpps, 2.939000 Pmpp, 2.565000 Cmpp
+Got 15.475000 Mpps, 2.954000 Pmpp, 2.570000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t iffq -M'
+Got 15.698000 Mpps, 1.240000 Pmpp, 1.282000 Cmpp
+Got 15.754000 Mpps, 1.248000 Pmpp, 1.279000 Cmpp
+Got 15.694000 Mpps, 1.247000 Pmpp, 1.278000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 50 -t biffq -M'
+Got 15.680000 Mpps, 1.273000 Pmpp, 1.280000 Cmpp
+Got 15.766000 Mpps, 1.281000 Pmpp, 1.282000 Cmpp
+Got 15.716000 Mpps, 1.279000 Pmpp, 1.279000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t lq -M'
+Got 12.562000 Mpps, 3.476000 Pmpp, 3.379000 Cmpp
+Got 13.010000 Mpps, 3.352000 Pmpp, 3.248000 Cmpp
+Got 12.406000 Mpps, 3.523000 Pmpp, 3.440000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t llq -M'
+Got 13.464000 Mpps, 2.317000 Pmpp, 2.155000 Cmpp
+Got 13.442000 Mpps, 2.306000 Pmpp, 2.155000 Cmpp
+Got 13.345000 Mpps, 2.301000 Pmpp, 2.153000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t blq -M'
+Got 13.513000 Mpps, 2.934000 Pmpp, 2.778000 Cmpp
+Got 13.474000 Mpps, 2.928000 Pmpp, 2.778000 Cmpp
+Got 13.430000 Mpps, 2.939000 Pmpp, 2.778000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t ffq -M'
+Got 13.339000 Mpps, 3.258000 Pmpp, 2.842000 Cmpp
+Got 13.320000 Mpps, 3.228000 Pmpp, 2.837000 Cmpp
+Got 13.367000 Mpps, 3.234000 Pmpp, 2.835000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t iffq -M'
+Got 13.320000 Mpps, 1.251000 Pmpp, 1.289000 Cmpp
+Got 13.293000 Mpps, 1.249000 Pmpp, 1.286000 Cmpp
+Got 13.265000 Mpps, 1.240000 Pmpp, 1.282000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 60 -t biffq -M'
+Got 13.306000 Mpps, 1.278000 Pmpp, 1.284000 Cmpp
+Got 13.305000 Mpps, 1.290000 Pmpp, 1.285000 Cmpp
+Got 13.308000 Mpps, 1.294000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t lq -M'
+Got 11.604000 Mpps, 3.707000 Pmpp, 3.540000 Cmpp
+Got 11.737000 Mpps, 3.840000 Pmpp, 3.668000 Cmpp
+Got 11.742000 Mpps, 3.847000 Pmpp, 3.667000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t llq -M'
+Got 11.848000 Mpps, 2.318000 Pmpp, 2.156000 Cmpp
+Got 11.899000 Mpps, 2.338000 Pmpp, 2.174000 Cmpp
+Got 11.906000 Mpps, 2.337000 Pmpp, 2.149000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t blq -M'
+Got 11.904000 Mpps, 2.931000 Pmpp, 2.785000 Cmpp
+Got 11.918000 Mpps, 2.931000 Pmpp, 2.781000 Cmpp
+Got 11.734000 Mpps, 2.934000 Pmpp, 2.785000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t ffq -M'
+Got 11.934000 Mpps, 3.264000 Pmpp, 3.007000 Cmpp
+Got 11.923000 Mpps, 3.269000 Pmpp, 3.011000 Cmpp
+Got 11.880000 Mpps, 3.288000 Pmpp, 3.019000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t iffq -M'
+Got 11.708000 Mpps, 1.254000 Pmpp, 1.286000 Cmpp
+Got 11.715000 Mpps, 1.252000 Pmpp, 1.290000 Cmpp
+Got 11.726000 Mpps, 1.256000 Pmpp, 1.285000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 70 -t biffq -M'
+Got 11.744000 Mpps, 1.296000 Pmpp, 1.289000 Cmpp
+Got 11.724000 Mpps, 1.296000 Pmpp, 1.286000 Cmpp
+Got 11.670000 Mpps, 1.288000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t lq -M'
+Got 10.444000 Mpps, 3.942000 Pmpp, 3.770000 Cmpp
+Got 10.737000 Mpps, 4.081000 Pmpp, 3.908000 Cmpp
+Got 10.451000 Mpps, 3.942000 Pmpp, 3.780000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t llq -M'
+Got 10.953000 Mpps, 2.324000 Pmpp, 2.163000 Cmpp
+Got 10.844000 Mpps, 2.287000 Pmpp, 2.157000 Cmpp
+Got 10.976000 Mpps, 2.312000 Pmpp, 2.165000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t blq -M'
+Got 10.687000 Mpps, 2.944000 Pmpp, 2.783000 Cmpp
+Got 10.685000 Mpps, 2.940000 Pmpp, 2.781000 Cmpp
+Got 10.688000 Mpps, 2.950000 Pmpp, 2.783000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t ffq -M'
+Got 10.765000 Mpps, 3.327000 Pmpp, 3.023000 Cmpp
+Got 10.829000 Mpps, 3.298000 Pmpp, 3.021000 Cmpp
+Got 10.837000 Mpps, 3.296000 Pmpp, 3.023000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t iffq -M'
+Got 10.780000 Mpps, 1.259000 Pmpp, 1.289000 Cmpp
+Got 10.798000 Mpps, 1.262000 Pmpp, 1.287000 Cmpp
+Got 10.788000 Mpps, 1.264000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 80 -t biffq -M'
+Got 10.772000 Mpps, 1.298000 Pmpp, 1.288000 Cmpp
+Got 10.796000 Mpps, 1.307000 Pmpp, 1.290000 Cmpp
+Got 10.777000 Mpps, 1.307000 Pmpp, 1.295000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t lq -M'
+Got 9.803000 Mpps, 4.096000 Pmpp, 3.912000 Cmpp
+Got 9.666000 Mpps, 4.083000 Pmpp, 3.902000 Cmpp
+Got 9.748000 Mpps, 4.083000 Pmpp, 3.908000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t llq -M'
+Got 9.803000 Mpps, 2.327000 Pmpp, 2.160000 Cmpp
+Got 9.704000 Mpps, 2.318000 Pmpp, 2.161000 Cmpp
+Got 9.790000 Mpps, 2.334000 Pmpp, 2.166000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t blq -M'
+Got 9.666000 Mpps, 2.950000 Pmpp, 2.792000 Cmpp
+Got 9.706000 Mpps, 2.944000 Pmpp, 2.782000 Cmpp
+Got 9.653000 Mpps, 2.958000 Pmpp, 2.787000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t ffq -M'
+Got 9.627000 Mpps, 3.320000 Pmpp, 3.025000 Cmpp
+Got 9.653000 Mpps, 3.318000 Pmpp, 3.028000 Cmpp
+Got 9.648000 Mpps, 3.310000 Pmpp, 3.026000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t iffq -M'
+Got 9.567000 Mpps, 1.264000 Pmpp, 1.295000 Cmpp
+Got 9.556000 Mpps, 1.270000 Pmpp, 1.288000 Cmpp
+Got 9.598000 Mpps, 1.265000 Pmpp, 1.292000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 10 -C 90 -t biffq -M'
+Got 9.571000 Mpps, 1.321000 Pmpp, 1.292000 Cmpp
+Got 9.580000 Mpps, 1.314000 Pmpp, 1.293000 Cmpp
+Got 9.576000 Mpps, 1.319000 Pmpp, 1.294000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t lq -M'
+Got 19.158000 Mpps, 3.516000 Pmpp, 3.391000 Cmpp
+Got 19.815000 Mpps, 3.517000 Pmpp, 3.372000 Cmpp
+Got 19.180000 Mpps, 3.507000 Pmpp, 3.376000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t llq -M'
+Got 26.142000 Mpps, 2.155000 Pmpp, 2.031000 Cmpp
+Got 25.819000 Mpps, 2.177000 Pmpp, 2.044000 Cmpp
+Got 25.647000 Mpps, 2.184000 Pmpp, 2.047000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t blq -M'
+Got 20.763000 Mpps, 2.466000 Pmpp, 2.354000 Cmpp
+Got 20.652000 Mpps, 2.514000 Pmpp, 2.400000 Cmpp
+Got 20.576000 Mpps, 2.449000 Pmpp, 2.357000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t ffq -M'
+Got 20.500000 Mpps, 2.526000 Pmpp, 2.490000 Cmpp
+Got 20.354000 Mpps, 2.535000 Pmpp, 2.497000 Cmpp
+Got 20.506000 Mpps, 2.525000 Pmpp, 2.498000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t iffq -M'
+Got 26.603000 Mpps, 1.226000 Pmpp, 1.272000 Cmpp
+Got 26.831000 Mpps, 1.223000 Pmpp, 1.275000 Cmpp
+Got 26.575000 Mpps, 1.225000 Pmpp, 1.278000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 0 -t biffq -M'
+Got 26.481000 Mpps, 1.243000 Pmpp, 1.277000 Cmpp
+Got 26.850000 Mpps, 1.236000 Pmpp, 1.278000 Cmpp
+Got 26.401000 Mpps, 1.244000 Pmpp, 1.275000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t lq -M'
+Got 18.817000 Mpps, 3.523000 Pmpp, 3.387000 Cmpp
+Got 19.812000 Mpps, 3.519000 Pmpp, 3.389000 Cmpp
+Got 19.031000 Mpps, 3.600000 Pmpp, 3.461000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t llq -M'
+Got 25.720000 Mpps, 2.163000 Pmpp, 2.040000 Cmpp
+Got 25.821000 Mpps, 2.162000 Pmpp, 2.032000 Cmpp
+Got 25.390000 Mpps, 2.188000 Pmpp, 2.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t blq -M'
+Got 20.718000 Mpps, 2.505000 Pmpp, 2.398000 Cmpp
+Got 20.939000 Mpps, 2.446000 Pmpp, 2.346000 Cmpp
+Got 20.437000 Mpps, 2.526000 Pmpp, 2.417000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t ffq -M'
+Got 20.402000 Mpps, 2.529000 Pmpp, 2.490000 Cmpp
+Got 20.310000 Mpps, 2.546000 Pmpp, 2.503000 Cmpp
+Got 20.360000 Mpps, 2.534000 Pmpp, 2.500000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t iffq -M'
+Got 26.740000 Mpps, 1.222000 Pmpp, 1.271000 Cmpp
+Got 26.525000 Mpps, 1.224000 Pmpp, 1.270000 Cmpp
+Got 26.691000 Mpps, 1.230000 Pmpp, 1.275000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 10 -t biffq -M'
+Got 26.599000 Mpps, 1.244000 Pmpp, 1.277000 Cmpp
+Got 26.670000 Mpps, 1.244000 Pmpp, 1.275000 Cmpp
+Got 26.732000 Mpps, 1.243000 Pmpp, 1.274000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t lq -M'
+Got 19.843000 Mpps, 3.521000 Pmpp, 3.388000 Cmpp
+Got 19.232000 Mpps, 3.539000 Pmpp, 3.414000 Cmpp
+Got 18.889000 Mpps, 3.539000 Pmpp, 3.407000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t llq -M'
+Got 26.068000 Mpps, 2.212000 Pmpp, 2.078000 Cmpp
+Got 25.834000 Mpps, 2.198000 Pmpp, 2.075000 Cmpp
+Got 25.245000 Mpps, 2.176000 Pmpp, 2.047000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t blq -M'
+Got 20.639000 Mpps, 2.462000 Pmpp, 2.348000 Cmpp
+Got 20.643000 Mpps, 2.463000 Pmpp, 2.360000 Cmpp
+Got 20.825000 Mpps, 2.456000 Pmpp, 2.358000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t ffq -M'
+Got 20.761000 Mpps, 2.513000 Pmpp, 2.471000 Cmpp
+Got 20.372000 Mpps, 2.531000 Pmpp, 2.499000 Cmpp
+Got 20.524000 Mpps, 2.537000 Pmpp, 2.493000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t iffq -M'
+Got 26.662000 Mpps, 1.226000 Pmpp, 1.277000 Cmpp
+Got 26.693000 Mpps, 1.232000 Pmpp, 1.276000 Cmpp
+Got 26.557000 Mpps, 1.233000 Pmpp, 1.272000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 20 -t biffq -M'
+Got 26.213000 Mpps, 1.243000 Pmpp, 1.276000 Cmpp
+Got 26.888000 Mpps, 1.241000 Pmpp, 1.271000 Cmpp
+Got 26.894000 Mpps, 1.238000 Pmpp, 1.276000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t lq -M'
+Got 18.770000 Mpps, 3.665000 Pmpp, 3.514000 Cmpp
+Got 18.316000 Mpps, 3.579000 Pmpp, 3.447000 Cmpp
+Got 18.789000 Mpps, 3.664000 Pmpp, 3.506000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t llq -M'
+Got 22.592000 Mpps, 2.255000 Pmpp, 2.118000 Cmpp
+Got 22.591000 Mpps, 2.282000 Pmpp, 2.136000 Cmpp
+Got 22.512000 Mpps, 2.260000 Pmpp, 2.137000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t blq -M'
+Got 19.553000 Mpps, 2.670000 Pmpp, 2.555000 Cmpp
+Got 19.394000 Mpps, 2.647000 Pmpp, 2.525000 Cmpp
+Got 18.822000 Mpps, 2.737000 Pmpp, 2.595000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t ffq -M'
+Got 19.857000 Mpps, 2.577000 Pmpp, 2.516000 Cmpp
+Got 19.878000 Mpps, 2.573000 Pmpp, 2.520000 Cmpp
+Got 19.878000 Mpps, 2.588000 Pmpp, 2.516000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t iffq -M'
+Got 22.134000 Mpps, 1.236000 Pmpp, 1.279000 Cmpp
+Got 22.315000 Mpps, 1.233000 Pmpp, 1.276000 Cmpp
+Got 22.327000 Mpps, 1.237000 Pmpp, 1.275000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 30 -t biffq -M'
+Got 22.123000 Mpps, 1.259000 Pmpp, 1.279000 Cmpp
+Got 22.155000 Mpps, 1.263000 Pmpp, 1.281000 Cmpp
+Got 22.144000 Mpps, 1.262000 Pmpp, 1.276000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t lq -M'
+Got 16.612000 Mpps, 3.629000 Pmpp, 3.499000 Cmpp
+Got 16.517000 Mpps, 3.548000 Pmpp, 3.411000 Cmpp
+Got 16.344000 Mpps, 3.716000 Pmpp, 3.601000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t llq -M'
+Got 18.764000 Mpps, 2.295000 Pmpp, 2.145000 Cmpp
+Got 18.845000 Mpps, 2.301000 Pmpp, 2.150000 Cmpp
+Got 19.007000 Mpps, 2.286000 Pmpp, 2.150000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t blq -M'
+Got 17.110000 Mpps, 2.809000 Pmpp, 2.651000 Cmpp
+Got 17.095000 Mpps, 2.793000 Pmpp, 2.647000 Cmpp
+Got 17.213000 Mpps, 2.789000 Pmpp, 2.641000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t ffq -M'
+Got 17.725000 Mpps, 2.616000 Pmpp, 2.471000 Cmpp
+Got 17.719000 Mpps, 2.614000 Pmpp, 2.471000 Cmpp
+Got 17.701000 Mpps, 2.619000 Pmpp, 2.470000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t iffq -M'
+Got 18.615000 Mpps, 1.244000 Pmpp, 1.283000 Cmpp
+Got 18.508000 Mpps, 1.229000 Pmpp, 1.277000 Cmpp
+Got 18.559000 Mpps, 1.241000 Pmpp, 1.285000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 40 -t biffq -M'
+Got 18.508000 Mpps, 1.268000 Pmpp, 1.280000 Cmpp
+Got 18.533000 Mpps, 1.261000 Pmpp, 1.281000 Cmpp
+Got 18.640000 Mpps, 1.267000 Pmpp, 1.277000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t lq -M'
+Got 15.039000 Mpps, 3.370000 Pmpp, 3.252000 Cmpp
+Got 15.304000 Mpps, 3.262000 Pmpp, 3.177000 Cmpp
+Got 15.190000 Mpps, 3.301000 Pmpp, 3.196000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t llq -M'
+Got 16.212000 Mpps, 2.325000 Pmpp, 2.160000 Cmpp
+Got 16.348000 Mpps, 2.309000 Pmpp, 2.155000 Cmpp
+Got 16.323000 Mpps, 2.315000 Pmpp, 2.158000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t blq -M'
+Got 15.965000 Mpps, 2.777000 Pmpp, 2.641000 Cmpp
+Got 15.813000 Mpps, 2.786000 Pmpp, 2.643000 Cmpp
+Got 15.841000 Mpps, 2.772000 Pmpp, 2.633000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t ffq -M'
+Got 15.451000 Mpps, 2.969000 Pmpp, 2.465000 Cmpp
+Got 15.410000 Mpps, 2.955000 Pmpp, 2.476000 Cmpp
+Got 15.422000 Mpps, 2.954000 Pmpp, 2.499000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t iffq -M'
+Got 15.649000 Mpps, 1.251000 Pmpp, 1.278000 Cmpp
+Got 15.645000 Mpps, 1.243000 Pmpp, 1.282000 Cmpp
+Got 15.793000 Mpps, 1.240000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 50 -t biffq -M'
+Got 15.655000 Mpps, 1.282000 Pmpp, 1.285000 Cmpp
+Got 15.689000 Mpps, 1.266000 Pmpp, 1.283000 Cmpp
+Got 15.669000 Mpps, 1.294000 Pmpp, 1.287000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t lq -M'
+Got 12.938000 Mpps, 3.533000 Pmpp, 3.399000 Cmpp
+Got 12.812000 Mpps, 3.426000 Pmpp, 3.318000 Cmpp
+Got 12.700000 Mpps, 3.426000 Pmpp, 3.332000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t llq -M'
+Got 13.385000 Mpps, 2.308000 Pmpp, 2.159000 Cmpp
+Got 13.365000 Mpps, 2.304000 Pmpp, 2.158000 Cmpp
+Got 13.479000 Mpps, 2.310000 Pmpp, 2.155000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t blq -M'
+Got 13.384000 Mpps, 2.912000 Pmpp, 2.760000 Cmpp
+Got 13.310000 Mpps, 2.832000 Pmpp, 2.688000 Cmpp
+Got 13.271000 Mpps, 2.780000 Pmpp, 2.633000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t ffq -M'
+Got 13.371000 Mpps, 3.222000 Pmpp, 2.819000 Cmpp
+Got 13.340000 Mpps, 3.230000 Pmpp, 2.831000 Cmpp
+Got 13.362000 Mpps, 3.227000 Pmpp, 2.818000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t iffq -M'
+Got 13.246000 Mpps, 1.242000 Pmpp, 1.281000 Cmpp
+Got 13.298000 Mpps, 1.249000 Pmpp, 1.283000 Cmpp
+Got 13.270000 Mpps, 1.261000 Pmpp, 1.285000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 60 -t biffq -M'
+Got 13.309000 Mpps, 1.286000 Pmpp, 1.286000 Cmpp
+Got 13.327000 Mpps, 1.283000 Pmpp, 1.280000 Cmpp
+Got 13.262000 Mpps, 1.276000 Pmpp, 1.284000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t lq -M'
+Got 11.555000 Mpps, 3.719000 Pmpp, 3.552000 Cmpp
+Got 11.749000 Mpps, 3.894000 Pmpp, 3.721000 Cmpp
+Got 11.677000 Mpps, 3.608000 Pmpp, 3.462000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t llq -M'
+Got 11.904000 Mpps, 2.313000 Pmpp, 2.156000 Cmpp
+Got 11.908000 Mpps, 2.340000 Pmpp, 2.162000 Cmpp
+Got 11.986000 Mpps, 2.297000 Pmpp, 2.155000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t blq -M'
+Got 11.947000 Mpps, 2.933000 Pmpp, 2.787000 Cmpp
+Got 11.904000 Mpps, 2.946000 Pmpp, 2.779000 Cmpp
+Got 11.927000 Mpps, 2.930000 Pmpp, 2.775000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t ffq -M'
+Got 11.966000 Mpps, 3.286000 Pmpp, 3.014000 Cmpp
+Got 11.945000 Mpps, 3.285000 Pmpp, 3.018000 Cmpp
+Got 11.841000 Mpps, 3.296000 Pmpp, 3.021000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t iffq -M'
+Got 11.729000 Mpps, 1.247000 Pmpp, 1.285000 Cmpp
+Got 11.692000 Mpps, 1.259000 Pmpp, 1.286000 Cmpp
+Got 11.697000 Mpps, 1.249000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 70 -t biffq -M'
+Got 11.725000 Mpps, 1.302000 Pmpp, 1.294000 Cmpp
+Got 11.723000 Mpps, 1.297000 Pmpp, 1.290000 Cmpp
+Got 11.708000 Mpps, 1.287000 Pmpp, 1.286000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t lq -M'
+Got 10.477000 Mpps, 4.070000 Pmpp, 3.889000 Cmpp
+Got 10.452000 Mpps, 3.962000 Pmpp, 3.787000 Cmpp
+Got 10.448000 Mpps, 3.940000 Pmpp, 3.788000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t llq -M'
+Got 10.838000 Mpps, 2.302000 Pmpp, 2.164000 Cmpp
+Got 10.972000 Mpps, 2.329000 Pmpp, 2.168000 Cmpp
+Got 10.940000 Mpps, 2.321000 Pmpp, 2.157000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t blq -M'
+Got 10.685000 Mpps, 2.934000 Pmpp, 2.784000 Cmpp
+Got 10.712000 Mpps, 2.956000 Pmpp, 2.780000 Cmpp
+Got 10.694000 Mpps, 2.942000 Pmpp, 2.784000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t ffq -M'
+Got 10.795000 Mpps, 3.305000 Pmpp, 3.021000 Cmpp
+Got 10.778000 Mpps, 3.297000 Pmpp, 3.022000 Cmpp
+Got 10.783000 Mpps, 3.300000 Pmpp, 3.027000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t iffq -M'
+Got 10.793000 Mpps, 1.257000 Pmpp, 1.293000 Cmpp
+Got 10.794000 Mpps, 1.247000 Pmpp, 1.285000 Cmpp
+Got 10.793000 Mpps, 1.260000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 80 -t biffq -M'
+Got 10.780000 Mpps, 1.296000 Pmpp, 1.285000 Cmpp
+Got 10.773000 Mpps, 1.295000 Pmpp, 1.290000 Cmpp
+Got 10.782000 Mpps, 1.284000 Pmpp, 1.287000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t lq -M'
+Got 9.751000 Mpps, 4.071000 Pmpp, 3.915000 Cmpp
+Got 9.745000 Mpps, 4.080000 Pmpp, 3.912000 Cmpp
+Got 9.752000 Mpps, 4.069000 Pmpp, 3.906000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t llq -M'
+Got 9.717000 Mpps, 2.309000 Pmpp, 2.160000 Cmpp
+Got 9.822000 Mpps, 2.345000 Pmpp, 2.166000 Cmpp
+Got 9.723000 Mpps, 2.327000 Pmpp, 2.160000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t blq -M'
+Got 9.661000 Mpps, 2.951000 Pmpp, 2.791000 Cmpp
+Got 9.637000 Mpps, 2.943000 Pmpp, 2.791000 Cmpp
+Got 9.683000 Mpps, 2.933000 Pmpp, 2.790000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t ffq -M'
+Got 9.634000 Mpps, 3.316000 Pmpp, 3.031000 Cmpp
+Got 9.654000 Mpps, 3.291000 Pmpp, 3.024000 Cmpp
+Got 9.637000 Mpps, 3.315000 Pmpp, 3.025000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t iffq -M'
+Got 9.581000 Mpps, 1.264000 Pmpp, 1.289000 Cmpp
+Got 9.572000 Mpps, 1.264000 Pmpp, 1.295000 Cmpp
+Got 9.568000 Mpps, 1.265000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 20 -C 90 -t biffq -M'
+Got 9.566000 Mpps, 1.304000 Pmpp, 1.301000 Cmpp
+Got 9.569000 Mpps, 1.303000 Pmpp, 1.294000 Cmpp
+Got 9.578000 Mpps, 1.304000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t lq -M'
+Got 22.136000 Mpps, 2.989000 Pmpp, 2.977000 Cmpp
+Got 23.472000 Mpps, 2.760000 Pmpp, 2.727000 Cmpp
+Got 23.597000 Mpps, 2.797000 Pmpp, 2.743000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t llq -M'
+Got 25.625000 Mpps, 1.207000 Pmpp, 1.206000 Cmpp
+Got 25.669000 Mpps, 1.183000 Pmpp, 1.189000 Cmpp
+Got 25.654000 Mpps, 1.194000 Pmpp, 1.196000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t blq -M'
+Got 25.435000 Mpps, 1.296000 Pmpp, 1.174000 Cmpp
+Got 25.496000 Mpps, 1.251000 Pmpp, 1.171000 Cmpp
+Got 25.327000 Mpps, 1.327000 Pmpp, 1.207000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t ffq -M'
+Got 24.761000 Mpps, 1.548000 Pmpp, 1.536000 Cmpp
+Got 24.302000 Mpps, 1.644000 Pmpp, 1.609000 Cmpp
+Got 24.595000 Mpps, 1.583000 Pmpp, 1.561000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t iffq -M'
+Got 25.361000 Mpps, 1.221000 Pmpp, 1.329000 Cmpp
+Got 25.328000 Mpps, 1.231000 Pmpp, 1.338000 Cmpp
+Got 25.377000 Mpps, 1.219000 Pmpp, 1.329000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 0 -t biffq -M'
+Got 24.406000 Mpps, 1.301000 Pmpp, 1.413000 Cmpp
+Got 24.446000 Mpps, 1.304000 Pmpp, 1.410000 Cmpp
+Got 24.413000 Mpps, 1.286000 Pmpp, 1.394000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t lq -M'
+Got 21.691000 Mpps, 3.025000 Pmpp, 3.024000 Cmpp
+Got 23.409000 Mpps, 2.779000 Pmpp, 2.740000 Cmpp
+Got 22.120000 Mpps, 2.994000 Pmpp, 2.982000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t llq -M'
+Got 25.696000 Mpps, 1.176000 Pmpp, 1.172000 Cmpp
+Got 25.638000 Mpps, 1.195000 Pmpp, 1.199000 Cmpp
+Got 25.634000 Mpps, 1.194000 Pmpp, 1.196000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t blq -M'
+Got 25.500000 Mpps, 1.214000 Pmpp, 1.169000 Cmpp
+Got 25.455000 Mpps, 1.294000 Pmpp, 1.178000 Cmpp
+Got 25.473000 Mpps, 1.252000 Pmpp, 1.170000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t ffq -M'
+Got 24.451000 Mpps, 1.598000 Pmpp, 1.574000 Cmpp
+Got 24.485000 Mpps, 1.598000 Pmpp, 1.569000 Cmpp
+Got 24.332000 Mpps, 1.635000 Pmpp, 1.596000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t iffq -M'
+Got 25.345000 Mpps, 1.223000 Pmpp, 1.337000 Cmpp
+Got 25.348000 Mpps, 1.229000 Pmpp, 1.334000 Cmpp
+Got 25.325000 Mpps, 1.227000 Pmpp, 1.335000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 10 -t biffq -M'
+Got 24.427000 Mpps, 1.293000 Pmpp, 1.396000 Cmpp
+Got 24.435000 Mpps, 1.294000 Pmpp, 1.410000 Cmpp
+Got 24.457000 Mpps, 1.285000 Pmpp, 1.394000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t lq -M'
+Got 23.653000 Mpps, 2.786000 Pmpp, 2.738000 Cmpp
+Got 23.457000 Mpps, 2.762000 Pmpp, 2.728000 Cmpp
+Got 23.378000 Mpps, 2.772000 Pmpp, 2.732000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t llq -M'
+Got 25.629000 Mpps, 1.183000 Pmpp, 1.182000 Cmpp
+Got 25.642000 Mpps, 1.197000 Pmpp, 1.201000 Cmpp
+Got 25.681000 Mpps, 1.185000 Pmpp, 1.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t blq -M'
+Got 25.542000 Mpps, 1.201000 Pmpp, 1.166000 Cmpp
+Got 25.447000 Mpps, 1.287000 Pmpp, 1.179000 Cmpp
+Got 25.516000 Mpps, 1.234000 Pmpp, 1.168000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t ffq -M'
+Got 24.514000 Mpps, 1.606000 Pmpp, 1.574000 Cmpp
+Got 24.390000 Mpps, 1.619000 Pmpp, 1.580000 Cmpp
+Got 24.589000 Mpps, 1.570000 Pmpp, 1.546000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t iffq -M'
+Got 25.289000 Mpps, 1.225000 Pmpp, 1.337000 Cmpp
+Got 25.362000 Mpps, 1.226000 Pmpp, 1.328000 Cmpp
+Got 25.380000 Mpps, 1.228000 Pmpp, 1.340000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 20 -t biffq -M'
+Got 24.391000 Mpps, 1.299000 Pmpp, 1.408000 Cmpp
+Got 24.461000 Mpps, 1.291000 Pmpp, 1.400000 Cmpp
+Got 24.452000 Mpps, 1.293000 Pmpp, 1.400000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t lq -M'
+Got 18.079000 Mpps, 3.705000 Pmpp, 3.565000 Cmpp
+Got 18.455000 Mpps, 3.674000 Pmpp, 3.555000 Cmpp
+Got 18.082000 Mpps, 3.637000 Pmpp, 3.509000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t llq -M'
+Got 22.876000 Mpps, 2.136000 Pmpp, 2.012000 Cmpp
+Got 22.599000 Mpps, 2.023000 Pmpp, 1.910000 Cmpp
+Got 22.772000 Mpps, 1.976000 Pmpp, 1.853000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t blq -M'
+Got 19.760000 Mpps, 2.472000 Pmpp, 2.364000 Cmpp
+Got 19.768000 Mpps, 2.474000 Pmpp, 2.356000 Cmpp
+Got 19.077000 Mpps, 2.648000 Pmpp, 2.524000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t ffq -M'
+Got 19.722000 Mpps, 2.534000 Pmpp, 2.461000 Cmpp
+Got 19.731000 Mpps, 2.530000 Pmpp, 2.459000 Cmpp
+Got 19.664000 Mpps, 2.535000 Pmpp, 2.462000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t iffq -M'
+Got 22.091000 Mpps, 1.221000 Pmpp, 1.270000 Cmpp
+Got 22.026000 Mpps, 1.230000 Pmpp, 1.276000 Cmpp
+Got 22.202000 Mpps, 1.233000 Pmpp, 1.278000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 30 -t biffq -M'
+Got 22.090000 Mpps, 1.240000 Pmpp, 1.281000 Cmpp
+Got 22.074000 Mpps, 1.236000 Pmpp, 1.276000 Cmpp
+Got 22.019000 Mpps, 1.230000 Pmpp, 1.271000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t lq -M'
+Got 16.399000 Mpps, 3.774000 Pmpp, 3.639000 Cmpp
+Got 16.710000 Mpps, 3.659000 Pmpp, 3.526000 Cmpp
+Got 16.394000 Mpps, 3.759000 Pmpp, 3.633000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t llq -M'
+Got 18.876000 Mpps, 2.300000 Pmpp, 2.141000 Cmpp
+Got 18.687000 Mpps, 2.292000 Pmpp, 2.143000 Cmpp
+Got 18.984000 Mpps, 2.280000 Pmpp, 2.149000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t blq -M'
+Got 17.198000 Mpps, 2.788000 Pmpp, 2.655000 Cmpp
+Got 17.143000 Mpps, 2.777000 Pmpp, 2.640000 Cmpp
+Got 17.127000 Mpps, 2.788000 Pmpp, 2.649000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t ffq -M'
+Got 17.698000 Mpps, 2.543000 Pmpp, 2.466000 Cmpp
+Got 17.671000 Mpps, 2.537000 Pmpp, 2.483000 Cmpp
+Got 17.675000 Mpps, 2.546000 Pmpp, 2.477000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t iffq -M'
+Got 18.587000 Mpps, 1.248000 Pmpp, 1.286000 Cmpp
+Got 18.586000 Mpps, 1.245000 Pmpp, 1.276000 Cmpp
+Got 18.632000 Mpps, 1.237000 Pmpp, 1.281000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 40 -t biffq -M'
+Got 18.539000 Mpps, 1.260000 Pmpp, 1.277000 Cmpp
+Got 18.451000 Mpps, 1.260000 Pmpp, 1.281000 Cmpp
+Got 18.526000 Mpps, 1.269000 Pmpp, 1.280000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t lq -M'
+Got 14.561000 Mpps, 3.538000 Pmpp, 3.437000 Cmpp
+Got 13.877000 Mpps, 3.600000 Pmpp, 3.569000 Cmpp
+Got 14.055000 Mpps, 3.582000 Pmpp, 3.518000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t llq -M'
+Got 15.952000 Mpps, 2.304000 Pmpp, 2.148000 Cmpp
+Got 16.372000 Mpps, 2.315000 Pmpp, 2.151000 Cmpp
+Got 15.989000 Mpps, 2.299000 Pmpp, 2.155000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t blq -M'
+Got 15.819000 Mpps, 2.771000 Pmpp, 2.646000 Cmpp
+Got 15.990000 Mpps, 2.780000 Pmpp, 2.650000 Cmpp
+Got 16.011000 Mpps, 2.776000 Pmpp, 2.651000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t ffq -M'
+Got 15.394000 Mpps, 2.850000 Pmpp, 2.518000 Cmpp
+Got 15.455000 Mpps, 2.833000 Pmpp, 2.505000 Cmpp
+Got 15.423000 Mpps, 2.866000 Pmpp, 2.479000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t iffq -M'
+Got 15.675000 Mpps, 1.241000 Pmpp, 1.284000 Cmpp
+Got 15.814000 Mpps, 1.235000 Pmpp, 1.281000 Cmpp
+Got 15.683000 Mpps, 1.242000 Pmpp, 1.282000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 50 -t biffq -M'
+Got 15.671000 Mpps, 1.267000 Pmpp, 1.288000 Cmpp
+Got 15.698000 Mpps, 1.268000 Pmpp, 1.283000 Cmpp
+Got 15.624000 Mpps, 1.264000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t lq -M'
+Got 12.193000 Mpps, 3.590000 Pmpp, 3.552000 Cmpp
+Got 12.292000 Mpps, 3.587000 Pmpp, 3.542000 Cmpp
+Got 12.836000 Mpps, 3.685000 Pmpp, 3.567000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t llq -M'
+Got 13.423000 Mpps, 2.310000 Pmpp, 2.156000 Cmpp
+Got 13.431000 Mpps, 2.311000 Pmpp, 2.153000 Cmpp
+Got 13.406000 Mpps, 2.315000 Pmpp, 2.147000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t blq -M'
+Got 13.182000 Mpps, 2.733000 Pmpp, 2.606000 Cmpp
+Got 13.335000 Mpps, 2.742000 Pmpp, 2.611000 Cmpp
+Got 13.248000 Mpps, 2.722000 Pmpp, 2.606000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t ffq -M'
+Got 13.288000 Mpps, 3.141000 Pmpp, 2.758000 Cmpp
+Got 13.312000 Mpps, 3.139000 Pmpp, 2.759000 Cmpp
+Got 13.264000 Mpps, 3.133000 Pmpp, 2.765000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t iffq -M'
+Got 13.311000 Mpps, 1.242000 Pmpp, 1.275000 Cmpp
+Got 13.309000 Mpps, 1.254000 Pmpp, 1.281000 Cmpp
+Got 13.308000 Mpps, 1.252000 Pmpp, 1.287000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 60 -t biffq -M'
+Got 13.327000 Mpps, 1.274000 Pmpp, 1.283000 Cmpp
+Got 13.229000 Mpps, 1.289000 Pmpp, 1.285000 Cmpp
+Got 13.267000 Mpps, 1.273000 Pmpp, 1.284000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t lq -M'
+Got 11.596000 Mpps, 3.661000 Pmpp, 3.522000 Cmpp
+Got 11.766000 Mpps, 3.938000 Pmpp, 3.769000 Cmpp
+Got 11.628000 Mpps, 3.742000 Pmpp, 3.590000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t llq -M'
+Got 11.968000 Mpps, 2.305000 Pmpp, 2.155000 Cmpp
+Got 11.890000 Mpps, 2.323000 Pmpp, 2.158000 Cmpp
+Got 11.900000 Mpps, 2.299000 Pmpp, 2.159000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t blq -M'
+Got 11.827000 Mpps, 2.894000 Pmpp, 2.754000 Cmpp
+Got 11.842000 Mpps, 2.893000 Pmpp, 2.759000 Cmpp
+Got 11.825000 Mpps, 2.907000 Pmpp, 2.751000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t ffq -M'
+Got 11.985000 Mpps, 3.205000 Pmpp, 3.014000 Cmpp
+Got 11.944000 Mpps, 3.221000 Pmpp, 3.016000 Cmpp
+Got 11.855000 Mpps, 3.218000 Pmpp, 3.018000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t iffq -M'
+Got 11.730000 Mpps, 1.249000 Pmpp, 1.285000 Cmpp
+Got 11.700000 Mpps, 1.245000 Pmpp, 1.288000 Cmpp
+Got 11.707000 Mpps, 1.241000 Pmpp, 1.287000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 70 -t biffq -M'
+Got 11.721000 Mpps, 1.283000 Pmpp, 1.284000 Cmpp
+Got 11.712000 Mpps, 1.290000 Pmpp, 1.292000 Cmpp
+Got 11.715000 Mpps, 1.286000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t lq -M'
+Got 10.481000 Mpps, 3.984000 Pmpp, 3.823000 Cmpp
+Got 10.628000 Mpps, 4.060000 Pmpp, 3.899000 Cmpp
+Got 10.631000 Mpps, 4.054000 Pmpp, 3.899000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t llq -M'
+Got 10.953000 Mpps, 2.333000 Pmpp, 2.161000 Cmpp
+Got 10.909000 Mpps, 2.322000 Pmpp, 2.160000 Cmpp
+Got 10.844000 Mpps, 2.314000 Pmpp, 2.157000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t blq -M'
+Got 10.660000 Mpps, 2.877000 Pmpp, 2.737000 Cmpp
+Got 10.668000 Mpps, 2.929000 Pmpp, 2.783000 Cmpp
+Got 10.671000 Mpps, 2.961000 Pmpp, 2.781000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t ffq -M'
+Got 10.754000 Mpps, 3.288000 Pmpp, 3.027000 Cmpp
+Got 10.765000 Mpps, 3.287000 Pmpp, 3.022000 Cmpp
+Got 10.771000 Mpps, 3.286000 Pmpp, 3.025000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t iffq -M'
+Got 10.784000 Mpps, 1.252000 Pmpp, 1.289000 Cmpp
+Got 10.778000 Mpps, 1.268000 Pmpp, 1.288000 Cmpp
+Got 10.782000 Mpps, 1.259000 Pmpp, 1.287000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 80 -t biffq -M'
+Got 10.763000 Mpps, 1.302000 Pmpp, 1.292000 Cmpp
+Got 10.781000 Mpps, 1.298000 Pmpp, 1.290000 Cmpp
+Got 10.784000 Mpps, 1.279000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t lq -M'
+Got 9.686000 Mpps, 4.068000 Pmpp, 3.908000 Cmpp
+Got 9.805000 Mpps, 4.069000 Pmpp, 3.913000 Cmpp
+Got 9.646000 Mpps, 4.084000 Pmpp, 3.909000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t llq -M'
+Got 9.814000 Mpps, 2.337000 Pmpp, 2.160000 Cmpp
+Got 9.707000 Mpps, 2.319000 Pmpp, 2.154000 Cmpp
+Got 9.787000 Mpps, 2.334000 Pmpp, 2.155000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t blq -M'
+Got 9.657000 Mpps, 2.955000 Pmpp, 2.783000 Cmpp
+Got 9.652000 Mpps, 2.930000 Pmpp, 2.789000 Cmpp
+Got 9.639000 Mpps, 2.939000 Pmpp, 2.789000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t ffq -M'
+Got 9.622000 Mpps, 3.316000 Pmpp, 3.024000 Cmpp
+Got 9.641000 Mpps, 3.300000 Pmpp, 3.030000 Cmpp
+Got 9.644000 Mpps, 3.313000 Pmpp, 3.028000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t iffq -M'
+Got 9.565000 Mpps, 1.261000 Pmpp, 1.292000 Cmpp
+Got 9.565000 Mpps, 1.257000 Pmpp, 1.292000 Cmpp
+Got 9.574000 Mpps, 1.254000 Pmpp, 1.294000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 30 -C 90 -t biffq -M'
+Got 9.608000 Mpps, 1.301000 Pmpp, 1.290000 Cmpp
+Got 9.548000 Mpps, 1.302000 Pmpp, 1.291000 Cmpp
+Got 9.589000 Mpps, 1.289000 Pmpp, 1.296000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t lq -M'
+Got 18.040000 Mpps, 3.576000 Pmpp, 3.580000 Cmpp
+Got 18.172000 Mpps, 3.531000 Pmpp, 3.537000 Cmpp
+Got 18.485000 Mpps, 3.593000 Pmpp, 3.595000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t llq -M'
+Got 18.282000 Mpps, 2.295000 Pmpp, 2.292000 Cmpp
+Got 18.258000 Mpps, 2.225000 Pmpp, 2.230000 Cmpp
+Got 18.249000 Mpps, 2.358000 Pmpp, 2.362000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t blq -M'
+Got 18.341000 Mpps, 2.127000 Pmpp, 2.129000 Cmpp
+Got 18.314000 Mpps, 2.121000 Pmpp, 2.128000 Cmpp
+Got 18.315000 Mpps, 2.131000 Pmpp, 2.135000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t ffq -M'
+Got 18.616000 Mpps, 2.531000 Pmpp, 2.178000 Cmpp
+Got 18.394000 Mpps, 2.527000 Pmpp, 2.231000 Cmpp
+Got 18.587000 Mpps, 2.520000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t iffq -M'
+Got 18.063000 Mpps, 1.932000 Pmpp, 2.031000 Cmpp
+Got 18.072000 Mpps, 1.916000 Pmpp, 2.026000 Cmpp
+Got 18.044000 Mpps, 1.929000 Pmpp, 2.042000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 0 -t biffq -M'
+Got 17.750000 Mpps, 1.973000 Pmpp, 2.083000 Cmpp
+Got 17.758000 Mpps, 1.982000 Pmpp, 2.100000 Cmpp
+Got 17.706000 Mpps, 1.976000 Pmpp, 2.092000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t lq -M'
+Got 18.202000 Mpps, 3.529000 Pmpp, 3.531000 Cmpp
+Got 18.033000 Mpps, 3.620000 Pmpp, 3.621000 Cmpp
+Got 18.177000 Mpps, 3.525000 Pmpp, 3.531000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t llq -M'
+Got 18.232000 Mpps, 2.360000 Pmpp, 2.369000 Cmpp
+Got 18.255000 Mpps, 2.274000 Pmpp, 2.276000 Cmpp
+Got 18.259000 Mpps, 2.364000 Pmpp, 2.367000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t blq -M'
+Got 18.308000 Mpps, 2.120000 Pmpp, 2.122000 Cmpp
+Got 18.307000 Mpps, 2.120000 Pmpp, 2.123000 Cmpp
+Got 18.331000 Mpps, 2.112000 Pmpp, 2.113000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t ffq -M'
+Got 18.635000 Mpps, 2.526000 Pmpp, 2.174000 Cmpp
+Got 18.472000 Mpps, 2.522000 Pmpp, 2.226000 Cmpp
+Got 18.572000 Mpps, 2.531000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t iffq -M'
+Got 18.036000 Mpps, 1.927000 Pmpp, 2.037000 Cmpp
+Got 18.076000 Mpps, 1.920000 Pmpp, 2.030000 Cmpp
+Got 18.066000 Mpps, 1.928000 Pmpp, 2.039000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 10 -t biffq -M'
+Got 17.753000 Mpps, 1.974000 Pmpp, 2.090000 Cmpp
+Got 17.738000 Mpps, 1.979000 Pmpp, 2.092000 Cmpp
+Got 17.723000 Mpps, 1.980000 Pmpp, 2.084000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t lq -M'
+Got 18.564000 Mpps, 3.577000 Pmpp, 3.581000 Cmpp
+Got 18.264000 Mpps, 3.514000 Pmpp, 3.518000 Cmpp
+Got 18.188000 Mpps, 3.535000 Pmpp, 3.536000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t llq -M'
+Got 18.264000 Mpps, 2.269000 Pmpp, 2.272000 Cmpp
+Got 18.259000 Mpps, 2.284000 Pmpp, 2.283000 Cmpp
+Got 18.239000 Mpps, 2.238000 Pmpp, 2.240000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t blq -M'
+Got 18.342000 Mpps, 2.135000 Pmpp, 2.133000 Cmpp
+Got 18.320000 Mpps, 2.115000 Pmpp, 2.110000 Cmpp
+Got 18.331000 Mpps, 2.134000 Pmpp, 2.136000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t ffq -M'
+Got 18.507000 Mpps, 2.527000 Pmpp, 2.202000 Cmpp
+Got 18.552000 Mpps, 2.527000 Pmpp, 2.198000 Cmpp
+Got 18.549000 Mpps, 2.526000 Pmpp, 2.216000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t iffq -M'
+Got 18.067000 Mpps, 1.936000 Pmpp, 2.044000 Cmpp
+Got 18.033000 Mpps, 1.930000 Pmpp, 2.039000 Cmpp
+Got 18.085000 Mpps, 1.923000 Pmpp, 2.035000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 20 -t biffq -M'
+Got 17.726000 Mpps, 1.977000 Pmpp, 2.094000 Cmpp
+Got 17.738000 Mpps, 1.985000 Pmpp, 2.097000 Cmpp
+Got 17.738000 Mpps, 1.968000 Pmpp, 2.082000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t lq -M'
+Got 18.254000 Mpps, 3.446000 Pmpp, 3.448000 Cmpp
+Got 18.299000 Mpps, 3.475000 Pmpp, 3.478000 Cmpp
+Got 18.251000 Mpps, 3.512000 Pmpp, 3.512000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t llq -M'
+Got 18.264000 Mpps, 2.127000 Pmpp, 2.123000 Cmpp
+Got 18.239000 Mpps, 2.119000 Pmpp, 2.122000 Cmpp
+Got 18.274000 Mpps, 2.106000 Pmpp, 2.102000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t blq -M'
+Got 18.327000 Mpps, 2.034000 Pmpp, 2.035000 Cmpp
+Got 18.321000 Mpps, 1.935000 Pmpp, 1.928000 Cmpp
+Got 18.344000 Mpps, 1.877000 Pmpp, 1.881000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t ffq -M'
+Got 18.642000 Mpps, 2.532000 Pmpp, 2.190000 Cmpp
+Got 18.491000 Mpps, 2.524000 Pmpp, 2.226000 Cmpp
+Got 18.522000 Mpps, 2.531000 Pmpp, 2.229000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t iffq -M'
+Got 18.060000 Mpps, 1.846000 Pmpp, 1.955000 Cmpp
+Got 18.077000 Mpps, 1.835000 Pmpp, 1.943000 Cmpp
+Got 18.077000 Mpps, 1.812000 Pmpp, 1.925000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 30 -t biffq -M'
+Got 17.763000 Mpps, 1.930000 Pmpp, 2.038000 Cmpp
+Got 17.772000 Mpps, 1.925000 Pmpp, 2.032000 Cmpp
+Got 17.736000 Mpps, 1.919000 Pmpp, 2.032000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t lq -M'
+Got 18.068000 Mpps, 3.149000 Pmpp, 3.062000 Cmpp
+Got 18.155000 Mpps, 3.002000 Pmpp, 3.004000 Cmpp
+Got 18.290000 Mpps, 3.051000 Pmpp, 3.050000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t llq -M'
+Got 18.356000 Mpps, 1.404000 Pmpp, 1.406000 Cmpp
+Got 18.335000 Mpps, 1.412000 Pmpp, 1.410000 Cmpp
+Got 18.338000 Mpps, 1.397000 Pmpp, 1.398000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t blq -M'
+Got 18.282000 Mpps, 1.346000 Pmpp, 1.212000 Cmpp
+Got 17.241000 Mpps, 2.612000 Pmpp, 2.482000 Cmpp
+Got 18.057000 Mpps, 1.453000 Pmpp, 1.325000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t ffq -M'
+Got 17.921000 Mpps, 1.836000 Pmpp, 1.790000 Cmpp
+Got 17.942000 Mpps, 1.842000 Pmpp, 1.786000 Cmpp
+Got 17.907000 Mpps, 1.879000 Pmpp, 1.809000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t iffq -M'
+Got 18.266000 Mpps, 1.273000 Pmpp, 1.381000 Cmpp
+Got 18.260000 Mpps, 1.262000 Pmpp, 1.376000 Cmpp
+Got 18.274000 Mpps, 1.259000 Pmpp, 1.366000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 40 -t biffq -M'
+Got 17.728000 Mpps, 1.481000 Pmpp, 1.583000 Cmpp
+Got 17.711000 Mpps, 1.471000 Pmpp, 1.583000 Cmpp
+Got 17.677000 Mpps, 1.474000 Pmpp, 1.583000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t lq -M'
+Got 14.191000 Mpps, 3.735000 Pmpp, 3.676000 Cmpp
+Got 14.187000 Mpps, 3.710000 Pmpp, 3.632000 Cmpp
+Got 14.289000 Mpps, 3.739000 Pmpp, 3.670000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t llq -M'
+Got 16.287000 Mpps, 2.298000 Pmpp, 2.152000 Cmpp
+Got 15.963000 Mpps, 2.298000 Pmpp, 2.150000 Cmpp
+Got 16.341000 Mpps, 2.297000 Pmpp, 2.148000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t blq -M'
+Got 15.837000 Mpps, 2.786000 Pmpp, 2.649000 Cmpp
+Got 15.940000 Mpps, 2.790000 Pmpp, 2.646000 Cmpp
+Got 15.965000 Mpps, 2.796000 Pmpp, 2.643000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t ffq -M'
+Got 15.412000 Mpps, 2.676000 Pmpp, 2.478000 Cmpp
+Got 15.467000 Mpps, 2.661000 Pmpp, 2.467000 Cmpp
+Got 15.467000 Mpps, 2.645000 Pmpp, 2.467000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t iffq -M'
+Got 15.653000 Mpps, 1.255000 Pmpp, 1.287000 Cmpp
+Got 15.720000 Mpps, 1.245000 Pmpp, 1.288000 Cmpp
+Got 15.553000 Mpps, 1.238000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 50 -t biffq -M'
+Got 15.689000 Mpps, 1.253000 Pmpp, 1.282000 Cmpp
+Got 15.602000 Mpps, 1.248000 Pmpp, 1.286000 Cmpp
+Got 15.630000 Mpps, 1.248000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t lq -M'
+Got 12.147000 Mpps, 3.664000 Pmpp, 3.612000 Cmpp
+Got 11.873000 Mpps, 3.788000 Pmpp, 3.736000 Cmpp
+Got 11.947000 Mpps, 3.766000 Pmpp, 3.717000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t llq -M'
+Got 13.535000 Mpps, 2.324000 Pmpp, 2.154000 Cmpp
+Got 13.348000 Mpps, 2.292000 Pmpp, 2.151000 Cmpp
+Got 13.362000 Mpps, 2.304000 Pmpp, 2.154000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t blq -M'
+Got 13.448000 Mpps, 2.778000 Pmpp, 2.645000 Cmpp
+Got 13.418000 Mpps, 2.748000 Pmpp, 2.632000 Cmpp
+Got 13.499000 Mpps, 2.782000 Pmpp, 2.644000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t ffq -M'
+Got 13.231000 Mpps, 3.006000 Pmpp, 2.712000 Cmpp
+Got 13.226000 Mpps, 2.979000 Pmpp, 2.692000 Cmpp
+Got 13.235000 Mpps, 2.984000 Pmpp, 2.695000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t iffq -M'
+Got 13.266000 Mpps, 1.251000 Pmpp, 1.294000 Cmpp
+Got 13.286000 Mpps, 1.229000 Pmpp, 1.284000 Cmpp
+Got 13.334000 Mpps, 1.242000 Pmpp, 1.284000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 60 -t biffq -M'
+Got 13.314000 Mpps, 1.281000 Pmpp, 1.286000 Cmpp
+Got 13.336000 Mpps, 1.253000 Pmpp, 1.283000 Cmpp
+Got 13.321000 Mpps, 1.267000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t lq -M'
+Got 11.795000 Mpps, 4.019000 Pmpp, 3.865000 Cmpp
+Got 11.572000 Mpps, 3.814000 Pmpp, 3.660000 Cmpp
+Got 11.464000 Mpps, 3.872000 Pmpp, 3.708000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t llq -M'
+Got 11.893000 Mpps, 2.287000 Pmpp, 2.156000 Cmpp
+Got 11.866000 Mpps, 2.313000 Pmpp, 2.158000 Cmpp
+Got 11.889000 Mpps, 2.333000 Pmpp, 2.157000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t blq -M'
+Got 11.807000 Mpps, 2.754000 Pmpp, 2.626000 Cmpp
+Got 11.551000 Mpps, 2.765000 Pmpp, 2.631000 Cmpp
+Got 11.806000 Mpps, 2.764000 Pmpp, 2.622000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t ffq -M'
+Got 11.959000 Mpps, 3.154000 Pmpp, 3.007000 Cmpp
+Got 11.868000 Mpps, 3.161000 Pmpp, 3.020000 Cmpp
+Got 11.926000 Mpps, 3.143000 Pmpp, 3.008000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t iffq -M'
+Got 11.740000 Mpps, 1.261000 Pmpp, 1.285000 Cmpp
+Got 11.731000 Mpps, 1.247000 Pmpp, 1.289000 Cmpp
+Got 11.719000 Mpps, 1.261000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 70 -t biffq -M'
+Got 11.706000 Mpps, 1.291000 Pmpp, 1.296000 Cmpp
+Got 11.720000 Mpps, 1.283000 Pmpp, 1.292000 Cmpp
+Got 11.722000 Mpps, 1.270000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t lq -M'
+Got 10.591000 Mpps, 4.045000 Pmpp, 3.882000 Cmpp
+Got 10.690000 Mpps, 4.059000 Pmpp, 3.904000 Cmpp
+Got 10.579000 Mpps, 4.048000 Pmpp, 3.882000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t llq -M'
+Got 10.920000 Mpps, 2.312000 Pmpp, 2.157000 Cmpp
+Got 10.910000 Mpps, 2.326000 Pmpp, 2.167000 Cmpp
+Got 10.902000 Mpps, 2.328000 Pmpp, 2.160000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t blq -M'
+Got 10.440000 Mpps, 2.895000 Pmpp, 2.743000 Cmpp
+Got 10.586000 Mpps, 2.859000 Pmpp, 2.733000 Cmpp
+Got 10.477000 Mpps, 2.811000 Pmpp, 2.670000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t ffq -M'
+Got 10.767000 Mpps, 3.209000 Pmpp, 3.029000 Cmpp
+Got 10.770000 Mpps, 3.199000 Pmpp, 3.026000 Cmpp
+Got 10.770000 Mpps, 3.204000 Pmpp, 3.027000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t iffq -M'
+Got 10.819000 Mpps, 1.268000 Pmpp, 1.286000 Cmpp
+Got 10.791000 Mpps, 1.249000 Pmpp, 1.287000 Cmpp
+Got 10.790000 Mpps, 1.254000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 80 -t biffq -M'
+Got 10.778000 Mpps, 1.285000 Pmpp, 1.290000 Cmpp
+Got 10.787000 Mpps, 1.291000 Pmpp, 1.289000 Cmpp
+Got 10.796000 Mpps, 1.295000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t lq -M'
+Got 9.731000 Mpps, 4.073000 Pmpp, 3.911000 Cmpp
+Got 9.574000 Mpps, 4.075000 Pmpp, 3.908000 Cmpp
+Got 9.768000 Mpps, 4.060000 Pmpp, 3.908000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t llq -M'
+Got 9.806000 Mpps, 2.327000 Pmpp, 2.160000 Cmpp
+Got 9.815000 Mpps, 2.312000 Pmpp, 2.156000 Cmpp
+Got 9.774000 Mpps, 2.323000 Pmpp, 2.166000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t blq -M'
+Got 9.680000 Mpps, 2.924000 Pmpp, 2.765000 Cmpp
+Got 9.670000 Mpps, 2.916000 Pmpp, 2.768000 Cmpp
+Got 9.654000 Mpps, 2.926000 Pmpp, 2.776000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t ffq -M'
+Got 9.619000 Mpps, 3.280000 Pmpp, 3.025000 Cmpp
+Got 9.659000 Mpps, 3.288000 Pmpp, 3.026000 Cmpp
+Got 9.628000 Mpps, 3.275000 Pmpp, 3.026000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t iffq -M'
+Got 9.585000 Mpps, 1.259000 Pmpp, 1.292000 Cmpp
+Got 9.568000 Mpps, 1.263000 Pmpp, 1.297000 Cmpp
+Got 9.553000 Mpps, 1.258000 Pmpp, 1.292000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 40 -C 90 -t biffq -M'
+Got 9.582000 Mpps, 1.285000 Pmpp, 1.294000 Cmpp
+Got 9.575000 Mpps, 1.295000 Pmpp, 1.291000 Cmpp
+Got 9.570000 Mpps, 1.286000 Pmpp, 1.293000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t lq -M'
+Got 15.683000 Mpps, 3.945000 Pmpp, 3.952000 Cmpp
+Got 16.453000 Mpps, 3.928000 Pmpp, 3.934000 Cmpp
+Got 15.730000 Mpps, 3.926000 Pmpp, 3.936000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t llq -M'
+Got 16.115000 Mpps, 3.043000 Pmpp, 3.049000 Cmpp
+Got 16.134000 Mpps, 3.036000 Pmpp, 3.043000 Cmpp
+Got 16.111000 Mpps, 3.039000 Pmpp, 3.050000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t blq -M'
+Got 16.034000 Mpps, 3.037000 Pmpp, 3.035000 Cmpp
+Got 16.041000 Mpps, 3.039000 Pmpp, 3.036000 Cmpp
+Got 16.017000 Mpps, 3.038000 Pmpp, 3.053000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t ffq -M'
+Got 15.398000 Mpps, 2.482000 Pmpp, 2.763000 Cmpp
+Got 15.386000 Mpps, 2.477000 Pmpp, 2.775000 Cmpp
+Got 15.321000 Mpps, 2.488000 Pmpp, 2.806000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t iffq -M'
+Got 15.868000 Mpps, 2.071000 Pmpp, 2.178000 Cmpp
+Got 15.785000 Mpps, 2.070000 Pmpp, 2.186000 Cmpp
+Got 15.899000 Mpps, 2.074000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 0 -t biffq -M'
+Got 15.791000 Mpps, 2.069000 Pmpp, 2.186000 Cmpp
+Got 15.753000 Mpps, 2.066000 Pmpp, 2.176000 Cmpp
+Got 15.763000 Mpps, 2.072000 Pmpp, 2.180000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t lq -M'
+Got 16.464000 Mpps, 3.935000 Pmpp, 3.943000 Cmpp
+Got 16.474000 Mpps, 3.906000 Pmpp, 3.917000 Cmpp
+Got 16.416000 Mpps, 3.780000 Pmpp, 3.790000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t llq -M'
+Got 16.120000 Mpps, 3.048000 Pmpp, 3.052000 Cmpp
+Got 16.117000 Mpps, 3.015000 Pmpp, 3.021000 Cmpp
+Got 16.130000 Mpps, 3.028000 Pmpp, 3.036000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t blq -M'
+Got 16.048000 Mpps, 3.017000 Pmpp, 3.029000 Cmpp
+Got 16.028000 Mpps, 3.039000 Pmpp, 3.038000 Cmpp
+Got 16.045000 Mpps, 3.025000 Pmpp, 3.036000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t ffq -M'
+Got 15.404000 Mpps, 2.487000 Pmpp, 2.800000 Cmpp
+Got 15.311000 Mpps, 2.505000 Pmpp, 2.800000 Cmpp
+Got 15.287000 Mpps, 2.506000 Pmpp, 2.821000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t iffq -M'
+Got 15.885000 Mpps, 2.074000 Pmpp, 2.178000 Cmpp
+Got 15.885000 Mpps, 2.065000 Pmpp, 2.178000 Cmpp
+Got 15.881000 Mpps, 2.070000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 10 -t biffq -M'
+Got 15.787000 Mpps, 2.065000 Pmpp, 2.174000 Cmpp
+Got 15.796000 Mpps, 2.064000 Pmpp, 2.174000 Cmpp
+Got 15.784000 Mpps, 2.067000 Pmpp, 2.179000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t lq -M'
+Got 16.441000 Mpps, 3.772000 Pmpp, 3.784000 Cmpp
+Got 15.935000 Mpps, 3.934000 Pmpp, 3.941000 Cmpp
+Got 16.528000 Mpps, 3.944000 Pmpp, 3.953000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t llq -M'
+Got 16.117000 Mpps, 3.046000 Pmpp, 3.044000 Cmpp
+Got 16.115000 Mpps, 3.042000 Pmpp, 3.048000 Cmpp
+Got 16.112000 Mpps, 3.033000 Pmpp, 3.042000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t blq -M'
+Got 16.032000 Mpps, 3.042000 Pmpp, 3.047000 Cmpp
+Got 16.021000 Mpps, 3.041000 Pmpp, 3.045000 Cmpp
+Got 16.025000 Mpps, 3.016000 Pmpp, 3.019000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t ffq -M'
+Got 15.367000 Mpps, 2.504000 Pmpp, 2.817000 Cmpp
+Got 15.332000 Mpps, 2.493000 Pmpp, 2.816000 Cmpp
+Got 15.391000 Mpps, 2.489000 Pmpp, 2.800000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t iffq -M'
+Got 15.851000 Mpps, 2.068000 Pmpp, 2.183000 Cmpp
+Got 15.857000 Mpps, 2.072000 Pmpp, 2.183000 Cmpp
+Got 15.904000 Mpps, 2.064000 Pmpp, 2.177000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 20 -t biffq -M'
+Got 15.780000 Mpps, 2.073000 Pmpp, 2.181000 Cmpp
+Got 15.780000 Mpps, 2.067000 Pmpp, 2.174000 Cmpp
+Got 15.788000 Mpps, 2.070000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t lq -M'
+Got 15.957000 Mpps, 3.952000 Pmpp, 3.960000 Cmpp
+Got 15.876000 Mpps, 3.919000 Pmpp, 3.928000 Cmpp
+Got 16.484000 Mpps, 3.963000 Pmpp, 3.973000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t llq -M'
+Got 16.120000 Mpps, 3.047000 Pmpp, 3.054000 Cmpp
+Got 16.127000 Mpps, 3.055000 Pmpp, 3.051000 Cmpp
+Got 16.109000 Mpps, 3.048000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t blq -M'
+Got 16.024000 Mpps, 3.012000 Pmpp, 3.020000 Cmpp
+Got 16.019000 Mpps, 3.029000 Pmpp, 3.038000 Cmpp
+Got 16.033000 Mpps, 3.000000 Pmpp, 3.003000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t ffq -M'
+Got 15.243000 Mpps, 2.464000 Pmpp, 2.843000 Cmpp
+Got 15.252000 Mpps, 2.466000 Pmpp, 2.851000 Cmpp
+Got 15.228000 Mpps, 2.469000 Pmpp, 2.851000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t iffq -M'
+Got 15.899000 Mpps, 2.066000 Pmpp, 2.182000 Cmpp
+Got 15.855000 Mpps, 2.071000 Pmpp, 2.182000 Cmpp
+Got 15.874000 Mpps, 2.071000 Pmpp, 2.181000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 30 -t biffq -M'
+Got 15.784000 Mpps, 2.073000 Pmpp, 2.181000 Cmpp
+Got 15.778000 Mpps, 2.074000 Pmpp, 2.173000 Cmpp
+Got 15.777000 Mpps, 2.071000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t lq -M'
+Got 16.482000 Mpps, 3.924000 Pmpp, 3.930000 Cmpp
+Got 15.721000 Mpps, 3.911000 Pmpp, 3.921000 Cmpp
+Got 16.558000 Mpps, 3.959000 Pmpp, 3.964000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t llq -M'
+Got 16.123000 Mpps, 3.058000 Pmpp, 3.054000 Cmpp
+Got 16.099000 Mpps, 3.041000 Pmpp, 3.047000 Cmpp
+Got 16.123000 Mpps, 3.049000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t blq -M'
+Got 16.051000 Mpps, 2.840000 Pmpp, 2.849000 Cmpp
+Got 16.014000 Mpps, 2.937000 Pmpp, 2.939000 Cmpp
+Got 16.051000 Mpps, 2.824000 Pmpp, 2.827000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t ffq -M'
+Got 15.284000 Mpps, 2.473000 Pmpp, 2.715000 Cmpp
+Got 15.254000 Mpps, 2.492000 Pmpp, 2.744000 Cmpp
+Got 15.340000 Mpps, 2.467000 Pmpp, 2.695000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t iffq -M'
+Got 15.852000 Mpps, 2.065000 Pmpp, 2.177000 Cmpp
+Got 15.853000 Mpps, 2.071000 Pmpp, 2.183000 Cmpp
+Got 15.883000 Mpps, 2.067000 Pmpp, 2.180000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 40 -t biffq -M'
+Got 15.782000 Mpps, 2.066000 Pmpp, 2.179000 Cmpp
+Got 15.779000 Mpps, 2.065000 Pmpp, 2.181000 Cmpp
+Got 15.803000 Mpps, 2.068000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t lq -M'
+Got 15.252000 Mpps, 3.766000 Pmpp, 3.659000 Cmpp
+Got 14.499000 Mpps, 3.782000 Pmpp, 3.701000 Cmpp
+Got 14.587000 Mpps, 3.783000 Pmpp, 3.701000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t llq -M'
+Got 16.193000 Mpps, 2.016000 Pmpp, 1.884000 Cmpp
+Got 16.003000 Mpps, 1.329000 Pmpp, 1.207000 Cmpp
+Got 16.035000 Mpps, 1.294000 Pmpp, 1.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t blq -M'
+Got 15.949000 Mpps, 1.319000 Pmpp, 1.197000 Cmpp
+Got 15.940000 Mpps, 1.353000 Pmpp, 1.222000 Cmpp
+Got 15.867000 Mpps, 1.791000 Pmpp, 1.663000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t ffq -M'
+Got 15.568000 Mpps, 2.299000 Pmpp, 2.127000 Cmpp
+Got 15.552000 Mpps, 2.350000 Pmpp, 2.171000 Cmpp
+Got 15.561000 Mpps, 2.387000 Pmpp, 2.215000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t iffq -M'
+Got 15.776000 Mpps, 1.233000 Pmpp, 1.287000 Cmpp
+Got 15.688000 Mpps, 1.233000 Pmpp, 1.283000 Cmpp
+Got 15.766000 Mpps, 1.239000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 50 -t biffq -M'
+Got 15.805000 Mpps, 1.221000 Pmpp, 1.330000 Cmpp
+Got 15.633000 Mpps, 1.234000 Pmpp, 1.280000 Cmpp
+Got 15.634000 Mpps, 1.230000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t lq -M'
+Got 12.441000 Mpps, 3.655000 Pmpp, 3.553000 Cmpp
+Got 12.457000 Mpps, 3.652000 Pmpp, 3.554000 Cmpp
+Got 12.120000 Mpps, 3.802000 Pmpp, 3.693000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t llq -M'
+Got 13.410000 Mpps, 2.319000 Pmpp, 2.155000 Cmpp
+Got 13.325000 Mpps, 2.304000 Pmpp, 2.151000 Cmpp
+Got 13.474000 Mpps, 2.301000 Pmpp, 2.157000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t blq -M'
+Got 13.558000 Mpps, 2.811000 Pmpp, 2.655000 Cmpp
+Got 13.461000 Mpps, 2.794000 Pmpp, 2.654000 Cmpp
+Got 13.497000 Mpps, 2.791000 Pmpp, 2.648000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t ffq -M'
+Got 13.174000 Mpps, 2.951000 Pmpp, 2.696000 Cmpp
+Got 13.193000 Mpps, 2.947000 Pmpp, 2.692000 Cmpp
+Got 13.170000 Mpps, 2.925000 Pmpp, 2.665000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t iffq -M'
+Got 13.305000 Mpps, 1.235000 Pmpp, 1.282000 Cmpp
+Got 13.290000 Mpps, 1.235000 Pmpp, 1.282000 Cmpp
+Got 13.356000 Mpps, 1.239000 Pmpp, 1.282000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 60 -t biffq -M'
+Got 13.292000 Mpps, 1.261000 Pmpp, 1.289000 Cmpp
+Got 13.250000 Mpps, 1.265000 Pmpp, 1.285000 Cmpp
+Got 13.318000 Mpps, 1.252000 Pmpp, 1.282000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t lq -M'
+Got 11.520000 Mpps, 3.947000 Pmpp, 3.777000 Cmpp
+Got 11.509000 Mpps, 3.816000 Pmpp, 3.676000 Cmpp
+Got 11.493000 Mpps, 3.839000 Pmpp, 3.682000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t llq -M'
+Got 11.954000 Mpps, 2.299000 Pmpp, 2.155000 Cmpp
+Got 11.899000 Mpps, 2.310000 Pmpp, 2.150000 Cmpp
+Got 11.900000 Mpps, 2.316000 Pmpp, 2.159000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t blq -M'
+Got 11.852000 Mpps, 2.788000 Pmpp, 2.648000 Cmpp
+Got 11.687000 Mpps, 2.799000 Pmpp, 2.658000 Cmpp
+Got 11.579000 Mpps, 2.788000 Pmpp, 2.631000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t ffq -M'
+Got 11.754000 Mpps, 3.153000 Pmpp, 2.941000 Cmpp
+Got 11.856000 Mpps, 3.124000 Pmpp, 2.927000 Cmpp
+Got 11.753000 Mpps, 3.134000 Pmpp, 2.936000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t iffq -M'
+Got 11.743000 Mpps, 1.249000 Pmpp, 1.294000 Cmpp
+Got 11.718000 Mpps, 1.244000 Pmpp, 1.286000 Cmpp
+Got 11.673000 Mpps, 1.249000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 70 -t biffq -M'
+Got 11.691000 Mpps, 1.269000 Pmpp, 1.290000 Cmpp
+Got 11.726000 Mpps, 1.273000 Pmpp, 1.287000 Cmpp
+Got 11.738000 Mpps, 1.263000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t lq -M'
+Got 10.587000 Mpps, 4.060000 Pmpp, 3.902000 Cmpp
+Got 10.760000 Mpps, 4.063000 Pmpp, 3.911000 Cmpp
+Got 10.732000 Mpps, 4.066000 Pmpp, 3.907000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t llq -M'
+Got 10.939000 Mpps, 2.321000 Pmpp, 2.163000 Cmpp
+Got 10.933000 Mpps, 2.323000 Pmpp, 2.161000 Cmpp
+Got 10.912000 Mpps, 2.303000 Pmpp, 2.161000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t blq -M'
+Got 10.524000 Mpps, 2.741000 Pmpp, 2.607000 Cmpp
+Got 10.533000 Mpps, 2.759000 Pmpp, 2.627000 Cmpp
+Got 10.538000 Mpps, 2.742000 Pmpp, 2.607000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t ffq -M'
+Got 10.745000 Mpps, 3.164000 Pmpp, 3.025000 Cmpp
+Got 10.781000 Mpps, 3.159000 Pmpp, 3.023000 Cmpp
+Got 10.827000 Mpps, 3.166000 Pmpp, 3.025000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t iffq -M'
+Got 10.794000 Mpps, 1.256000 Pmpp, 1.287000 Cmpp
+Got 10.785000 Mpps, 1.244000 Pmpp, 1.287000 Cmpp
+Got 10.780000 Mpps, 1.250000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 80 -t biffq -M'
+Got 10.765000 Mpps, 1.280000 Pmpp, 1.286000 Cmpp
+Got 10.788000 Mpps, 1.282000 Pmpp, 1.289000 Cmpp
+Got 10.760000 Mpps, 1.287000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t lq -M'
+Got 9.642000 Mpps, 4.075000 Pmpp, 3.908000 Cmpp
+Got 9.652000 Mpps, 4.079000 Pmpp, 3.909000 Cmpp
+Got 9.663000 Mpps, 4.080000 Pmpp, 3.910000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t llq -M'
+Got 9.807000 Mpps, 2.315000 Pmpp, 2.160000 Cmpp
+Got 9.821000 Mpps, 2.328000 Pmpp, 2.165000 Cmpp
+Got 9.825000 Mpps, 2.330000 Pmpp, 2.166000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t blq -M'
+Got 9.610000 Mpps, 2.894000 Pmpp, 2.751000 Cmpp
+Got 9.516000 Mpps, 2.876000 Pmpp, 2.745000 Cmpp
+Got 9.579000 Mpps, 2.811000 Pmpp, 2.659000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t ffq -M'
+Got 9.650000 Mpps, 3.215000 Pmpp, 3.025000 Cmpp
+Got 9.654000 Mpps, 3.233000 Pmpp, 3.033000 Cmpp
+Got 9.671000 Mpps, 3.220000 Pmpp, 3.025000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t iffq -M'
+Got 9.591000 Mpps, 1.250000 Pmpp, 1.298000 Cmpp
+Got 9.549000 Mpps, 1.249000 Pmpp, 1.294000 Cmpp
+Got 9.616000 Mpps, 1.256000 Pmpp, 1.299000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 50 -C 90 -t biffq -M'
+Got 9.568000 Mpps, 1.284000 Pmpp, 1.292000 Cmpp
+Got 9.568000 Mpps, 1.278000 Pmpp, 1.291000 Cmpp
+Got 9.585000 Mpps, 1.287000 Pmpp, 1.295000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t lq -M'
+Got 14.162000 Mpps, 3.615000 Pmpp, 3.620000 Cmpp
+Got 13.666000 Mpps, 3.598000 Pmpp, 3.610000 Cmpp
+Got 14.168000 Mpps, 3.587000 Pmpp, 3.596000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t llq -M'
+Got 14.323000 Mpps, 3.057000 Pmpp, 3.057000 Cmpp
+Got 14.338000 Mpps, 3.049000 Pmpp, 3.059000 Cmpp
+Got 14.339000 Mpps, 3.055000 Pmpp, 3.059000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t blq -M'
+Got 14.273000 Mpps, 3.038000 Pmpp, 3.047000 Cmpp
+Got 14.305000 Mpps, 3.039000 Pmpp, 3.057000 Cmpp
+Got 14.307000 Mpps, 3.032000 Pmpp, 3.045000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t ffq -M'
+Got 13.445000 Mpps, 2.726000 Pmpp, 3.058000 Cmpp
+Got 13.453000 Mpps, 2.725000 Pmpp, 3.062000 Cmpp
+Got 13.354000 Mpps, 2.791000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t iffq -M'
+Got 14.144000 Mpps, 2.065000 Pmpp, 2.170000 Cmpp
+Got 14.121000 Mpps, 2.072000 Pmpp, 2.179000 Cmpp
+Got 14.121000 Mpps, 2.072000 Pmpp, 2.184000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 0 -t biffq -M'
+Got 13.882000 Mpps, 2.071000 Pmpp, 2.181000 Cmpp
+Got 13.869000 Mpps, 2.070000 Pmpp, 2.183000 Cmpp
+Got 13.861000 Mpps, 2.072000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t lq -M'
+Got 13.663000 Mpps, 3.600000 Pmpp, 3.606000 Cmpp
+Got 14.124000 Mpps, 3.598000 Pmpp, 3.605000 Cmpp
+Got 13.489000 Mpps, 3.653000 Pmpp, 3.665000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t llq -M'
+Got 14.327000 Mpps, 3.046000 Pmpp, 3.056000 Cmpp
+Got 14.323000 Mpps, 3.057000 Pmpp, 3.064000 Cmpp
+Got 14.331000 Mpps, 3.050000 Pmpp, 3.048000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t blq -M'
+Got 14.302000 Mpps, 3.052000 Pmpp, 3.059000 Cmpp
+Got 14.296000 Mpps, 3.042000 Pmpp, 3.052000 Cmpp
+Got 14.300000 Mpps, 3.049000 Pmpp, 3.056000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t ffq -M'
+Got 13.394000 Mpps, 2.742000 Pmpp, 3.053000 Cmpp
+Got 13.368000 Mpps, 2.784000 Pmpp, 3.052000 Cmpp
+Got 13.360000 Mpps, 2.780000 Pmpp, 3.059000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t iffq -M'
+Got 14.125000 Mpps, 2.076000 Pmpp, 2.180000 Cmpp
+Got 14.120000 Mpps, 2.073000 Pmpp, 2.183000 Cmpp
+Got 14.119000 Mpps, 2.075000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 10 -t biffq -M'
+Got 13.879000 Mpps, 2.070000 Pmpp, 2.179000 Cmpp
+Got 13.857000 Mpps, 2.074000 Pmpp, 2.184000 Cmpp
+Got 13.874000 Mpps, 2.069000 Pmpp, 2.178000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t lq -M'
+Got 13.570000 Mpps, 3.635000 Pmpp, 3.634000 Cmpp
+Got 14.138000 Mpps, 3.625000 Pmpp, 3.633000 Cmpp
+Got 14.122000 Mpps, 3.602000 Pmpp, 3.613000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t llq -M'
+Got 14.325000 Mpps, 3.052000 Pmpp, 3.056000 Cmpp
+Got 14.325000 Mpps, 3.053000 Pmpp, 3.059000 Cmpp
+Got 14.335000 Mpps, 3.054000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t blq -M'
+Got 14.291000 Mpps, 3.052000 Pmpp, 3.054000 Cmpp
+Got 14.306000 Mpps, 3.044000 Pmpp, 3.066000 Cmpp
+Got 14.289000 Mpps, 3.037000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t ffq -M'
+Got 13.463000 Mpps, 2.725000 Pmpp, 3.060000 Cmpp
+Got 13.432000 Mpps, 2.719000 Pmpp, 3.058000 Cmpp
+Got 13.459000 Mpps, 2.743000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t iffq -M'
+Got 14.098000 Mpps, 2.073000 Pmpp, 2.184000 Cmpp
+Got 14.105000 Mpps, 2.072000 Pmpp, 2.184000 Cmpp
+Got 14.102000 Mpps, 2.070000 Pmpp, 2.176000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 20 -t biffq -M'
+Got 13.877000 Mpps, 2.072000 Pmpp, 2.181000 Cmpp
+Got 13.878000 Mpps, 2.071000 Pmpp, 2.185000 Cmpp
+Got 13.870000 Mpps, 2.073000 Pmpp, 2.187000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t lq -M'
+Got 13.553000 Mpps, 3.631000 Pmpp, 3.644000 Cmpp
+Got 13.500000 Mpps, 3.650000 Pmpp, 3.656000 Cmpp
+Got 13.506000 Mpps, 3.655000 Pmpp, 3.671000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t llq -M'
+Got 14.327000 Mpps, 3.055000 Pmpp, 3.061000 Cmpp
+Got 14.338000 Mpps, 3.051000 Pmpp, 3.061000 Cmpp
+Got 14.317000 Mpps, 3.056000 Pmpp, 3.054000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t blq -M'
+Got 14.295000 Mpps, 3.031000 Pmpp, 3.037000 Cmpp
+Got 14.303000 Mpps, 3.039000 Pmpp, 3.049000 Cmpp
+Got 14.274000 Mpps, 3.043000 Pmpp, 3.042000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t ffq -M'
+Got 13.322000 Mpps, 2.712000 Pmpp, 3.054000 Cmpp
+Got 13.328000 Mpps, 2.717000 Pmpp, 3.052000 Cmpp
+Got 13.280000 Mpps, 2.761000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t iffq -M'
+Got 14.117000 Mpps, 2.072000 Pmpp, 2.178000 Cmpp
+Got 14.114000 Mpps, 2.065000 Pmpp, 2.176000 Cmpp
+Got 14.125000 Mpps, 2.068000 Pmpp, 2.176000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 30 -t biffq -M'
+Got 13.857000 Mpps, 2.074000 Pmpp, 2.182000 Cmpp
+Got 13.877000 Mpps, 2.075000 Pmpp, 2.183000 Cmpp
+Got 13.862000 Mpps, 2.072000 Pmpp, 2.178000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t lq -M'
+Got 14.194000 Mpps, 3.615000 Pmpp, 3.622000 Cmpp
+Got 14.237000 Mpps, 3.601000 Pmpp, 3.610000 Cmpp
+Got 14.117000 Mpps, 3.609000 Pmpp, 3.617000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t llq -M'
+Got 14.324000 Mpps, 3.058000 Pmpp, 3.065000 Cmpp
+Got 14.327000 Mpps, 3.055000 Pmpp, 3.057000 Cmpp
+Got 14.338000 Mpps, 3.050000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t blq -M'
+Got 14.305000 Mpps, 3.034000 Pmpp, 3.046000 Cmpp
+Got 14.288000 Mpps, 3.026000 Pmpp, 3.030000 Cmpp
+Got 14.292000 Mpps, 3.033000 Pmpp, 3.040000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t ffq -M'
+Got 13.292000 Mpps, 2.702000 Pmpp, 3.022000 Cmpp
+Got 13.261000 Mpps, 2.707000 Pmpp, 3.034000 Cmpp
+Got 13.243000 Mpps, 2.738000 Pmpp, 3.037000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t iffq -M'
+Got 14.116000 Mpps, 2.070000 Pmpp, 2.176000 Cmpp
+Got 14.129000 Mpps, 2.074000 Pmpp, 2.180000 Cmpp
+Got 14.138000 Mpps, 2.075000 Pmpp, 2.186000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 40 -t biffq -M'
+Got 13.852000 Mpps, 2.073000 Pmpp, 2.184000 Cmpp
+Got 13.883000 Mpps, 2.066000 Pmpp, 2.173000 Cmpp
+Got 13.882000 Mpps, 2.073000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t lq -M'
+Got 13.343000 Mpps, 3.730000 Pmpp, 3.738000 Cmpp
+Got 13.338000 Mpps, 3.717000 Pmpp, 3.720000 Cmpp
+Got 13.525000 Mpps, 3.648000 Pmpp, 3.657000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t llq -M'
+Got 14.330000 Mpps, 3.057000 Pmpp, 3.053000 Cmpp
+Got 14.327000 Mpps, 3.055000 Pmpp, 3.057000 Cmpp
+Got 14.326000 Mpps, 3.043000 Pmpp, 3.050000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t blq -M'
+Got 14.302000 Mpps, 2.943000 Pmpp, 2.950000 Cmpp
+Got 14.304000 Mpps, 2.921000 Pmpp, 2.925000 Cmpp
+Got 14.295000 Mpps, 2.933000 Pmpp, 2.931000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t ffq -M'
+Got 13.285000 Mpps, 2.665000 Pmpp, 2.873000 Cmpp
+Got 13.224000 Mpps, 2.689000 Pmpp, 2.906000 Cmpp
+Got 13.230000 Mpps, 2.691000 Pmpp, 2.882000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t iffq -M'
+Got 14.126000 Mpps, 2.073000 Pmpp, 2.184000 Cmpp
+Got 14.130000 Mpps, 2.073000 Pmpp, 2.184000 Cmpp
+Got 14.118000 Mpps, 2.075000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 50 -t biffq -M'
+Got 13.884000 Mpps, 2.066000 Pmpp, 2.175000 Cmpp
+Got 13.874000 Mpps, 2.073000 Pmpp, 2.183000 Cmpp
+Got 13.859000 Mpps, 2.069000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t lq -M'
+Got 12.654000 Mpps, 3.785000 Pmpp, 3.672000 Cmpp
+Got 12.635000 Mpps, 3.782000 Pmpp, 3.678000 Cmpp
+Got 12.516000 Mpps, 3.796000 Pmpp, 3.670000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t llq -M'
+Got 13.426000 Mpps, 1.948000 Pmpp, 1.826000 Cmpp
+Got 13.433000 Mpps, 2.265000 Pmpp, 2.136000 Cmpp
+Got 13.357000 Mpps, 1.999000 Pmpp, 1.879000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t blq -M'
+Got 13.555000 Mpps, 2.759000 Pmpp, 2.644000 Cmpp
+Got 13.487000 Mpps, 2.214000 Pmpp, 2.096000 Cmpp
+Got 13.527000 Mpps, 2.751000 Pmpp, 2.635000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t ffq -M'
+Got 13.234000 Mpps, 2.666000 Pmpp, 2.459000 Cmpp
+Got 13.261000 Mpps, 2.637000 Pmpp, 2.439000 Cmpp
+Got 13.260000 Mpps, 2.660000 Pmpp, 2.457000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t iffq -M'
+Got 13.254000 Mpps, 1.249000 Pmpp, 1.291000 Cmpp
+Got 13.354000 Mpps, 1.231000 Pmpp, 1.283000 Cmpp
+Got 13.327000 Mpps, 1.239000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 60 -t biffq -M'
+Got 13.350000 Mpps, 1.246000 Pmpp, 1.285000 Cmpp
+Got 13.336000 Mpps, 1.249000 Pmpp, 1.287000 Cmpp
+Got 13.286000 Mpps, 1.250000 Pmpp, 1.282000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t lq -M'
+Got 11.408000 Mpps, 3.747000 Pmpp, 3.612000 Cmpp
+Got 11.384000 Mpps, 3.767000 Pmpp, 3.620000 Cmpp
+Got 11.826000 Mpps, 4.027000 Pmpp, 3.890000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t llq -M'
+Got 11.910000 Mpps, 2.295000 Pmpp, 2.153000 Cmpp
+Got 11.896000 Mpps, 2.295000 Pmpp, 2.152000 Cmpp
+Got 11.890000 Mpps, 2.308000 Pmpp, 2.150000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t blq -M'
+Got 11.933000 Mpps, 2.799000 Pmpp, 2.662000 Cmpp
+Got 11.917000 Mpps, 2.805000 Pmpp, 2.660000 Cmpp
+Got 12.091000 Mpps, 2.796000 Pmpp, 2.646000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t ffq -M'
+Got 11.833000 Mpps, 3.091000 Pmpp, 2.880000 Cmpp
+Got 11.823000 Mpps, 3.082000 Pmpp, 2.886000 Cmpp
+Got 11.768000 Mpps, 3.100000 Pmpp, 2.920000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t iffq -M'
+Got 11.728000 Mpps, 1.238000 Pmpp, 1.289000 Cmpp
+Got 11.708000 Mpps, 1.262000 Pmpp, 1.286000 Cmpp
+Got 11.713000 Mpps, 1.248000 Pmpp, 1.286000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 70 -t biffq -M'
+Got 11.718000 Mpps, 1.265000 Pmpp, 1.290000 Cmpp
+Got 11.751000 Mpps, 1.282000 Pmpp, 1.305000 Cmpp
+Got 11.701000 Mpps, 1.253000 Pmpp, 1.289000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t lq -M'
+Got 10.749000 Mpps, 4.053000 Pmpp, 3.906000 Cmpp
+Got 10.722000 Mpps, 4.048000 Pmpp, 3.910000 Cmpp
+Got 10.749000 Mpps, 4.059000 Pmpp, 3.913000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t llq -M'
+Got 10.811000 Mpps, 2.312000 Pmpp, 2.155000 Cmpp
+Got 10.946000 Mpps, 2.310000 Pmpp, 2.156000 Cmpp
+Got 10.899000 Mpps, 2.319000 Pmpp, 2.160000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t blq -M'
+Got 10.580000 Mpps, 2.782000 Pmpp, 2.638000 Cmpp
+Got 10.550000 Mpps, 2.779000 Pmpp, 2.644000 Cmpp
+Got 10.654000 Mpps, 2.801000 Pmpp, 2.653000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t ffq -M'
+Got 10.787000 Mpps, 3.150000 Pmpp, 3.015000 Cmpp
+Got 10.695000 Mpps, 3.144000 Pmpp, 3.013000 Cmpp
+Got 10.786000 Mpps, 3.166000 Pmpp, 3.020000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t iffq -M'
+Got 10.780000 Mpps, 1.242000 Pmpp, 1.290000 Cmpp
+Got 10.795000 Mpps, 1.250000 Pmpp, 1.299000 Cmpp
+Got 10.773000 Mpps, 1.246000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 80 -t biffq -M'
+Got 10.804000 Mpps, 1.271000 Pmpp, 1.297000 Cmpp
+Got 10.802000 Mpps, 1.274000 Pmpp, 1.293000 Cmpp
+Got 10.789000 Mpps, 1.262000 Pmpp, 1.291000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t lq -M'
+Got 9.794000 Mpps, 4.070000 Pmpp, 3.914000 Cmpp
+Got 9.554000 Mpps, 4.066000 Pmpp, 3.907000 Cmpp
+Got 9.746000 Mpps, 4.066000 Pmpp, 3.904000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t llq -M'
+Got 9.706000 Mpps, 2.323000 Pmpp, 2.165000 Cmpp
+Got 9.724000 Mpps, 2.321000 Pmpp, 2.158000 Cmpp
+Got 9.700000 Mpps, 2.313000 Pmpp, 2.164000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t blq -M'
+Got 9.675000 Mpps, 2.763000 Pmpp, 2.627000 Cmpp
+Got 9.641000 Mpps, 2.785000 Pmpp, 2.630000 Cmpp
+Got 9.571000 Mpps, 2.729000 Pmpp, 2.595000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t ffq -M'
+Got 9.670000 Mpps, 3.181000 Pmpp, 3.026000 Cmpp
+Got 9.635000 Mpps, 3.178000 Pmpp, 3.032000 Cmpp
+Got 9.648000 Mpps, 3.186000 Pmpp, 3.030000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t iffq -M'
+Got 9.586000 Mpps, 1.246000 Pmpp, 1.296000 Cmpp
+Got 9.565000 Mpps, 1.249000 Pmpp, 1.292000 Cmpp
+Got 9.569000 Mpps, 1.256000 Pmpp, 1.300000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 60 -C 90 -t biffq -M'
+Got 9.582000 Mpps, 1.284000 Pmpp, 1.295000 Cmpp
+Got 9.598000 Mpps, 1.292000 Pmpp, 1.301000 Cmpp
+Got 9.576000 Mpps, 1.284000 Pmpp, 1.299000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t lq -M'
+Got 11.042000 Mpps, 3.945000 Pmpp, 3.965000 Cmpp
+Got 11.258000 Mpps, 3.915000 Pmpp, 3.927000 Cmpp
+Got 11.801000 Mpps, 3.749000 Pmpp, 3.758000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t llq -M'
+Got 12.767000 Mpps, 3.050000 Pmpp, 3.049000 Cmpp
+Got 12.755000 Mpps, 3.054000 Pmpp, 3.062000 Cmpp
+Got 11.738000 Mpps, 3.054000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t blq -M'
+Got 11.707000 Mpps, 3.049000 Pmpp, 3.056000 Cmpp
+Got 12.409000 Mpps, 3.058000 Pmpp, 3.051000 Cmpp
+Got 11.714000 Mpps, 3.060000 Pmpp, 3.065000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t ffq -M'
+Got 11.923000 Mpps, 3.048000 Pmpp, 3.057000 Cmpp
+Got 11.920000 Mpps, 3.052000 Pmpp, 3.065000 Cmpp
+Got 11.863000 Mpps, 3.047000 Pmpp, 3.056000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t iffq -M'
+Got 12.558000 Mpps, 2.074000 Pmpp, 2.181000 Cmpp
+Got 12.551000 Mpps, 2.067000 Pmpp, 2.178000 Cmpp
+Got 12.580000 Mpps, 2.075000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 0 -t biffq -M'
+Got 11.980000 Mpps, 2.078000 Pmpp, 2.184000 Cmpp
+Got 11.969000 Mpps, 2.079000 Pmpp, 2.186000 Cmpp
+Got 11.988000 Mpps, 2.076000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t lq -M'
+Got 10.044000 Mpps, 3.989000 Pmpp, 3.995000 Cmpp
+Got 11.673000 Mpps, 3.790000 Pmpp, 3.793000 Cmpp
+Got 11.679000 Mpps, 3.739000 Pmpp, 3.748000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t llq -M'
+Got 11.730000 Mpps, 3.056000 Pmpp, 3.066000 Cmpp
+Got 12.775000 Mpps, 3.055000 Pmpp, 3.050000 Cmpp
+Got 12.783000 Mpps, 3.058000 Pmpp, 3.057000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t blq -M'
+Got 11.717000 Mpps, 3.050000 Pmpp, 3.048000 Cmpp
+Got 12.402000 Mpps, 3.052000 Pmpp, 3.065000 Cmpp
+Got 11.704000 Mpps, 3.049000 Pmpp, 3.056000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t ffq -M'
+Got 11.839000 Mpps, 3.051000 Pmpp, 3.058000 Cmpp
+Got 11.783000 Mpps, 3.050000 Pmpp, 3.056000 Cmpp
+Got 11.912000 Mpps, 3.051000 Pmpp, 3.060000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t iffq -M'
+Got 12.565000 Mpps, 2.078000 Pmpp, 2.186000 Cmpp
+Got 12.578000 Mpps, 2.075000 Pmpp, 2.181000 Cmpp
+Got 12.543000 Mpps, 2.076000 Pmpp, 2.184000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 10 -t biffq -M'
+Got 11.957000 Mpps, 2.076000 Pmpp, 2.182000 Cmpp
+Got 11.479000 Mpps, 2.079000 Pmpp, 2.181000 Cmpp
+Got 11.981000 Mpps, 2.077000 Pmpp, 2.185000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t lq -M'
+Got 11.657000 Mpps, 3.756000 Pmpp, 3.766000 Cmpp
+Got 11.000000 Mpps, 3.954000 Pmpp, 3.960000 Cmpp
+Got 12.522000 Mpps, 3.608000 Pmpp, 3.613000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t llq -M'
+Got 11.734000 Mpps, 3.060000 Pmpp, 3.064000 Cmpp
+Got 12.800000 Mpps, 3.048000 Pmpp, 3.055000 Cmpp
+Got 12.747000 Mpps, 3.057000 Pmpp, 3.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t blq -M'
+Got 12.406000 Mpps, 3.057000 Pmpp, 3.069000 Cmpp
+Got 11.707000 Mpps, 3.058000 Pmpp, 3.068000 Cmpp
+Got 12.413000 Mpps, 3.056000 Pmpp, 3.060000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t ffq -M'
+Got 11.843000 Mpps, 3.051000 Pmpp, 3.061000 Cmpp
+Got 11.930000 Mpps, 3.049000 Pmpp, 3.059000 Cmpp
+Got 11.881000 Mpps, 3.053000 Pmpp, 3.059000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t iffq -M'
+Got 11.603000 Mpps, 2.074000 Pmpp, 2.181000 Cmpp
+Got 12.557000 Mpps, 2.077000 Pmpp, 2.185000 Cmpp
+Got 12.576000 Mpps, 2.076000 Pmpp, 2.186000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 20 -t biffq -M'
+Got 11.978000 Mpps, 2.077000 Pmpp, 2.183000 Cmpp
+Got 11.497000 Mpps, 2.079000 Pmpp, 2.190000 Cmpp
+Got 11.489000 Mpps, 2.084000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t lq -M'
+Got 11.075000 Mpps, 3.944000 Pmpp, 3.954000 Cmpp
+Got 12.160000 Mpps, 3.718000 Pmpp, 3.728000 Cmpp
+Got 10.933000 Mpps, 3.994000 Pmpp, 4.001000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t llq -M'
+Got 12.766000 Mpps, 3.059000 Pmpp, 3.072000 Cmpp
+Got 12.745000 Mpps, 3.056000 Pmpp, 3.063000 Cmpp
+Got 12.753000 Mpps, 3.051000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t blq -M'
+Got 12.433000 Mpps, 3.046000 Pmpp, 3.060000 Cmpp
+Got 11.700000 Mpps, 3.050000 Pmpp, 3.063000 Cmpp
+Got 11.711000 Mpps, 3.057000 Pmpp, 3.064000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t ffq -M'
+Got 11.893000 Mpps, 3.045000 Pmpp, 3.055000 Cmpp
+Got 11.845000 Mpps, 3.045000 Pmpp, 3.055000 Cmpp
+Got 11.840000 Mpps, 3.051000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t iffq -M'
+Got 11.627000 Mpps, 2.080000 Pmpp, 2.185000 Cmpp
+Got 11.591000 Mpps, 2.078000 Pmpp, 2.188000 Cmpp
+Got 12.557000 Mpps, 2.073000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 30 -t biffq -M'
+Got 11.483000 Mpps, 2.078000 Pmpp, 2.189000 Cmpp
+Got 11.485000 Mpps, 2.079000 Pmpp, 2.187000 Cmpp
+Got 11.968000 Mpps, 2.076000 Pmpp, 2.180000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t lq -M'
+Got 12.589000 Mpps, 3.594000 Pmpp, 3.603000 Cmpp
+Got 12.427000 Mpps, 3.644000 Pmpp, 3.648000 Cmpp
+Got 11.519000 Mpps, 3.698000 Pmpp, 3.702000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t llq -M'
+Got 12.762000 Mpps, 3.054000 Pmpp, 3.060000 Cmpp
+Got 11.725000 Mpps, 3.057000 Pmpp, 3.066000 Cmpp
+Got 12.759000 Mpps, 3.059000 Pmpp, 3.061000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t blq -M'
+Got 11.697000 Mpps, 3.065000 Pmpp, 3.068000 Cmpp
+Got 11.695000 Mpps, 3.058000 Pmpp, 3.067000 Cmpp
+Got 11.699000 Mpps, 3.065000 Pmpp, 3.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t ffq -M'
+Got 11.877000 Mpps, 3.037000 Pmpp, 3.053000 Cmpp
+Got 11.856000 Mpps, 3.039000 Pmpp, 3.052000 Cmpp
+Got 11.828000 Mpps, 3.034000 Pmpp, 3.052000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t iffq -M'
+Got 12.564000 Mpps, 2.075000 Pmpp, 2.186000 Cmpp
+Got 11.604000 Mpps, 2.074000 Pmpp, 2.185000 Cmpp
+Got 12.553000 Mpps, 2.074000 Pmpp, 2.183000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 40 -t biffq -M'
+Got 11.980000 Mpps, 2.080000 Pmpp, 2.191000 Cmpp
+Got 11.951000 Mpps, 2.078000 Pmpp, 2.190000 Cmpp
+Got 11.975000 Mpps, 2.078000 Pmpp, 2.186000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t lq -M'
+Got 11.908000 Mpps, 3.672000 Pmpp, 3.680000 Cmpp
+Got 11.328000 Mpps, 3.912000 Pmpp, 3.914000 Cmpp
+Got 10.117000 Mpps, 3.984000 Pmpp, 3.997000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t llq -M'
+Got 12.789000 Mpps, 3.048000 Pmpp, 3.060000 Cmpp
+Got 12.727000 Mpps, 3.053000 Pmpp, 3.061000 Cmpp
+Got 12.743000 Mpps, 3.045000 Pmpp, 3.048000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t blq -M'
+Got 12.409000 Mpps, 3.045000 Pmpp, 3.052000 Cmpp
+Got 11.700000 Mpps, 3.064000 Pmpp, 3.061000 Cmpp
+Got 12.408000 Mpps, 3.050000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t ffq -M'
+Got 11.766000 Mpps, 3.012000 Pmpp, 3.056000 Cmpp
+Got 11.759000 Mpps, 2.969000 Pmpp, 3.052000 Cmpp
+Got 11.740000 Mpps, 3.012000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t iffq -M'
+Got 11.587000 Mpps, 2.078000 Pmpp, 2.186000 Cmpp
+Got 12.551000 Mpps, 2.076000 Pmpp, 2.189000 Cmpp
+Got 12.579000 Mpps, 2.069000 Pmpp, 2.179000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 50 -t biffq -M'
+Got 11.959000 Mpps, 2.078000 Pmpp, 2.187000 Cmpp
+Got 11.489000 Mpps, 2.073000 Pmpp, 2.185000 Cmpp
+Got 11.481000 Mpps, 2.077000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t lq -M'
+Got 11.518000 Mpps, 3.936000 Pmpp, 3.940000 Cmpp
+Got 11.856000 Mpps, 3.774000 Pmpp, 3.781000 Cmpp
+Got 10.910000 Mpps, 3.915000 Pmpp, 3.923000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t llq -M'
+Got 12.731000 Mpps, 3.049000 Pmpp, 3.057000 Cmpp
+Got 12.739000 Mpps, 3.047000 Pmpp, 3.059000 Cmpp
+Got 12.753000 Mpps, 3.046000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t blq -M'
+Got 11.679000 Mpps, 3.051000 Pmpp, 3.059000 Cmpp
+Got 12.403000 Mpps, 2.915000 Pmpp, 2.921000 Cmpp
+Got 12.402000 Mpps, 2.933000 Pmpp, 2.935000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t ffq -M'
+Got 11.750000 Mpps, 2.903000 Pmpp, 3.016000 Cmpp
+Got 11.747000 Mpps, 2.931000 Pmpp, 3.038000 Cmpp
+Got 11.752000 Mpps, 2.910000 Pmpp, 3.018000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t iffq -M'
+Got 12.564000 Mpps, 2.072000 Pmpp, 2.188000 Cmpp
+Got 12.560000 Mpps, 2.069000 Pmpp, 2.177000 Cmpp
+Got 12.575000 Mpps, 2.072000 Pmpp, 2.185000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 60 -t biffq -M'
+Got 11.958000 Mpps, 2.070000 Pmpp, 2.183000 Cmpp
+Got 11.948000 Mpps, 2.070000 Pmpp, 2.180000 Cmpp
+Got 11.951000 Mpps, 2.073000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t lq -M'
+Got 11.783000 Mpps, 3.358000 Pmpp, 3.357000 Cmpp
+Got 11.778000 Mpps, 3.399000 Pmpp, 3.403000 Cmpp
+Got 11.717000 Mpps, 3.947000 Pmpp, 3.807000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t llq -M'
+Got 11.913000 Mpps, 2.279000 Pmpp, 2.145000 Cmpp
+Got 11.909000 Mpps, 2.166000 Pmpp, 2.046000 Cmpp
+Got 11.897000 Mpps, 2.301000 Pmpp, 2.152000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t blq -M'
+Got 11.831000 Mpps, 2.648000 Pmpp, 2.510000 Cmpp
+Got 11.882000 Mpps, 2.739000 Pmpp, 2.618000 Cmpp
+Got 11.888000 Mpps, 2.773000 Pmpp, 2.617000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t ffq -M'
+Got 11.778000 Mpps, 2.874000 Pmpp, 2.602000 Cmpp
+Got 11.767000 Mpps, 2.841000 Pmpp, 2.603000 Cmpp
+Got 11.763000 Mpps, 2.856000 Pmpp, 2.619000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t iffq -M'
+Got 11.680000 Mpps, 1.243000 Pmpp, 1.291000 Cmpp
+Got 11.690000 Mpps, 1.242000 Pmpp, 1.285000 Cmpp
+Got 11.682000 Mpps, 1.238000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 70 -t biffq -M'
+Got 11.721000 Mpps, 1.244000 Pmpp, 1.287000 Cmpp
+Got 11.490000 Mpps, 1.801000 Pmpp, 1.914000 Cmpp
+Got 11.713000 Mpps, 1.249000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t lq -M'
+Got 10.662000 Mpps, 4.039000 Pmpp, 3.893000 Cmpp
+Got 10.687000 Mpps, 4.038000 Pmpp, 3.896000 Cmpp
+Got 10.671000 Mpps, 4.038000 Pmpp, 3.886000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t llq -M'
+Got 10.915000 Mpps, 2.305000 Pmpp, 2.163000 Cmpp
+Got 10.924000 Mpps, 2.324000 Pmpp, 2.157000 Cmpp
+Got 10.902000 Mpps, 2.309000 Pmpp, 2.168000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t blq -M'
+Got 10.649000 Mpps, 2.803000 Pmpp, 2.655000 Cmpp
+Got 10.639000 Mpps, 2.814000 Pmpp, 2.652000 Cmpp
+Got 10.621000 Mpps, 2.806000 Pmpp, 2.666000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t ffq -M'
+Got 10.634000 Mpps, 3.096000 Pmpp, 2.916000 Cmpp
+Got 10.657000 Mpps, 3.118000 Pmpp, 2.930000 Cmpp
+Got 10.626000 Mpps, 3.123000 Pmpp, 2.947000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t iffq -M'
+Got 10.818000 Mpps, 1.242000 Pmpp, 1.292000 Cmpp
+Got 10.824000 Mpps, 1.239000 Pmpp, 1.290000 Cmpp
+Got 10.799000 Mpps, 1.245000 Pmpp, 1.288000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 80 -t biffq -M'
+Got 10.785000 Mpps, 1.257000 Pmpp, 1.290000 Cmpp
+Got 10.780000 Mpps, 1.263000 Pmpp, 1.289000 Cmpp
+Got 10.802000 Mpps, 1.254000 Pmpp, 1.290000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t lq -M'
+Got 9.632000 Mpps, 4.066000 Pmpp, 3.906000 Cmpp
+Got 9.762000 Mpps, 4.059000 Pmpp, 3.905000 Cmpp
+Got 9.570000 Mpps, 4.064000 Pmpp, 3.904000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t llq -M'
+Got 9.779000 Mpps, 2.338000 Pmpp, 2.154000 Cmpp
+Got 9.701000 Mpps, 2.338000 Pmpp, 2.159000 Cmpp
+Got 9.797000 Mpps, 2.315000 Pmpp, 2.163000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t blq -M'
+Got 9.720000 Mpps, 2.808000 Pmpp, 2.651000 Cmpp
+Got 9.638000 Mpps, 2.804000 Pmpp, 2.646000 Cmpp
+Got 9.492000 Mpps, 2.752000 Pmpp, 2.618000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t ffq -M'
+Got 9.669000 Mpps, 3.156000 Pmpp, 3.024000 Cmpp
+Got 9.622000 Mpps, 3.171000 Pmpp, 3.032000 Cmpp
+Got 9.617000 Mpps, 3.157000 Pmpp, 3.018000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t iffq -M'
+Got 9.559000 Mpps, 1.259000 Pmpp, 1.302000 Cmpp
+Got 9.579000 Mpps, 1.258000 Pmpp, 1.294000 Cmpp
+Got 9.574000 Mpps, 1.256000 Pmpp, 1.303000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 70 -C 90 -t biffq -M'
+Got 9.577000 Mpps, 1.268000 Pmpp, 1.295000 Cmpp
+Got 9.583000 Mpps, 1.265000 Pmpp, 1.294000 Cmpp
+Got 9.560000 Mpps, 1.268000 Pmpp, 1.296000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t lq -M'
+Got 10.653000 Mpps, 4.053000 Pmpp, 4.064000 Cmpp
+Got 10.705000 Mpps, 4.046000 Pmpp, 4.061000 Cmpp
+Got 11.041000 Mpps, 4.054000 Pmpp, 4.068000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t llq -M'
+Got 10.759000 Mpps, 3.060000 Pmpp, 3.058000 Cmpp
+Got 10.752000 Mpps, 3.052000 Pmpp, 3.058000 Cmpp
+Got 10.746000 Mpps, 3.058000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t blq -M'
+Got 10.711000 Mpps, 3.069000 Pmpp, 3.061000 Cmpp
+Got 10.721000 Mpps, 3.061000 Pmpp, 3.070000 Cmpp
+Got 10.716000 Mpps, 3.066000 Pmpp, 3.064000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t ffq -M'
+Got 10.770000 Mpps, 3.049000 Pmpp, 3.058000 Cmpp
+Got 10.778000 Mpps, 3.053000 Pmpp, 3.061000 Cmpp
+Got 10.793000 Mpps, 3.053000 Pmpp, 3.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t iffq -M'
+Got 10.649000 Mpps, 2.079000 Pmpp, 2.176000 Cmpp
+Got 10.660000 Mpps, 2.083000 Pmpp, 2.193000 Cmpp
+Got 10.671000 Mpps, 2.080000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 0 -t biffq -M'
+Got 10.626000 Mpps, 2.080000 Pmpp, 2.188000 Cmpp
+Got 10.609000 Mpps, 2.081000 Pmpp, 2.195000 Cmpp
+Got 10.612000 Mpps, 2.078000 Pmpp, 2.182000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t lq -M'
+Got 10.318000 Mpps, 4.042000 Pmpp, 4.044000 Cmpp
+Got 11.026000 Mpps, 4.056000 Pmpp, 4.065000 Cmpp
+Got 10.994000 Mpps, 4.063000 Pmpp, 4.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t llq -M'
+Got 10.758000 Mpps, 3.047000 Pmpp, 3.048000 Cmpp
+Got 10.753000 Mpps, 3.059000 Pmpp, 3.066000 Cmpp
+Got 10.756000 Mpps, 3.059000 Pmpp, 3.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t blq -M'
+Got 10.722000 Mpps, 3.059000 Pmpp, 3.067000 Cmpp
+Got 10.719000 Mpps, 3.066000 Pmpp, 3.064000 Cmpp
+Got 10.725000 Mpps, 3.058000 Pmpp, 3.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t ffq -M'
+Got 10.729000 Mpps, 3.045000 Pmpp, 3.052000 Cmpp
+Got 10.742000 Mpps, 3.049000 Pmpp, 3.052000 Cmpp
+Got 10.762000 Mpps, 3.045000 Pmpp, 3.050000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t iffq -M'
+Got 10.657000 Mpps, 2.079000 Pmpp, 2.192000 Cmpp
+Got 10.659000 Mpps, 2.085000 Pmpp, 2.186000 Cmpp
+Got 10.670000 Mpps, 2.080000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 10 -t biffq -M'
+Got 10.613000 Mpps, 2.080000 Pmpp, 2.186000 Cmpp
+Got 10.601000 Mpps, 2.080000 Pmpp, 2.191000 Cmpp
+Got 10.604000 Mpps, 2.080000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t lq -M'
+Got 10.949000 Mpps, 4.072000 Pmpp, 4.075000 Cmpp
+Got 11.020000 Mpps, 4.072000 Pmpp, 4.080000 Cmpp
+Got 10.328000 Mpps, 4.020000 Pmpp, 4.025000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t llq -M'
+Got 10.751000 Mpps, 3.060000 Pmpp, 3.061000 Cmpp
+Got 10.761000 Mpps, 3.053000 Pmpp, 3.055000 Cmpp
+Got 10.761000 Mpps, 3.055000 Pmpp, 3.060000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t blq -M'
+Got 10.717000 Mpps, 3.057000 Pmpp, 3.059000 Cmpp
+Got 10.719000 Mpps, 3.061000 Pmpp, 3.067000 Cmpp
+Got 10.716000 Mpps, 3.058000 Pmpp, 3.067000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t ffq -M'
+Got 10.780000 Mpps, 3.046000 Pmpp, 3.052000 Cmpp
+Got 10.787000 Mpps, 3.050000 Pmpp, 3.056000 Cmpp
+Got 10.811000 Mpps, 3.052000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t iffq -M'
+Got 10.656000 Mpps, 2.082000 Pmpp, 2.194000 Cmpp
+Got 10.612000 Mpps, 2.089000 Pmpp, 2.195000 Cmpp
+Got 10.669000 Mpps, 2.079000 Pmpp, 2.186000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 20 -t biffq -M'
+Got 10.609000 Mpps, 2.082000 Pmpp, 2.188000 Cmpp
+Got 10.609000 Mpps, 2.078000 Pmpp, 2.190000 Cmpp
+Got 10.612000 Mpps, 2.079000 Pmpp, 2.197000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t lq -M'
+Got 10.638000 Mpps, 4.065000 Pmpp, 4.073000 Cmpp
+Got 10.626000 Mpps, 4.064000 Pmpp, 4.076000 Cmpp
+Got 10.909000 Mpps, 4.072000 Pmpp, 4.077000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t llq -M'
+Got 10.749000 Mpps, 3.062000 Pmpp, 3.059000 Cmpp
+Got 10.750000 Mpps, 3.068000 Pmpp, 3.060000 Cmpp
+Got 10.752000 Mpps, 3.068000 Pmpp, 3.064000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t blq -M'
+Got 10.717000 Mpps, 3.068000 Pmpp, 3.068000 Cmpp
+Got 10.719000 Mpps, 3.060000 Pmpp, 3.065000 Cmpp
+Got 10.719000 Mpps, 3.063000 Pmpp, 3.068000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t ffq -M'
+Got 10.757000 Mpps, 3.052000 Pmpp, 3.064000 Cmpp
+Got 10.771000 Mpps, 3.050000 Pmpp, 3.062000 Cmpp
+Got 10.759000 Mpps, 3.051000 Pmpp, 3.063000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t iffq -M'
+Got 10.650000 Mpps, 2.080000 Pmpp, 2.186000 Cmpp
+Got 10.666000 Mpps, 2.083000 Pmpp, 2.191000 Cmpp
+Got 10.672000 Mpps, 2.081000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 30 -t biffq -M'
+Got 10.612000 Mpps, 2.076000 Pmpp, 2.191000 Cmpp
+Got 10.598000 Mpps, 2.073000 Pmpp, 2.188000 Cmpp
+Got 10.616000 Mpps, 2.081000 Pmpp, 2.197000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t lq -M'
+Got 10.960000 Mpps, 4.053000 Pmpp, 4.064000 Cmpp
+Got 10.718000 Mpps, 4.051000 Pmpp, 4.055000 Cmpp
+Got 10.983000 Mpps, 4.080000 Pmpp, 4.084000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t llq -M'
+Got 10.747000 Mpps, 3.062000 Pmpp, 3.074000 Cmpp
+Got 10.757000 Mpps, 3.061000 Pmpp, 3.071000 Cmpp
+Got 10.759000 Mpps, 3.063000 Pmpp, 3.073000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t blq -M'
+Got 10.711000 Mpps, 3.062000 Pmpp, 3.068000 Cmpp
+Got 10.724000 Mpps, 3.061000 Pmpp, 3.056000 Cmpp
+Got 10.724000 Mpps, 3.061000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t ffq -M'
+Got 10.743000 Mpps, 3.058000 Pmpp, 3.061000 Cmpp
+Got 10.747000 Mpps, 3.051000 Pmpp, 3.059000 Cmpp
+Got 10.752000 Mpps, 3.054000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t iffq -M'
+Got 10.646000 Mpps, 2.082000 Pmpp, 2.188000 Cmpp
+Got 10.662000 Mpps, 2.079000 Pmpp, 2.194000 Cmpp
+Got 10.573000 Mpps, 2.067000 Pmpp, 2.175000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 40 -t biffq -M'
+Got 10.617000 Mpps, 2.083000 Pmpp, 2.191000 Cmpp
+Got 10.620000 Mpps, 2.082000 Pmpp, 2.191000 Cmpp
+Got 10.597000 Mpps, 2.081000 Pmpp, 2.188000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t lq -M'
+Got 10.125000 Mpps, 4.033000 Pmpp, 4.037000 Cmpp
+Got 11.025000 Mpps, 4.062000 Pmpp, 4.070000 Cmpp
+Got 11.027000 Mpps, 4.053000 Pmpp, 4.064000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t llq -M'
+Got 10.754000 Mpps, 3.063000 Pmpp, 3.070000 Cmpp
+Got 10.749000 Mpps, 3.064000 Pmpp, 3.063000 Cmpp
+Got 10.759000 Mpps, 3.060000 Pmpp, 3.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t blq -M'
+Got 10.718000 Mpps, 3.073000 Pmpp, 3.065000 Cmpp
+Got 10.721000 Mpps, 3.056000 Pmpp, 3.058000 Cmpp
+Got 10.723000 Mpps, 3.058000 Pmpp, 3.070000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t ffq -M'
+Got 10.769000 Mpps, 3.051000 Pmpp, 3.056000 Cmpp
+Got 10.778000 Mpps, 3.044000 Pmpp, 3.047000 Cmpp
+Got 10.790000 Mpps, 3.047000 Pmpp, 3.048000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t iffq -M'
+Got 10.664000 Mpps, 2.080000 Pmpp, 2.191000 Cmpp
+Got 10.673000 Mpps, 2.089000 Pmpp, 2.190000 Cmpp
+Got 10.675000 Mpps, 2.079000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 50 -t biffq -M'
+Got 10.613000 Mpps, 2.078000 Pmpp, 2.185000 Cmpp
+Got 10.621000 Mpps, 2.078000 Pmpp, 2.192000 Cmpp
+Got 10.617000 Mpps, 2.076000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t lq -M'
+Got 10.921000 Mpps, 3.998000 Pmpp, 4.003000 Cmpp
+Got 10.690000 Mpps, 3.968000 Pmpp, 3.976000 Cmpp
+Got 10.681000 Mpps, 3.964000 Pmpp, 3.972000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t llq -M'
+Got 10.757000 Mpps, 3.061000 Pmpp, 3.068000 Cmpp
+Got 10.754000 Mpps, 3.059000 Pmpp, 3.070000 Cmpp
+Got 10.756000 Mpps, 3.063000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t blq -M'
+Got 10.718000 Mpps, 3.050000 Pmpp, 3.056000 Cmpp
+Got 10.712000 Mpps, 3.069000 Pmpp, 3.063000 Cmpp
+Got 10.721000 Mpps, 3.064000 Pmpp, 3.068000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t ffq -M'
+Got 10.771000 Mpps, 3.045000 Pmpp, 3.054000 Cmpp
+Got 10.775000 Mpps, 3.048000 Pmpp, 3.051000 Cmpp
+Got 10.767000 Mpps, 3.042000 Pmpp, 3.047000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t iffq -M'
+Got 10.631000 Mpps, 2.076000 Pmpp, 2.188000 Cmpp
+Got 10.653000 Mpps, 2.083000 Pmpp, 2.187000 Cmpp
+Got 10.663000 Mpps, 2.078000 Pmpp, 2.194000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 60 -t biffq -M'
+Got 10.616000 Mpps, 2.075000 Pmpp, 2.185000 Cmpp
+Got 10.612000 Mpps, 2.075000 Pmpp, 2.186000 Cmpp
+Got 10.609000 Mpps, 2.072000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t lq -M'
+Got 10.638000 Mpps, 3.932000 Pmpp, 3.942000 Cmpp
+Got 10.806000 Mpps, 3.925000 Pmpp, 3.929000 Cmpp
+Got 10.447000 Mpps, 3.907000 Pmpp, 3.916000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t llq -M'
+Got 10.751000 Mpps, 3.065000 Pmpp, 3.064000 Cmpp
+Got 10.747000 Mpps, 3.057000 Pmpp, 3.067000 Cmpp
+Got 10.749000 Mpps, 3.050000 Pmpp, 3.057000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t blq -M'
+Got 10.721000 Mpps, 3.045000 Pmpp, 3.054000 Cmpp
+Got 10.723000 Mpps, 3.043000 Pmpp, 3.041000 Cmpp
+Got 10.725000 Mpps, 3.056000 Pmpp, 3.055000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t ffq -M'
+Got 10.755000 Mpps, 3.017000 Pmpp, 3.059000 Cmpp
+Got 10.688000 Mpps, 3.019000 Pmpp, 3.051000 Cmpp
+Got 10.766000 Mpps, 3.019000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t iffq -M'
+Got 10.666000 Mpps, 2.080000 Pmpp, 2.190000 Cmpp
+Got 10.661000 Mpps, 2.079000 Pmpp, 2.189000 Cmpp
+Got 10.679000 Mpps, 2.077000 Pmpp, 2.192000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 70 -t biffq -M'
+Got 10.607000 Mpps, 2.082000 Pmpp, 2.194000 Cmpp
+Got 10.594000 Mpps, 2.080000 Pmpp, 2.187000 Cmpp
+Got 10.605000 Mpps, 2.082000 Pmpp, 2.191000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t lq -M'
+Got 10.535000 Mpps, 3.996000 Pmpp, 3.842000 Cmpp
+Got 10.557000 Mpps, 3.987000 Pmpp, 3.843000 Cmpp
+Got 10.572000 Mpps, 3.079000 Pmpp, 3.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t llq -M'
+Got 10.745000 Mpps, 1.211000 Pmpp, 1.198000 Cmpp
+Got 10.743000 Mpps, 1.211000 Pmpp, 1.182000 Cmpp
+Got 10.735000 Mpps, 1.291000 Pmpp, 1.283000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t blq -M'
+Got 10.736000 Mpps, 1.197000 Pmpp, 1.199000 Cmpp
+Got 10.715000 Mpps, 1.293000 Pmpp, 1.186000 Cmpp
+Got 10.723000 Mpps, 1.305000 Pmpp, 1.195000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t ffq -M'
+Got 10.521000 Mpps, 2.514000 Pmpp, 2.505000 Cmpp
+Got 10.550000 Mpps, 2.540000 Pmpp, 2.527000 Cmpp
+Got 10.551000 Mpps, 2.565000 Pmpp, 2.548000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t iffq -M'
+Got 10.722000 Mpps, 1.322000 Pmpp, 1.431000 Cmpp
+Got 10.707000 Mpps, 1.363000 Pmpp, 1.473000 Cmpp
+Got 10.717000 Mpps, 1.344000 Pmpp, 1.438000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 80 -t biffq -M'
+Got 10.609000 Mpps, 1.455000 Pmpp, 1.563000 Cmpp
+Got 10.605000 Mpps, 1.421000 Pmpp, 1.529000 Cmpp
+Got 10.602000 Mpps, 1.411000 Pmpp, 1.524000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t lq -M'
+Got 9.788000 Mpps, 4.053000 Pmpp, 3.907000 Cmpp
+Got 9.561000 Mpps, 4.075000 Pmpp, 3.902000 Cmpp
+Got 9.571000 Mpps, 4.060000 Pmpp, 3.906000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t llq -M'
+Got 9.822000 Mpps, 2.301000 Pmpp, 2.162000 Cmpp
+Got 9.823000 Mpps, 2.324000 Pmpp, 2.163000 Cmpp
+Got 9.751000 Mpps, 2.333000 Pmpp, 2.167000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t blq -M'
+Got 9.687000 Mpps, 2.823000 Pmpp, 2.658000 Cmpp
+Got 9.710000 Mpps, 2.805000 Pmpp, 2.660000 Cmpp
+Got 9.722000 Mpps, 2.808000 Pmpp, 2.660000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t ffq -M'
+Got 9.596000 Mpps, 3.152000 Pmpp, 3.003000 Cmpp
+Got 9.622000 Mpps, 3.154000 Pmpp, 2.991000 Cmpp
+Got 9.588000 Mpps, 3.139000 Pmpp, 2.996000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t iffq -M'
+Got 9.571000 Mpps, 1.247000 Pmpp, 1.295000 Cmpp
+Got 9.580000 Mpps, 1.257000 Pmpp, 1.298000 Cmpp
+Got 9.586000 Mpps, 1.257000 Pmpp, 1.293000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 80 -C 90 -t biffq -M'
+Got 9.572000 Mpps, 1.256000 Pmpp, 1.292000 Cmpp
+Got 9.578000 Mpps, 1.270000 Pmpp, 1.296000 Cmpp
+Got 9.577000 Mpps, 1.263000 Pmpp, 1.302000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t lq -M'
+Got 9.880000 Mpps, 4.062000 Pmpp, 4.071000 Cmpp
+Got 9.764000 Mpps, 4.063000 Pmpp, 4.074000 Cmpp
+Got 9.766000 Mpps, 4.039000 Pmpp, 4.047000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t llq -M'
+Got 9.928000 Mpps, 3.066000 Pmpp, 3.075000 Cmpp
+Got 9.930000 Mpps, 3.064000 Pmpp, 3.076000 Cmpp
+Got 9.934000 Mpps, 3.057000 Pmpp, 3.067000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t blq -M'
+Got 9.920000 Mpps, 3.064000 Pmpp, 3.057000 Cmpp
+Got 9.917000 Mpps, 3.059000 Pmpp, 3.067000 Cmpp
+Got 9.921000 Mpps, 3.062000 Pmpp, 3.079000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t ffq -M'
+Got 9.816000 Mpps, 3.055000 Pmpp, 3.062000 Cmpp
+Got 9.850000 Mpps, 3.051000 Pmpp, 3.059000 Cmpp
+Got 9.855000 Mpps, 3.060000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t iffq -M'
+Got 9.838000 Mpps, 2.078000 Pmpp, 2.184000 Cmpp
+Got 9.849000 Mpps, 2.078000 Pmpp, 2.188000 Cmpp
+Got 9.843000 Mpps, 2.087000 Pmpp, 2.193000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 0 -t biffq -M'
+Got 9.734000 Mpps, 2.084000 Pmpp, 2.193000 Cmpp
+Got 9.734000 Mpps, 2.083000 Pmpp, 2.186000 Cmpp
+Got 9.741000 Mpps, 2.092000 Pmpp, 2.187000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t lq -M'
+Got 9.746000 Mpps, 4.057000 Pmpp, 4.067000 Cmpp
+Got 10.168000 Mpps, 4.067000 Pmpp, 4.072000 Cmpp
+Got 10.190000 Mpps, 4.065000 Pmpp, 4.061000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t llq -M'
+Got 9.933000 Mpps, 3.064000 Pmpp, 3.073000 Cmpp
+Got 9.927000 Mpps, 3.063000 Pmpp, 3.072000 Cmpp
+Got 9.922000 Mpps, 3.064000 Pmpp, 3.067000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t blq -M'
+Got 9.918000 Mpps, 3.064000 Pmpp, 3.071000 Cmpp
+Got 9.914000 Mpps, 3.061000 Pmpp, 3.072000 Cmpp
+Got 9.921000 Mpps, 3.066000 Pmpp, 3.065000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t ffq -M'
+Got 9.846000 Mpps, 3.049000 Pmpp, 3.056000 Cmpp
+Got 9.841000 Mpps, 3.054000 Pmpp, 3.065000 Cmpp
+Got 9.864000 Mpps, 3.051000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t iffq -M'
+Got 9.806000 Mpps, 2.083000 Pmpp, 2.197000 Cmpp
+Got 9.798000 Mpps, 2.087000 Pmpp, 2.196000 Cmpp
+Got 9.827000 Mpps, 2.076000 Pmpp, 2.186000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 10 -t biffq -M'
+Got 9.738000 Mpps, 2.083000 Pmpp, 2.195000 Cmpp
+Got 9.741000 Mpps, 2.083000 Pmpp, 2.192000 Cmpp
+Got 9.738000 Mpps, 2.085000 Pmpp, 2.195000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t lq -M'
+Got 10.188000 Mpps, 4.062000 Pmpp, 4.070000 Cmpp
+Got 9.874000 Mpps, 4.061000 Pmpp, 4.074000 Cmpp
+Got 9.927000 Mpps, 4.051000 Pmpp, 4.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t llq -M'
+Got 9.927000 Mpps, 3.060000 Pmpp, 3.074000 Cmpp
+Got 9.935000 Mpps, 3.061000 Pmpp, 3.071000 Cmpp
+Got 9.931000 Mpps, 3.067000 Pmpp, 3.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t blq -M'
+Got 9.922000 Mpps, 3.064000 Pmpp, 3.070000 Cmpp
+Got 9.923000 Mpps, 3.058000 Pmpp, 3.069000 Cmpp
+Got 9.910000 Mpps, 3.057000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t ffq -M'
+Got 9.842000 Mpps, 3.054000 Pmpp, 3.064000 Cmpp
+Got 9.883000 Mpps, 3.055000 Pmpp, 3.057000 Cmpp
+Got 9.828000 Mpps, 3.056000 Pmpp, 3.062000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t iffq -M'
+Got 9.840000 Mpps, 2.080000 Pmpp, 2.198000 Cmpp
+Got 9.832000 Mpps, 2.083000 Pmpp, 2.193000 Cmpp
+Got 9.833000 Mpps, 2.081000 Pmpp, 2.194000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 20 -t biffq -M'
+Got 9.741000 Mpps, 2.082000 Pmpp, 2.190000 Cmpp
+Got 9.740000 Mpps, 2.077000 Pmpp, 2.186000 Cmpp
+Got 9.742000 Mpps, 2.083000 Pmpp, 2.193000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t lq -M'
+Got 9.908000 Mpps, 4.054000 Pmpp, 4.066000 Cmpp
+Got 9.935000 Mpps, 4.051000 Pmpp, 4.058000 Cmpp
+Got 10.198000 Mpps, 4.054000 Pmpp, 4.061000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t llq -M'
+Got 9.936000 Mpps, 3.065000 Pmpp, 3.080000 Cmpp
+Got 9.931000 Mpps, 3.070000 Pmpp, 3.059000 Cmpp
+Got 9.935000 Mpps, 3.061000 Pmpp, 3.068000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t blq -M'
+Got 9.920000 Mpps, 3.055000 Pmpp, 3.066000 Cmpp
+Got 9.923000 Mpps, 3.059000 Pmpp, 3.069000 Cmpp
+Got 9.919000 Mpps, 3.073000 Pmpp, 3.061000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t ffq -M'
+Got 9.801000 Mpps, 3.058000 Pmpp, 3.059000 Cmpp
+Got 9.848000 Mpps, 3.056000 Pmpp, 3.061000 Cmpp
+Got 9.839000 Mpps, 3.053000 Pmpp, 3.070000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t iffq -M'
+Got 9.829000 Mpps, 2.083000 Pmpp, 2.189000 Cmpp
+Got 9.836000 Mpps, 2.085000 Pmpp, 2.193000 Cmpp
+Got 9.826000 Mpps, 2.080000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 30 -t biffq -M'
+Got 9.742000 Mpps, 2.083000 Pmpp, 2.190000 Cmpp
+Got 9.739000 Mpps, 2.075000 Pmpp, 2.183000 Cmpp
+Got 9.730000 Mpps, 2.083000 Pmpp, 2.194000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t lq -M'
+Got 9.862000 Mpps, 4.049000 Pmpp, 4.060000 Cmpp
+Got 10.191000 Mpps, 4.055000 Pmpp, 4.066000 Cmpp
+Got 9.866000 Mpps, 4.064000 Pmpp, 4.073000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t llq -M'
+Got 9.935000 Mpps, 3.062000 Pmpp, 3.072000 Cmpp
+Got 9.934000 Mpps, 3.069000 Pmpp, 3.063000 Cmpp
+Got 9.930000 Mpps, 3.068000 Pmpp, 3.070000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t blq -M'
+Got 9.921000 Mpps, 3.069000 Pmpp, 3.072000 Cmpp
+Got 9.922000 Mpps, 3.061000 Pmpp, 3.070000 Cmpp
+Got 9.923000 Mpps, 3.062000 Pmpp, 3.068000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t ffq -M'
+Got 9.812000 Mpps, 3.060000 Pmpp, 3.071000 Cmpp
+Got 9.809000 Mpps, 3.054000 Pmpp, 3.064000 Cmpp
+Got 9.820000 Mpps, 3.057000 Pmpp, 3.067000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t iffq -M'
+Got 9.841000 Mpps, 2.087000 Pmpp, 2.194000 Cmpp
+Got 9.835000 Mpps, 2.076000 Pmpp, 2.181000 Cmpp
+Got 9.827000 Mpps, 2.084000 Pmpp, 2.195000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 40 -t biffq -M'
+Got 9.745000 Mpps, 2.083000 Pmpp, 2.195000 Cmpp
+Got 9.745000 Mpps, 2.083000 Pmpp, 2.194000 Cmpp
+Got 9.749000 Mpps, 2.085000 Pmpp, 2.195000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t lq -M'
+Got 9.879000 Mpps, 4.062000 Pmpp, 4.073000 Cmpp
+Got 9.871000 Mpps, 4.057000 Pmpp, 4.071000 Cmpp
+Got 10.163000 Mpps, 4.058000 Pmpp, 4.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t llq -M'
+Got 9.936000 Mpps, 3.052000 Pmpp, 3.065000 Cmpp
+Got 9.929000 Mpps, 3.062000 Pmpp, 3.079000 Cmpp
+Got 9.935000 Mpps, 3.062000 Pmpp, 3.059000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t blq -M'
+Got 9.918000 Mpps, 3.062000 Pmpp, 3.069000 Cmpp
+Got 9.921000 Mpps, 3.067000 Pmpp, 3.066000 Cmpp
+Got 9.918000 Mpps, 3.066000 Pmpp, 3.060000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t ffq -M'
+Got 9.853000 Mpps, 3.058000 Pmpp, 3.059000 Cmpp
+Got 9.844000 Mpps, 3.051000 Pmpp, 3.054000 Cmpp
+Got 9.870000 Mpps, 3.055000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t iffq -M'
+Got 9.839000 Mpps, 2.078000 Pmpp, 2.186000 Cmpp
+Got 9.845000 Mpps, 2.081000 Pmpp, 2.196000 Cmpp
+Got 9.831000 Mpps, 2.089000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 50 -t biffq -M'
+Got 9.739000 Mpps, 2.082000 Pmpp, 2.190000 Cmpp
+Got 9.726000 Mpps, 2.088000 Pmpp, 2.197000 Cmpp
+Got 9.738000 Mpps, 2.080000 Pmpp, 2.190000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t lq -M'
+Got 9.760000 Mpps, 4.011000 Pmpp, 4.018000 Cmpp
+Got 9.730000 Mpps, 4.015000 Pmpp, 4.025000 Cmpp
+Got 9.756000 Mpps, 4.032000 Pmpp, 4.043000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t llq -M'
+Got 9.931000 Mpps, 3.063000 Pmpp, 3.064000 Cmpp
+Got 9.937000 Mpps, 3.052000 Pmpp, 3.068000 Cmpp
+Got 9.935000 Mpps, 3.067000 Pmpp, 3.067000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t blq -M'
+Got 9.920000 Mpps, 3.055000 Pmpp, 3.064000 Cmpp
+Got 9.918000 Mpps, 3.057000 Pmpp, 3.066000 Cmpp
+Got 9.919000 Mpps, 3.063000 Pmpp, 3.069000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t ffq -M'
+Got 9.793000 Mpps, 3.059000 Pmpp, 3.065000 Cmpp
+Got 9.824000 Mpps, 3.049000 Pmpp, 3.055000 Cmpp
+Got 9.866000 Mpps, 3.049000 Pmpp, 3.051000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t iffq -M'
+Got 9.826000 Mpps, 2.083000 Pmpp, 2.195000 Cmpp
+Got 9.833000 Mpps, 2.082000 Pmpp, 2.195000 Cmpp
+Got 9.822000 Mpps, 2.079000 Pmpp, 2.189000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 60 -t biffq -M'
+Got 9.739000 Mpps, 2.078000 Pmpp, 2.194000 Cmpp
+Got 9.730000 Mpps, 2.079000 Pmpp, 2.195000 Cmpp
+Got 9.726000 Mpps, 2.085000 Pmpp, 2.192000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t lq -M'
+Got 9.686000 Mpps, 3.917000 Pmpp, 3.928000 Cmpp
+Got 9.658000 Mpps, 3.985000 Pmpp, 3.993000 Cmpp
+Got 9.786000 Mpps, 3.948000 Pmpp, 3.960000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t llq -M'
+Got 9.930000 Mpps, 3.062000 Pmpp, 3.069000 Cmpp
+Got 9.936000 Mpps, 3.060000 Pmpp, 3.076000 Cmpp
+Got 9.925000 Mpps, 3.061000 Pmpp, 3.073000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t blq -M'
+Got 9.922000 Mpps, 3.061000 Pmpp, 3.074000 Cmpp
+Got 9.922000 Mpps, 3.063000 Pmpp, 3.069000 Cmpp
+Got 9.916000 Mpps, 3.056000 Pmpp, 3.066000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t ffq -M'
+Got 9.808000 Mpps, 3.060000 Pmpp, 3.059000 Cmpp
+Got 9.813000 Mpps, 3.059000 Pmpp, 3.064000 Cmpp
+Got 9.827000 Mpps, 3.047000 Pmpp, 3.054000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t iffq -M'
+Got 9.835000 Mpps, 2.084000 Pmpp, 2.192000 Cmpp
+Got 9.835000 Mpps, 2.085000 Pmpp, 2.200000 Cmpp
+Got 9.846000 Mpps, 2.079000 Pmpp, 2.194000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 70 -t biffq -M'
+Got 9.733000 Mpps, 2.079000 Pmpp, 2.191000 Cmpp
+Got 9.729000 Mpps, 2.084000 Pmpp, 2.194000 Cmpp
+Got 9.742000 Mpps, 2.081000 Pmpp, 2.194000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t lq -M'
+Got 9.868000 Mpps, 4.029000 Pmpp, 4.038000 Cmpp
+Got 9.641000 Mpps, 4.044000 Pmpp, 4.065000 Cmpp
+Got 9.606000 Mpps, 4.046000 Pmpp, 4.054000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t llq -M'
+Got 9.931000 Mpps, 3.050000 Pmpp, 3.064000 Cmpp
+Got 9.938000 Mpps, 3.055000 Pmpp, 3.068000 Cmpp
+Got 9.925000 Mpps, 3.071000 Pmpp, 3.072000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t blq -M'
+Got 9.919000 Mpps, 3.050000 Pmpp, 3.059000 Cmpp
+Got 9.919000 Mpps, 3.069000 Pmpp, 3.066000 Cmpp
+Got 9.918000 Mpps, 3.049000 Pmpp, 3.057000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t ffq -M'
+Got 9.771000 Mpps, 3.054000 Pmpp, 3.060000 Cmpp
+Got 9.767000 Mpps, 3.046000 Pmpp, 3.054000 Cmpp
+Got 9.783000 Mpps, 3.050000 Pmpp, 3.058000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t iffq -M'
+Got 9.826000 Mpps, 2.076000 Pmpp, 2.186000 Cmpp
+Got 9.818000 Mpps, 2.082000 Pmpp, 2.193000 Cmpp
+Got 9.839000 Mpps, 2.080000 Pmpp, 2.185000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 80 -t biffq -M'
+Got 9.735000 Mpps, 2.084000 Pmpp, 2.195000 Cmpp
+Got 9.745000 Mpps, 2.085000 Pmpp, 2.194000 Cmpp
+Got 9.737000 Mpps, 2.078000 Pmpp, 2.187000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t lq -M'
+Got 9.614000 Mpps, 4.035000 Pmpp, 3.883000 Cmpp
+Got 9.626000 Mpps, 3.436000 Pmpp, 3.443000 Cmpp
+Got 9.637000 Mpps, 4.030000 Pmpp, 3.878000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t llq -M'
+Got 9.796000 Mpps, 2.281000 Pmpp, 2.130000 Cmpp
+Got 9.779000 Mpps, 2.207000 Pmpp, 2.088000 Cmpp
+Got 9.803000 Mpps, 2.274000 Pmpp, 2.137000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t blq -M'
+Got 9.675000 Mpps, 2.777000 Pmpp, 2.638000 Cmpp
+Got 9.684000 Mpps, 2.678000 Pmpp, 2.543000 Cmpp
+Got 9.650000 Mpps, 2.645000 Pmpp, 2.514000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t ffq -M'
+Got 9.511000 Mpps, 2.397000 Pmpp, 2.233000 Cmpp
+Got 9.536000 Mpps, 2.681000 Pmpp, 2.522000 Cmpp
+Got 9.509000 Mpps, 2.411000 Pmpp, 2.264000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t iffq -M'
+Got 9.606000 Mpps, 1.250000 Pmpp, 1.297000 Cmpp
+Got 9.562000 Mpps, 1.249000 Pmpp, 1.303000 Cmpp
+Got 9.574000 Mpps, 1.247000 Pmpp, 1.298000 Cmpp
+Running './spscq -pw -D 5 -l 256 -L 32 -b 1 -b 1 -P 90 -C 90 -t biffq -M'
+Got 9.601000 Mpps, 1.255000 Pmpp, 1.296000 Cmpp
+Got 9.584000 Mpps, 1.257000 Pmpp, 1.292000 Cmpp
+Got 9.590000 Mpps, 1.255000 Pmpp, 1.292000 Cmpp
 ./run-tests.py -vw --duration 5 --max-trials 3 --step 10 --spin-min 0 --num-points 10 -S square -M --Bp 1 --Bc 1
   P   C     lq.T    llq.T    blq.T    ffq.T   iffq.T  biffq.T     lq.P    llq.P    blq.P    ffq.P   iffq.P  biffq.P     lq.C    llq.C    blq.C    ffq.C   iffq.C  biffq.C 
-  0   0    25.94    25.64    23.55    29.22    30.23    27.86     3.45     2.77     2.71     2.12     1.97     1.92     3.82     3.06     2.82     2.19     2.09     2.03 
-  0  10    19.52    21.18    19.59    20.37    26.61    26.56     3.54     2.66     2.74     2.56     1.24     1.25     3.36     2.55     2.61     2.52     1.27     1.27 
-  0  20    19.15    21.00    19.79    20.39    26.44    26.61     3.59     2.68     2.74     2.55     1.23     1.26     3.41     2.56     2.62     2.52     1.27     1.27 
-  0  30    18.15    19.75    18.97    19.83    21.69    21.63     3.65     2.69     2.77     2.61     1.23     1.27     3.47     2.57     2.62     2.52     1.27     1.27 
-  0  40    16.75    17.69    17.03    17.71    18.44    18.46     3.53     2.66     2.73     2.65     1.24     1.27     3.38     2.54     2.60     2.46     1.27     1.28 
-  0  50    15.36    15.52    15.55    15.48    15.92    15.91     3.29     2.77     2.80     2.97     1.24     1.28     3.17     2.64     2.66     2.54     1.28     1.27 
-  0  60    12.83    13.31    13.64    13.36    13.17    13.17     3.41     2.95     2.93     3.25     1.25     1.29     3.30     2.79     2.78     2.84     1.28     1.28 
-  0  70    11.48    11.93    11.95    11.91    11.71    11.70     3.67     3.06     2.93     3.29     1.25     1.30     3.51     2.90     2.78     3.02     1.28     1.28 
-  0  80    10.50    10.76    10.73    10.77    10.73    10.69     4.06     3.07     2.94     3.32     1.26     1.31     3.89     2.91     2.78     3.02     1.29     1.29 
-  0  90     9.69     9.60     9.67     9.63     9.56     9.57     4.08     3.08     2.93     3.32     1.27     1.31     3.91     2.91     2.79     3.02     1.29     1.29 
- 10   0    18.80    20.86    19.70    20.42    26.45    26.57     3.61     2.68     2.75     2.55     1.23     1.25     3.48     2.56     2.61     2.52     1.28     1.28 
- 10  10    19.26    20.49    19.75    20.43    26.57    26.47     3.52     2.70     2.72     2.56     1.23     1.26     3.37     2.58     2.59     2.52     1.27     1.27 
- 10  20    20.02    20.50    19.73    20.52    26.68    26.64     3.50     2.70     2.74     2.54     1.23     1.26     3.36     2.58     2.61     2.51     1.27     1.27 
- 10  30    18.45    19.97    18.95    19.80    21.68    21.87     3.60     2.67     2.74     2.60     1.23     1.27     3.46     2.55     2.61     2.52     1.27     1.28 
- 10  40    16.70    17.72    17.03    17.71    18.45    18.44     3.53     2.66     2.74     2.64     1.24     1.28     3.39     2.54     2.62     2.46     1.28     1.28 
- 10  50    15.49    15.73    15.60    15.50    15.92    15.90     3.26     2.71     2.81     2.95     1.25     1.28     3.15     2.58     2.68     2.54     1.28     1.28 
- 10  60    12.70    13.29    13.64    13.31    13.17    13.17     3.48     2.94     2.92     3.25     1.25     1.29     3.38     2.80     2.78     2.85     1.28     1.28 
- 10  70    11.71    11.92    11.89    11.95    11.71    11.70     3.65     3.05     2.92     3.28     1.25     1.29     3.48     2.90     2.78     3.01     1.28     1.28 
- 10  80    10.60    10.78    10.71    10.79    10.73    10.69     4.02     3.07     2.94     3.31     1.26     1.30     3.85     2.91     2.78     3.02     1.29     1.29 
- 10  90     9.78     9.59     9.67     9.64     9.56     9.56     4.07     3.06     2.94     3.33     1.27     1.31     3.90     2.91     2.78     3.02     1.29     1.29 
- 20   0    19.11    20.31    20.80    20.37    26.63    26.78     3.51     2.69     2.47     2.54     1.23     1.24     3.36     2.57     2.37     2.50     1.27     1.27 
- 20  10    19.03    20.75    20.80    20.43    26.63    26.48     3.51     2.68     2.53     2.52     1.23     1.25     3.37     2.56     2.42     2.49     1.27     1.27 
- 20  20    19.27    20.30    20.73    20.35    26.70    26.66     3.53     2.69     2.48     2.53     1.23     1.24     3.39     2.57     2.38     2.50     1.27     1.27 
- 20  30    18.09    19.46    18.81    19.85    21.87    21.99     3.63     2.73     2.70     2.57     1.24     1.26     3.48     2.59     2.57     2.51     1.27     1.27 
- 20  40    16.53    17.52    17.28    17.68    18.49    18.44     3.62     2.69     2.77     2.62     1.24     1.27     3.47     2.56     2.64     2.47     1.27     1.28 
- 20  50    14.41    15.61    15.77    15.46    15.94    15.90     3.48     2.71     2.75     2.95     1.25     1.28     3.40     2.58     2.62     2.47     1.28     1.28 
- 20  60    12.56    13.25    13.47    13.37    13.19    13.18     3.48     2.92     2.79     3.22     1.25     1.28     3.40     2.77     2.67     2.82     1.28     1.28 
- 20  70    11.57    11.90    11.84    11.91    11.68    11.70     3.89     3.05     2.92     3.28     1.25     1.29     3.71     2.90     2.78     3.01     1.28     1.28 
- 20  80    10.51    10.76    10.66    10.78    10.73    10.71     3.99     3.08     2.93     3.30     1.26     1.29     3.82     2.91     2.78     3.02     1.29     1.28 
- 20  90     9.67     9.59     9.66     9.63     9.58     9.56     4.08     3.07     2.94     3.32     1.27     1.30     3.90     2.91     2.79     3.02     1.29     1.29 
- 30   0    20.86    25.65    25.41    24.58    25.36    24.49     3.16     1.20     1.28     1.59     1.21     1.29     3.12     1.20     1.18     1.56     1.32     1.40 
- 30  10    23.08    25.64    25.51    24.39    25.39    24.46     2.86     1.21     1.23     1.61     1.22     1.28     2.82     1.21     1.17     1.57     1.33     1.39 
- 30  20    21.83    25.68    25.48    24.46    25.32    24.50     3.03     1.20     1.25     1.61     1.22     1.28     3.02     1.20     1.17     1.57     1.33     1.38 
- 30  30    19.47    18.96    19.49    19.52    21.44    21.98     3.43     2.75     2.53     2.53     1.23     1.24     3.31     2.61     2.41     2.46     1.27     1.27 
- 30  40    16.60    17.40    17.19    17.70    18.45    18.46     3.70     2.72     2.79     2.55     1.23     1.26     3.57     2.59     2.65     2.47     1.28     1.28 
- 30  50    14.44    15.48    15.94    15.43    15.93    15.92     3.52     2.74     2.78     2.86     1.24     1.26     3.43     2.61     2.64     2.49     1.28     1.28 
- 30  60    12.61    13.29    13.42    13.31    13.19    13.19     3.58     2.94     2.71     3.13     1.24     1.28     3.49     2.79     2.59     2.76     1.28     1.28 
- 30  70    11.60    11.89    11.82    11.94    11.71    11.70     3.73     3.06     2.90     3.22     1.25     1.28     3.57     2.89     2.75     3.01     1.29     1.29 
- 30  80    10.54    10.78    10.72    10.80    10.72    10.71     4.06     3.06     2.93     3.28     1.25     1.28     3.89     2.91     2.78     3.02     1.29     1.28 
- 30  90     9.70     9.60     9.68     9.63     9.57     9.56     4.08     3.06     2.94     3.32     1.27     1.30     3.90     2.91     2.79     3.02     1.29     1.29 
- 40   0    18.33    18.23    18.30    18.56    18.06    17.77     3.52     2.25     2.13     2.53     1.95     1.98     3.52     2.25     2.14     2.20     2.05     2.09 
- 40  10    18.38    18.26    18.33    18.58    18.07    17.77     3.57     2.25     2.12     2.52     1.94     1.97     3.58     2.25     2.12     2.19     2.05     2.08 
- 40  20    18.45    18.26    18.32    18.59    18.07    17.76     3.58     2.25     2.13     2.52     1.94     1.98     3.58     2.25     2.13     2.19     2.05     2.10 
- 40  30    18.44    18.23    18.34    18.51    18.09    17.76     3.46     2.10     1.99     2.52     1.81     1.92     3.47     2.10     1.99     2.22     1.92     2.03 
- 40  40    17.18    18.37    17.56    17.86    18.32    17.77     3.55     1.37     2.11     1.92     1.25     1.45     3.44     1.37     1.98     1.86     1.34     1.56 
- 40  50    14.18    15.42    15.92    15.49    15.92    15.93     3.69     2.73     2.77     2.66     1.23     1.24     3.64     2.61     2.64     2.47     1.28     1.28 
- 40  60    12.50    13.26    13.59    13.21    13.19    13.15     3.78     2.92     2.78     3.00     1.24     1.27     3.67     2.77     2.64     2.71     1.28     1.28 
- 40  70    11.65    11.89    11.82    11.94    11.69    11.70     3.98     3.07     2.73     3.15     1.25     1.27     3.82     2.89     2.61     3.01     1.29     1.29 
- 40  80    10.61    10.75    10.62    10.78    10.73    10.70     4.06     3.07     2.85     3.20     1.25     1.29     3.90     2.91     2.71     3.02     1.29     1.29 
- 40  90     9.71     9.60     9.68     9.63     9.57     9.56     4.07     3.06     2.92     3.29     1.25     1.29     3.91     2.91     2.77     3.02     1.29     1.29 
- 50   0    16.49    16.13    16.04    15.41    15.88    15.79     3.88     3.05     3.03     2.49     2.07     2.07     3.89     3.05     3.04     2.81     2.18     2.18 
- 50  10    16.24    16.13    16.04    15.37    15.88    15.78     3.87     3.05     3.03     2.49     2.07     2.07     3.88     3.05     3.03     2.82     2.18     2.17 
- 50  20    16.55    16.13    16.04    15.42    15.86    15.79     3.87     3.04     3.04     2.49     2.07     2.07     3.88     3.05     3.04     2.79     2.17     2.18 
- 50  30    16.51    16.13    16.03    15.25    15.88    15.76     3.81     3.03     3.02     2.46     2.07     2.07     3.82     3.03     3.03     2.84     2.18     2.18 
- 50  40    16.16    16.12    16.04    15.24    15.89    15.81     3.94     3.04     2.89     2.47     2.07     2.07     3.95     3.05     2.89     2.71     2.18     2.17 
- 50  50    15.07    15.42    16.03    15.67    15.95    15.78     3.78     2.64     1.28     2.20     1.23     1.27     3.68     2.52     1.18     2.06     1.28     1.38 
- 50  60    12.51    13.18    13.67    13.17    13.19    13.21     3.77     2.88     2.78     2.92     1.25     1.26     3.64     2.74     2.65     2.67     1.28     1.28 
- 50  70    11.51    11.93    11.85    11.80    11.71    11.69     3.92     3.05     2.79     3.14     1.25     1.27     3.76     2.90     2.65     2.92     1.28     1.29 
- 50  80    10.68    10.74    10.57    10.78    10.73    10.71     4.05     3.07     2.75     3.17     1.25     1.28     3.90     2.91     2.61     3.02     1.29     1.29 
- 50  90     9.77     9.60     9.61     9.63     9.58     9.57     4.07     3.09     2.76     3.23     1.26     1.28     3.91     2.91     2.62     3.02     1.29     1.29 
- 60   0    13.68    14.34    14.31    13.42    14.07    13.92     3.64     3.05     3.05     2.75     2.07     2.07     3.65     3.06     3.06     3.05     2.18     2.18 
- 60  10    13.76    14.34    14.31    13.42    14.13    13.92     3.63     3.05     3.04     2.77     2.07     2.07     3.64     3.05     3.05     3.06     2.18     2.18 
- 60  20    13.81    14.34    14.31    13.39    14.13    13.92     3.60     3.05     3.04     2.76     2.07     2.07     3.61     3.06     3.05     3.06     2.18     2.18 
- 60  30    13.54    14.34    14.31    13.32    14.10    13.92     3.64     3.05     3.03     2.72     2.07     2.07     3.65     3.05     3.04     3.06     2.18     2.18 
- 60  40    13.88    14.34    14.31    13.29    14.09    13.93     3.64     3.05     3.03     2.70     2.07     2.07     3.65     3.05     3.04     3.03     2.18     2.18 
- 60  50    13.74    14.33    14.30    13.28    14.13    13.92     3.69     3.04     2.96     2.67     2.07     2.07     3.70     3.05     2.97     2.88     2.18     2.18 
- 60  60    12.76    13.18    13.54    13.25    13.18    13.17     3.80     2.81     2.42     2.64     1.24     1.24     3.72     2.69     2.30     2.44     1.29     1.29 
- 60  70    11.37    11.85    11.84    11.81    11.70    11.69     3.81     2.99     2.79     3.09     1.25     1.26     3.66     2.83     2.65     2.89     1.29     1.29 
- 60  80    10.65    10.75    10.67    10.75    10.71    10.72     4.05     3.06     2.79     3.15     1.25     1.27     3.90     2.91     2.65     3.02     1.29     1.29 
- 60  90     9.69     9.59     9.66     9.65     9.58     9.57     4.07     3.08     2.75     3.18     1.25     1.28     3.90     2.91     2.62     3.03     1.29     1.29 
- 70   0    11.51    12.46    11.95    11.88    12.54    11.46     3.69     3.05     3.06     3.05     2.08     2.08     3.69     3.05     3.06     3.06     2.18     2.19 
- 70  10    11.17    11.74    11.94    11.89    11.92    11.68     3.75     3.05     3.06     3.05     2.07     2.08     3.75     3.05     3.06     3.05     2.18     2.18 
- 70  20    11.23    11.74    12.19    11.86    12.07    11.71     3.74     3.06     3.05     3.05     2.08     2.07     3.74     3.06     3.06     3.05     2.19     2.18 
- 70  30    11.07    12.09    11.95    11.88    11.64    11.94     3.76     3.06     3.06     3.04     2.08     2.08     3.77     3.06     3.06     3.05     2.19     2.18 
- 70  40    11.76    12.45    12.19    11.85    12.02    11.46     3.74     3.05     3.05     3.03     2.08     2.08     3.74     3.06     3.06     3.06     2.19     2.19 
- 70  50    12.18    12.45    11.93    11.77    12.14    11.95     3.70     3.05     3.06     3.00     2.08     2.08     3.71     3.06     3.06     3.06     2.20     2.18 
- 70  60    12.03    12.80    11.93    11.76    11.65    11.99     3.80     3.05     3.00     2.91     2.07     2.07     3.82     3.05     3.01     3.02     2.18     2.18 
- 70  70    11.62    11.72    11.79    11.63    11.70    11.62     3.52     2.57     1.83     2.67     1.24     1.51     3.43     2.53     1.79     2.57     1.29     1.58 
- 70  80    10.60    10.67    10.64    10.63    10.72    10.71     4.02     3.04     2.78     3.11     1.25     1.26     3.86     2.87     2.65     2.94     1.29     1.29 
- 70  90     9.77     9.60     9.64     9.63     9.57     9.56     4.06     3.08     2.78     3.15     1.26     1.26     3.91     2.91     2.63     3.02     1.29     1.29 
- 80   0    10.78    10.77    10.72    10.79    10.63    10.61     3.97     3.06     3.06     3.05     2.08     2.08     3.97     3.06     3.07     3.06     2.18     2.19 
- 80  10    10.82    10.77    10.72    10.77    10.64    10.61     3.97     3.05     3.06     3.05     2.08     2.08     3.97     3.06     3.06     3.05     2.18     2.19 
- 80  20    10.93    10.76    10.73    10.75    10.65    10.61     4.02     3.06     3.06     3.05     2.08     2.08     4.03     3.06     3.06     3.06     2.19     2.19 
- 80  30    10.49    10.76    10.72    10.75    10.65    10.61     3.82     3.06     3.06     3.05     2.08     2.08     3.82     3.06     3.06     3.06     2.19     2.19 
- 80  40    10.43    10.76    10.71    10.76    10.66    10.60     3.79     3.06     3.06     3.05     2.08     2.08     3.80     3.06     3.06     3.06     2.19     2.19 
- 80  50    10.67    10.76    10.72    10.76    10.66    10.61     3.91     3.06     3.06     3.05     2.08     2.08     3.91     3.06     3.06     3.05     2.19     2.19 
- 80  60    10.86    10.76    10.72    10.76    10.68    10.60     3.99     3.06     3.06     3.04     2.08     2.08     4.00     3.06     3.06     3.05     2.19     2.19 
- 80  70    10.71    10.77    10.73    10.75    10.67    10.60     3.94     3.06     3.05     3.01     2.08     2.08     3.95     3.06     3.05     3.05     2.19     2.19 
- 80  80    10.62    10.75    10.72    10.54    10.71    10.61     3.72     1.25     1.35     2.58     1.25     1.30     3.61     1.20     1.25     2.57     1.33     1.41 
- 80  90     9.69     9.60     9.69     9.60     9.58     9.58     4.06     3.06     2.80     3.15     1.25     1.26     3.90     2.91     2.66     3.00     1.29     1.29 
- 90   0     9.56     9.94     9.92     9.85     9.85     9.74     4.06     3.06     3.06     3.05     2.09     2.09     4.06     3.07     3.06     3.06     2.19     2.19 
- 90  10     9.46     9.93     9.92     9.80     9.84     9.72     3.96     3.06     3.06     3.06     2.08     2.08     3.96     3.06     3.07     3.06     2.19     2.19 
- 90  20     9.53     9.94     9.93     9.84     9.84     9.74     4.02     3.06     3.05     3.06     2.08     2.08     4.03     3.07     3.06     3.06     2.19     2.19 
- 90  30     9.50     9.94     9.92     9.83     9.83     9.72     3.98     3.06     3.06     3.05     2.08     2.08     3.98     3.07     3.07     3.06     2.18     2.19 
- 90  40     9.50     9.93     9.92     9.81     9.81     9.75     3.98     3.06     3.06     3.06     2.08     2.08     3.98     3.07     3.07     3.06     2.19     2.19 
- 90  50     9.46     9.94     9.92     9.82     9.84     9.74     3.91     3.06     3.06     3.05     2.09     2.08     3.91     3.07     3.07     3.05     2.19     2.19 
- 90  60     9.95     9.93     9.93     9.83     9.84     9.73     4.05     3.06     3.06     3.06     2.08     2.08     4.06     3.06     3.06     3.06     2.19     2.19 
- 90  70     9.62     9.93     9.92     9.82     9.84     9.75     3.97     3.06     3.06     3.06     2.08     2.09     3.98     3.06     3.07     3.06     2.19     2.19 
- 90  80     9.75     9.93     9.92     9.80     9.83     9.72     4.02     3.06     3.06     3.05     2.08     2.08     4.02     3.07     3.07     3.06     2.19     2.19 
- 90  90     9.60     9.60     9.68     9.51     9.57     9.57     4.03     3.04     2.71     2.52     1.25     1.26     3.88     2.88     2.57     2.36     1.30     1.29 
+  0   0    26.00    25.81    24.00    29.13    29.96    27.71     3.47     2.77     2.70     2.12     1.98     1.92     3.91     3.06     2.81     2.18     2.10     2.03 
+  0  10    19.40    25.67    19.69    20.40    26.68    26.82     3.56     2.27     2.75     2.56     1.23     1.26     3.38     2.13     2.62     2.52     1.27     1.27 
+  0  20    19.32    25.90    19.83    20.41    26.67    26.64     3.54     2.27     2.76     2.57     1.23     1.26     3.36     2.13     2.62     2.52     1.27     1.27 
+  0  30    18.13    22.39    19.17    19.77    21.89    22.11     3.65     2.29     2.76     2.62     1.24     1.27     3.48     2.15     2.63     2.53     1.27     1.28 
+  0  40    16.52    18.88    16.95    17.70    18.58    18.56     3.64     2.29     2.79     2.63     1.24     1.28     3.49     2.15     2.65     2.47     1.28     1.28 
+  0  50    15.52    16.33    15.46    15.48    15.67    15.73     3.26     2.30     2.84     2.97     1.25     1.28     3.14     2.15     2.69     2.55     1.28     1.28 
+  0  60    12.78    13.39    13.50    13.35    13.32    13.29     3.46     2.31     2.93     3.24     1.25     1.29     3.36     2.16     2.78     2.84     1.28     1.28 
+  0  70    11.59    11.91    11.83    11.94    11.72    11.75     3.75     2.31     2.93     3.28     1.25     1.30     3.59     2.16     2.79     3.01     1.29     1.28 
+  0  80    10.58    10.92    10.68    10.78    10.78    10.77     4.05     2.32     2.94     3.30     1.25     1.30     3.87     2.16     2.78     3.03     1.29     1.29 
+  0  90     9.72     9.74     9.63     9.65     9.57     9.58     4.08     2.32     2.95     3.32     1.26     1.31     3.91     2.16     2.79     3.03     1.29     1.29 
+ 10   0    19.71    25.35    20.22    20.59    26.82    26.63     3.48     2.24     2.71     2.53     1.23     1.25     3.33     2.11     2.59     2.51     1.27     1.27 
+ 10  10    19.67    25.50    20.31    20.44    26.69    26.54     3.50     2.25     2.66     2.55     1.23     1.25     3.35     2.12     2.53     2.52     1.27     1.27 
+ 10  20    19.72    25.73    19.86    20.27    26.57    26.70     3.52     2.27     2.67     2.55     1.23     1.25     3.38     2.13     2.55     2.52     1.27     1.27 
+ 10  30    18.54    22.47    19.01    19.60    21.85    22.13     3.62     2.28     2.76     2.62     1.24     1.27     3.47     2.15     2.62     2.52     1.28     1.28 
+ 10  40    16.64    18.88    17.07    17.70    18.55    18.56     3.55     2.29     2.76     2.61     1.24     1.27     3.42     2.15     2.63     2.49     1.28     1.28 
+ 10  50    15.33    16.32    15.57    15.50    15.72    15.72     3.27     2.30     2.83     2.95     1.25     1.28     3.18     2.15     2.69     2.56     1.28     1.28 
+ 10  60    12.66    13.42    13.47    13.34    13.29    13.31     3.45     2.31     2.93     3.24     1.25     1.29     3.36     2.15     2.78     2.84     1.29     1.28 
+ 10  70    11.69    11.88    11.85    11.91    11.72    11.71     3.80     2.33     2.93     3.27     1.25     1.29     3.62     2.16     2.78     3.01     1.29     1.29 
+ 10  80    10.54    10.92    10.69    10.81    10.79    10.78     3.99     2.31     2.94     3.31     1.26     1.30     3.82     2.16     2.78     3.02     1.29     1.29 
+ 10  90     9.74     9.77     9.68     9.64     9.57     9.58     4.09     2.33     2.95     3.32     1.27     1.32     3.91     2.16     2.79     3.03     1.29     1.29 
+ 20   0    19.38    25.87    20.66    20.45    26.67    26.58     3.51     2.17     2.48     2.53     1.22     1.24     3.38     2.04     2.37     2.50     1.27     1.28 
+ 20  10    19.22    25.64    20.70    20.36    26.65    26.67     3.55     2.17     2.49     2.54     1.23     1.24     3.41     2.04     2.39     2.50     1.27     1.28 
+ 20  20    19.32    25.72    20.70    20.55    26.64    26.66     3.53     2.20     2.46     2.53     1.23     1.24     3.40     2.07     2.36     2.49     1.27     1.27 
+ 20  30    18.62    22.57    19.26    19.87    22.26    22.14     3.64     2.27     2.68     2.58     1.24     1.26     3.49     2.13     2.56     2.52     1.28     1.28 
+ 20  40    16.49    18.87    17.14    17.71    18.56    18.56     3.63     2.29     2.80     2.62     1.24     1.27     3.50     2.15     2.65     2.47     1.28     1.28 
+ 20  50    15.18    16.29    15.87    15.43    15.70    15.67     3.31     2.32     2.78     2.96     1.24     1.28     3.21     2.16     2.64     2.48     1.28     1.28 
+ 20  60    12.82    13.41    13.32    13.36    13.27    13.30     3.46     2.31     2.84     3.23     1.25     1.28     3.35     2.16     2.69     2.82     1.28     1.28 
+ 20  70    11.66    11.93    11.93    11.92    11.71    11.72     3.74     2.32     2.94     3.29     1.25     1.30     3.58     2.16     2.78     3.02     1.29     1.29 
+ 20  80    10.46    10.92    10.70    10.79    10.79    10.78     3.99     2.32     2.94     3.30     1.25     1.29     3.82     2.16     2.78     3.02     1.29     1.29 
+ 20  90     9.75     9.75     9.66     9.64     9.57     9.57     4.07     2.33     2.94     3.31     1.26     1.30     3.91     2.16     2.79     3.03     1.29     1.30 
+ 30   0    23.07    25.65    25.42    24.55    25.36    24.42     2.85     1.19     1.29     1.59     1.22     1.30     2.82     1.20     1.18     1.57     1.33     1.41 
+ 30  10    22.41    25.66    25.48    24.42    25.34    24.44     2.93     1.19     1.25     1.61     1.23     1.29     2.92     1.19     1.17     1.58     1.34     1.40 
+ 30  20    23.50    25.65    25.50    24.50    25.34    24.43     2.77     1.19     1.24     1.60     1.23     1.29     2.73     1.19     1.17     1.57     1.33     1.40 
+ 30  30    18.21    22.75    19.54    19.71    22.11    22.06     3.67     2.04     2.53     2.53     1.23     1.24     3.54     1.93     2.41     2.46     1.27     1.28 
+ 30  40    16.50    18.85    17.16    17.68    18.60    18.51     3.73     2.29     2.78     2.54     1.24     1.26     3.60     2.14     2.65     2.48     1.28     1.28 
+ 30  50    14.16    16.10    15.94    15.42    15.72    15.66     3.57     2.31     2.78     2.85     1.24     1.27     3.51     2.15     2.65     2.50     1.28     1.29 
+ 30  60    12.44    13.42    13.26    13.29    13.31    13.27     3.62     2.31     2.73     3.14     1.25     1.28     3.55     2.15     2.61     2.76     1.28     1.28 
+ 30  70    11.66    11.92    11.83    11.93    11.71    11.72     3.78     2.31     2.90     3.21     1.25     1.29     3.63     2.16     2.75     3.02     1.29     1.29 
+ 30  80    10.58    10.90    10.67    10.76    10.78    10.78     4.03     2.32     2.92     3.29     1.26     1.29     3.87     2.16     2.77     3.02     1.29     1.29 
+ 30  90     9.71     9.77     9.65     9.64     9.57     9.58     4.07     2.33     2.94     3.31     1.26     1.30     3.91     2.16     2.79     3.03     1.29     1.29 
+ 40   0    18.23    18.26    18.32    18.53    18.06    17.74     3.57     2.29     2.13     2.53     1.93     1.98     3.57     2.29     2.13     2.20     2.03     2.09 
+ 40  10    18.14    18.25    18.32    18.56    18.06    17.74     3.56     2.33     2.12     2.53     1.93     1.98     3.56     2.34     2.12     2.20     2.04     2.09 
+ 40  20    18.34    18.25    18.33    18.54    18.06    17.73     3.54     2.26     2.13     2.53     1.93     1.98     3.54     2.27     2.13     2.21     2.04     2.09 
+ 40  30    18.27    18.26    18.33    18.55    18.07    17.76     3.48     2.12     1.95     2.53     1.83     1.92     3.48     2.12     1.95     2.21     1.94     2.03 
+ 40  40    18.17    18.34    17.86    17.92    18.27    17.71     3.07     1.40     1.80     1.85     1.26     1.48     3.04     1.40     1.67     1.79     1.37     1.58 
+ 40  50    14.22    16.20    15.91    15.45    15.64    15.64     3.73     2.30     2.79     2.66     1.25     1.25     3.66     2.15     2.65     2.47     1.29     1.28 
+ 40  60    11.99    13.42    13.46    13.23    13.30    13.32     3.74     2.31     2.77     2.99     1.24     1.27     3.69     2.15     2.64     2.70     1.29     1.29 
+ 40  70    11.61    11.88    11.72    11.92    11.73    11.72     3.90     2.31     2.76     3.15     1.26     1.28     3.74     2.16     2.63     3.01     1.29     1.29 
+ 40  80    10.62    10.91    10.50    10.77    10.80    10.79     4.05     2.32     2.85     3.20     1.26     1.29     3.89     2.16     2.72     3.03     1.29     1.29 
+ 40  90     9.69     9.80     9.67     9.64     9.57     9.58     4.07     2.32     2.92     3.28     1.26     1.29     3.91     2.16     2.77     3.03     1.29     1.29 
+ 50   0    15.96    16.12    16.03    15.37    15.85    15.77     3.93     3.04     3.04     2.48     2.07     2.07     3.94     3.05     3.04     2.78     2.18     2.18 
+ 50  10    16.45    16.12    16.04    15.33    15.88    15.79     3.87     3.03     3.03     2.50     2.07     2.07     3.88     3.04     3.03     2.81     2.18     2.18 
+ 50  20    16.30    16.11    16.03    15.36    15.87    15.78     3.88     3.04     3.03     2.50     2.07     2.07     3.89     3.04     3.04     2.81     2.18     2.18 
+ 50  30    16.11    16.12    16.03    15.24    15.88    15.78     3.94     3.05     3.01     2.47     2.07     2.07     3.95     3.05     3.02     2.85     2.18     2.18 
+ 50  40    16.25    16.12    16.04    15.29    15.86    15.79     3.93     3.05     2.87     2.48     2.07     2.07     3.94     3.05     2.87     2.72     2.18     2.18 
+ 50  50    14.78    16.08    15.92    15.56    15.74    15.69     3.78     1.55     1.49     2.35     1.24     1.23     3.69     1.43     1.36     2.17     1.29     1.30 
+ 50  60    12.34    13.40    13.51    13.18    13.32    13.29     3.70     2.31     2.80     2.94     1.24     1.26     3.60     2.15     2.65     2.68     1.28     1.29 
+ 50  70    11.51    11.92    11.71    11.79    11.71    11.72     3.87     2.31     2.79     3.14     1.25     1.27     3.71     2.15     2.65     2.93     1.29     1.29 
+ 50  80    10.69    10.93    10.53    10.78    10.79    10.77     4.06     2.32     2.75     3.16     1.25     1.28     3.91     2.16     2.61     3.02     1.29     1.29 
+ 50  90     9.65     9.82     9.57     9.66     9.59     9.57     4.08     2.32     2.86     3.22     1.25     1.28     3.91     2.16     2.72     3.03     1.30     1.29 
+ 60   0    14.00    14.33    14.29    13.42    14.13    13.87     3.60     3.05     3.04     2.75     2.07     2.07     3.61     3.06     3.05     3.06     2.18     2.18 
+ 60  10    13.76    14.33    14.30    13.37    14.12    13.87     3.62     3.05     3.05     2.77     2.07     2.07     3.63     3.06     3.06     3.05     2.18     2.18 
+ 60  20    13.94    14.33    14.30    13.45    14.10    13.88     3.62     3.05     3.04     2.73     2.07     2.07     3.63     3.06     3.06     3.06     2.18     2.18 
+ 60  30    13.52    14.33    14.29    13.31    14.12    13.87     3.65     3.05     3.04     2.73     2.07     2.07     3.66     3.06     3.04     3.06     2.18     2.18 
+ 60  40    14.18    14.33    14.29    13.27    14.13    13.87     3.61     3.05     3.03     2.72     2.07     2.07     3.62     3.06     3.04     3.03     2.18     2.18 
+ 60  50    13.40    14.33    14.30    13.25    14.12    13.87     3.70     3.05     2.93     2.68     2.07     2.07     3.71     3.05     2.94     2.89     2.18     2.18 
+ 60  60    12.60    13.41    13.52    13.25    13.31    13.32     3.79     2.07     2.57     2.65     1.24     1.25     3.67     1.95     2.46     2.45     1.29     1.28 
+ 60  70    11.54    11.90    11.98    11.81    11.72    11.72     3.85     2.30     2.80     3.09     1.25     1.27     3.71     2.15     2.66     2.90     1.29     1.29 
+ 60  80    10.74    10.89    10.59    10.76    10.78    10.80     4.05     2.31     2.79     3.15     1.25     1.27     3.91     2.16     2.65     3.02     1.29     1.29 
+ 60  90     9.70     9.71     9.63     9.65     9.57     9.59     4.07     2.32     2.76     3.18     1.25     1.29     3.91     2.16     2.62     3.03     1.30     1.30 
+ 70   0    11.37    12.42    11.94    11.90    12.56    11.98     3.87     3.05     3.06     3.05     2.07     2.08     3.88     3.06     3.06     3.06     2.18     2.18 
+ 70  10    11.13    12.43    11.94    11.84    12.56    11.81     3.84     3.06     3.05     3.05     2.08     2.08     3.85     3.06     3.06     3.06     2.18     2.18 
+ 70  20    11.73    12.43    12.18    11.88    12.25    11.65     3.77     3.06     3.06     3.05     2.08     2.08     3.78     3.06     3.07     3.06     2.18     2.19 
+ 70  30    11.39    12.75    11.95    11.86    11.93    11.65     3.89     3.06     3.05     3.05     2.08     2.08     3.89     3.06     3.06     3.06     2.19     2.19 
+ 70  40    12.18    12.42    11.70    11.85    12.24    11.97     3.65     3.06     3.06     3.04     2.07     2.08     3.65     3.06     3.07     3.05     2.18     2.19 
+ 70  50    11.12    12.75    12.17    11.76    12.24    11.64     3.86     3.05     3.05     3.00     2.07     2.08     3.86     3.06     3.06     3.05     2.18     2.19 
+ 70  60    11.43    12.74    12.16    11.75    12.57    11.95     3.88     3.05     2.97     2.91     2.07     2.07     3.88     3.06     2.97     3.02     2.18     2.18 
+ 70  70    11.76    11.91    11.87    11.77    11.68    11.64     3.57     2.25     2.72     2.86     1.24     1.43     3.52     2.11     2.58     2.61     1.29     1.49 
+ 70  80    10.67    10.91    10.64    10.64    10.81    10.79     4.04     2.31     2.81     3.11     1.24     1.26     3.89     2.16     2.66     2.93     1.29     1.29 
+ 70  90     9.65     9.76     9.62     9.64     9.57     9.57     4.06     2.33     2.79     3.16     1.26     1.27     3.90     2.16     2.64     3.02     1.30     1.29 
+ 80   0    10.80    10.75    10.72    10.78    10.66    10.62     4.05     3.06     3.07     3.05     2.08     2.08     4.06     3.06     3.06     3.06     2.19     2.19 
+ 80  10    10.78    10.76    10.72    10.74    10.66    10.61     4.05     3.06     3.06     3.05     2.08     2.08     4.06     3.06     3.07     3.05     2.19     2.19 
+ 80  20    10.77    10.76    10.72    10.79    10.65    10.61     4.05     3.06     3.06     3.05     2.08     2.08     4.06     3.06     3.06     3.05     2.19     2.19 
+ 80  30    10.72    10.75    10.72    10.76    10.66    10.61     4.07     3.07     3.06     3.05     2.08     2.08     4.08     3.06     3.07     3.06     2.19     2.19 
+ 80  40    10.89    10.75    10.72    10.75    10.63    10.61     4.06     3.06     3.06     3.05     2.08     2.08     4.07     3.07     3.06     3.06     2.19     2.19 
+ 80  50    10.73    10.75    10.72    10.78    10.67    10.62     4.05     3.06     3.06     3.05     2.08     2.08     4.06     3.07     3.06     3.05     2.19     2.19 
+ 80  60    10.76    10.76    10.72    10.77    10.65    10.61     3.98     3.06     3.06     3.04     2.08     2.07     3.98     3.07     3.06     3.05     2.19     2.19 
+ 80  70    10.63    10.75    10.72    10.74    10.67    10.60     3.92     3.06     3.05     3.02     2.08     2.08     3.93     3.06     3.05     3.06     2.19     2.19 
+ 80  80    10.55    10.74    10.72    10.54    10.72    10.61     3.69     1.24     1.26     2.54     1.34     1.43     3.58     1.22     1.19     2.53     1.45     1.54 
+ 80  90     9.64     9.80     9.71     9.60     9.58     9.58     4.06     2.32     2.81     3.15     1.25     1.26     3.91     2.16     2.66     3.00     1.30     1.30 
+ 90   0     9.80     9.93     9.92     9.84     9.84     9.74     4.05     3.06     3.06     3.06     2.08     2.09     4.06     3.07     3.07     3.06     2.19     2.19 
+ 90  10    10.03     9.93     9.92     9.85     9.81     9.74     4.06     3.06     3.06     3.05     2.08     2.08     4.07     3.07     3.07     3.06     2.19     2.19 
+ 90  20    10.00     9.93     9.92     9.85     9.84     9.74     4.06     3.06     3.06     3.06     2.08     2.08     4.07     3.07     3.07     3.06     2.19     2.19 
+ 90  30    10.01     9.93     9.92     9.83     9.83     9.74     4.05     3.07     3.06     3.06     2.08     2.08     4.06     3.07     3.07     3.06     2.19     2.19 
+ 90  40     9.97     9.93     9.92     9.81     9.83     9.75     4.06     3.07     3.06     3.06     2.08     2.08     4.07     3.07     3.07     3.07     2.19     2.19 
+ 90  50     9.97     9.93     9.92     9.86     9.84     9.73     4.06     3.06     3.06     3.05     2.08     2.08     4.07     3.07     3.06     3.06     2.19     2.19 
+ 90  60     9.75     9.93     9.92     9.83     9.83     9.73     4.02     3.06     3.06     3.05     2.08     2.08     4.03     3.07     3.07     3.06     2.19     2.19 
+ 90  70     9.71     9.93     9.92     9.82     9.84     9.73     3.95     3.06     3.06     3.06     2.08     2.08     3.96     3.07     3.07     3.06     2.20     2.19 
+ 90  80     9.71     9.93     9.92     9.77     9.83     9.74     4.04     3.06     3.06     3.05     2.08     2.08     4.05     3.07     3.06     3.06     2.19     2.19 
+ 90  90     9.63     9.79     9.67     9.52     9.58     9.59     3.83     2.25     2.70     2.50     1.25     1.26     3.73     2.12     2.56     2.34     1.30     1.29 
