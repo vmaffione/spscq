@@ -1,3 +1,3 @@
-./run-tests.py -vw --duration 5 --max-trials 3 -M --exp-type latency --spin-min 0 --num-points 1
+./run-tests.py -vw --duration 7 --max-trials 3 -M --exp-type latency --spin-min 0 --num-points 1
   P   C     lq.T    llq.T    blq.T    ffq.T   iffq.T  biffq.T     lq.P    llq.P    blq.P    ffq.P   iffq.P  biffq.P     lq.C    llq.C    blq.C    ffq.C   iffq.C  biffq.C 
-  0   0     1.07     1.18     1.17     1.35     1.52     1.52     0.00     0.00     0.00     0.00     0.00     0.00     0.00     0.00     0.00     0.00     0.00     0.00 
+  0   0     1.07     1.17     1.19     1.35     1.51     1.57    10.60     6.38     6.53     5.15     3.50     3.47    10.57     7.10     7.17     5.06     3.52     3.49 
