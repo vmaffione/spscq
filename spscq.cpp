@@ -1049,7 +1049,7 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
     unsigned int i;
 
     if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
-        entries * sizeof(uintptr_t) <= 2 * line_size ||
+        (improved && entries * sizeof(uintptr_t) <= 2 * line_size) ||
         line_size < sizeof(uintptr_t)) {
         printf("Error: invalid entries/linesize parameters\n");
         return -EINVAL;
