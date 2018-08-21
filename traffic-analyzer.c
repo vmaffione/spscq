@@ -240,6 +240,41 @@ blq_deq(struct worker *w, unsigned batch)
     blq_read_publish(blq);
 }
 
+static unsigned int
+ffq_enq(struct worker *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (ffq_write(w->ffq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    return count;
+}
+
+static void
+ffq_deq(struct worker *w, unsigned batch)
+{
+    for (; batch > 0; batch--) {
+        struct mbuf *m = (struct mbuf *)ffq_read(w->ffq);
+
+        if (m == NULL) {
+            return;
+        }
+        analyze_mbuf(m);
+    }
+}
+
 static int stop = 0;
 
 static void *
@@ -400,6 +435,9 @@ main(int argc, char **argv)
     } else if (!strcmp(ta->qtype, "blq")) {
         ta->enq = blq_enq;
         ta->deq = blq_deq;
+    } else if (!strcmp(ta->qtype, "ffq")) {
+        ta->enq = ffq_enq;
+        ta->deq = ffq_deq;
     }
 
     /*
