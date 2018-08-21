@@ -551,6 +551,7 @@ main(int argc, char **argv)
     }
 
     if (benchmark) {
+        printf("Running consumer benchmark: CTRL-C to stop\n");
         consumer_benchmark();
         return 0;
     }
@@ -660,6 +661,8 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
     }
+
+    printf("Press CTRL-C to stop\n");
 
     /*
      * Teardown phase.
