@@ -114,7 +114,7 @@ struct vswitch_experiment {
     struct vswitch *vswitchs;
 
     /* Microseconds for sender usleep(). */
-    unsigned int sender_usleep;
+    unsigned int client_usleep;
 };
 
 static inline struct client *
@@ -243,15 +243,15 @@ client_worker(void *opaque)
     unsigned int first_client  = c->vswitch->first_client;
     unsigned int last_client   = first_client + c->vswitch->num_clients;
     unsigned int dst_idx       = first_client;
-    unsigned int sender_usleep = c->ce->sender_usleep;
+    unsigned int client_usleep = c->ce->client_usleep;
 
     timerslack_reset();
 
     while (!ACCESS_ONCE(stop)) {
         struct mbuf *m;
 
-        if (sender_usleep > 0) {
-            usleep(sender_usleep);
+        if (client_usleep > 0) {
+            usleep(client_usleep);
         }
 
         /* Allocate and initialize an mbuf. */
@@ -324,7 +324,7 @@ main(int argc, char **argv)
     ce->qtype         = "lq";
     ce->vswitch_batch = 8;
     ce->client_batch  = 1;
-    ce->sender_usleep = 50;
+    ce->client_usleep = 50;
     ffq               = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:")) != -1) {
@@ -398,8 +398,8 @@ main(int argc, char **argv)
             break;
 
         case 'u':
-            ce->sender_usleep = atoi(optarg);
-            if (ce->sender_usleep < 0 || ce->sender_usleep > 1000) {
+            ce->client_usleep = atoi(optarg);
+            if (ce->client_usleep < 0 || ce->client_usleep > 1000) {
                 printf("    Invalid sender usleep argument '%s'\n", optarg);
                 return -1;
             }

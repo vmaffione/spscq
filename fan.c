@@ -79,8 +79,8 @@ struct experiment {
     /* Root nodes. */
     struct root *roots;
 
-    /* Microseconds for sender usleep(). */
-    unsigned int sender_usleep;
+    /* Microseconds for leaf usleep(). */
+    unsigned int leaf_usleep;
 };
 
 static size_t
@@ -413,9 +413,6 @@ lq_leaf_sender(struct leaf *w, unsigned int batch)
         }
     }
     w->mbuf_next = mbuf_next;
-
-    /* Don't be greedy, and wait a little while. */
-    usleep(w->ce->sender_usleep);
 }
 
 static unsigned int
@@ -455,8 +452,6 @@ llq_leaf_sender(struct leaf *w, unsigned int batch)
         }
     }
     w->mbuf_next = mbuf_next;
-
-    usleep(w->ce->sender_usleep);
 }
 
 static unsigned int
@@ -504,8 +499,6 @@ blq_leaf_sender(struct leaf *w, unsigned int batch)
 
     blq_write_publish(blq);
     w->mbuf_next = mbuf_next;
-
-    usleep(w->ce->sender_usleep);
 }
 
 static unsigned int
@@ -545,9 +538,6 @@ ffq_leaf_sender(struct leaf *w, unsigned int batch)
         }
     }
     w->mbuf_next = mbuf_next;
-
-    /* Don't be greedy, and wait a little while. */
-    usleep(w->ce->sender_usleep);
 }
 
 static unsigned int
@@ -590,9 +580,6 @@ iffq_leaf_sender(struct leaf *w, unsigned int batch)
         }
     }
     w->mbuf_next = mbuf_next;
-
-    /* Don't be greedy, and wait a little while. */
-    usleep(w->ce->sender_usleep);
 }
 
 static void
@@ -618,9 +605,6 @@ biffq_leaf_sender(struct leaf *w, unsigned int batch)
 
     iffq_insert_publish(ffq);
     w->mbuf_next = mbuf_next;
-
-    /* Don't be greedy, and wait a little while. */
-    usleep(w->ce->sender_usleep);
 }
 
 /*
@@ -670,14 +654,18 @@ root_worker(void *opaque)
 static void *
 leaf_worker(void *opaque)
 {
-    struct leaf *w        = opaque;
-    leaf_func_t leaf_func = w->ce->leaf_func;
-    unsigned int batch    = w->ce->leaf_batch;
+    struct leaf *w           = opaque;
+    leaf_func_t leaf_func    = w->ce->leaf_func;
+    unsigned int batch       = w->ce->leaf_batch;
+    unsigned int leaf_usleep = w->ce->leaf_usleep;
 
     timerslack_reset();
 
     while (!ACCESS_ONCE(stop)) {
         leaf_func(w, batch);
+        if (leaf_usleep > 0) {
+            usleep(leaf_usleep);
+        }
     }
 
     return NULL;
@@ -763,7 +751,7 @@ main(int argc, char **argv)
     ce->expname    = "fanout";
     ce->qtype      = "lq";
     ce->root_batch = ce->leaf_batch = 8;
-    ce->sender_usleep               = 50;
+    ce->leaf_usleep                 = 0;
     ffq                             = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:")) != -1) {
@@ -841,8 +829,8 @@ main(int argc, char **argv)
             break;
 
         case 'u':
-            ce->sender_usleep = atoi(optarg);
-            if (ce->sender_usleep < 0 || ce->sender_usleep > 1000) {
+            ce->leaf_usleep = atoi(optarg);
+            if (ce->leaf_usleep < 0 || ce->leaf_usleep > 1000) {
                 printf("    Invalid sender usleep argument '%s'\n", optarg);
                 return -1;
             }
