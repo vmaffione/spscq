@@ -11,10 +11,13 @@
 #include <sys/prctl.h>
 #include <poll.h>
 
-//#define WITH_NETMAP
+#define WITH_NETMAP
 #ifdef WITH_NETMAP
 #define NETMAP_WITH_LIBS
 #include <net/netmap_user.h>
+
+#define EXPECTED_NUM_SLOTS 1024
+
 #endif
 
 #include "mlib.h"
@@ -174,7 +177,7 @@ root_packet_get(struct root *root, struct mbuf *m)
     memcpy(m->buf, NETMAP_BUF(ring, ring->slot[head].buf_idx), sizeof(m->buf));
     m->len     = sizeof(m->buf);
     ring->head = ring->cur = nm_ring_next(ring, head);
-    if (unlikely(++root->nm_slots_pending >= 512)) {
+    if (unlikely(++root->nm_slots_pending >= (EXPECTED_NUM_SLOTS / 2))) {
         root->nm_slots_pending = 0;
         ioctl(root->nmd->fd, NIOCRXSYNC, NULL);
     }
@@ -199,7 +202,7 @@ root_packet_put(struct root *root, struct mbuf *m)
     memcpy(NETMAP_BUF(ring, slot->buf_idx), m->buf, sizeof(m->buf));
     slot->len  = sizeof(m->buf);
     ring->head = ring->cur = nm_ring_next(ring, head);
-    if (unlikely(++root->nm_slots_pending >= 512)) {
+    if (unlikely(++root->nm_slots_pending >= (EXPECTED_NUM_SLOTS / 2))) {
         root->nm_slots_pending = 0;
         ioctl(root->nmd->fd, NIOCTXSYNC, NULL);
     }
@@ -1186,6 +1189,16 @@ main(int argc, char **argv)
                 }
                 r->rx_ring = NETMAP_RXRING(r->nmd->nifp, 0);
                 r->tx_ring = NETMAP_TXRING(r->nmd->nifp, 0);
+                if (r->rx_ring->num_slots != EXPECTED_NUM_SLOTS) {
+                    printf("Unsupported number of slots (%u vs %u)\n",
+                           r->rx_ring->num_slots, EXPECTED_NUM_SLOTS);
+                    return -1;
+                }
+                if (r->tx_ring->num_slots != EXPECTED_NUM_SLOTS) {
+                    printf("Unsupported number of slots (%u vs %u)\n",
+                           r->tx_ring->num_slots, EXPECTED_NUM_SLOTS);
+                    return -1;
+                }
                 netmap_ring_populate(r->rx_ring);
                 netmap_ring_populate(r->tx_ring);
                 r->nm_slots_pending = 0;
