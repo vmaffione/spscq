@@ -16,12 +16,22 @@ struct mbuf {
     char buf[60];
 };
 
+/* Forward declaration */
+struct traffic_analyzer;
+
+/* Context of a traffic analyzer thread (consumer). */
 struct worker {
+    struct traffic_analyzer *ta;
     pthread_t th;
     struct mbuf *pool;
+    unsigned int mbuf_next;
+    unsigned int pool_mbufs;
     struct Blq *blq;
     struct Iffq *ffq;
 };
+
+typedef void (*enq_t)(struct worker *w, unsigned int batch);
+typedef void (*deq_t)(struct worker *w, unsigned int batch);
 
 struct traffic_analyzer {
     /* Type of spsc queue to be used. */
@@ -33,8 +43,14 @@ struct traffic_analyzer {
     /* Length of each SPSC queue. */
     unsigned int qlen;
 
-    /* Load balancer thread. */
+    /* Load balancer thread (producer). */
     pthread_t lb_th;
+
+    /* Producer work. */
+    enq_t enq;
+
+    /* Consumer work. */
+    deq_t deq;
 
     /* Analyzer threads. */
     struct worker *workers;
@@ -44,6 +60,12 @@ static size_t
 worker_pool_size(struct traffic_analyzer *ta)
 {
     return ALIGNED_SIZE(sizeof(struct mbuf) * ta->qlen * 2);
+}
+
+static size_t
+worker_pool_mbufs(struct traffic_analyzer *ta)
+{
+    return ta->qlen * 2;
 }
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
@@ -60,37 +82,140 @@ szalloc(size_t size)
     return p;
 }
 
-static void
+static const uint8_t bytes[] = {
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x45, 0x10, 0x00, 0x2e, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
+    0x26, 0xad, 0x0a, 0x00, 0x00, 0x01, 0x0a, 0x01, 0x00, 0x01, 0x04, 0xd2,
+    0x04, 0xd2, 0x00, 0x1a, 0x15, 0x80, 0x6e, 0x65, 0x74, 0x6d, 0x61, 0x70,
+    0x20, 0x70, 0x6b, 0x74, 0x2d, 0x67, 0x65, 0x6e, 0x20, 0x44, 0x49, 0x52};
+
+static inline void
 udp_60_bytes_packet_get(struct mbuf *m)
 {
-    const uint8_t bytes[] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x08, 0x00, 0x45, 0x10, 0x00, 0x2e, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
-        0x26, 0xad, 0x0a, 0x00, 0x00, 0x01, 0x0a, 0x01, 0x00, 0x01, 0x04, 0xd2,
-        0x04, 0xd2, 0x00, 0x1a, 0x15, 0x80, 0x6e, 0x65, 0x74, 0x6d, 0x61, 0x70,
-        0x20, 0x70, 0x6b, 0x74, 0x2d, 0x67, 0x65, 0x6e, 0x20, 0x44, 0x49, 0x52};
-
     assert(sizeof(bytes) == 60);
     m->len = sizeof(bytes);
     memcpy(m->buf, bytes, sizeof(m->buf));
 }
 
+static void
+analyze_mbuf(struct mbuf *m)
+{
+    unsigned int sum = 0;
+    int i;
+    int k;
+
+    for (k = 0; k < 5; k++) {
+        for (i = 0; i < m->len; i++) {
+            if (m->buf[i] > 31 + k) {
+                sum += m->buf[i];
+            } else {
+                sum -= m->buf[i];
+            }
+        }
+    }
+    if (sum == 281) {
+        printf("WOW\n");
+    }
+}
+
+/* Enqueue and dequeue wrappers. */
+static void
+lq_enq(struct worker *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (lq_write(w->blq, (uintptr_t)m)) {
+            break;
+        }
+        if (++mbuf_next == w->pool_mbufs) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+}
+
+static void
+lq_deq(struct worker *w, unsigned batch)
+{
+    for (; batch > 0; batch--) {
+        struct mbuf *m = (struct mbuf *)lq_read(w->blq);
+
+        if (m == NULL) {
+            return;
+        }
+        analyze_mbuf(m);
+    }
+}
+
+/*
+static int
+blq_enq(struct worker *w, struct mbuf *m)
+{
+    struct Blq *blq = w->blq;
+    unsigned int wspace = blq_wspace(blq);
+
+    if (wspace == 0) {
+        return -1;
+    }
+
+    blq_write_local(blq, (uintptr_t)m);
+    blq_write_publish(blq);
+
+    return 0;
+}
+
+static struct mbuf *
+blq_deq(struct worker *w)
+{
+    struct Blq *blq = w->blq;
+    unsigned int rspace = blq_rspace(blq);
+    struct mbuf *m;
+
+    if (rspace == 0) {
+        return NULL;
+    }
+
+    m = blq_read_local(blq);
+
+}
+*/
+
 static void *
 lb(void *opaque)
 {
     struct traffic_analyzer *ta = opaque;
-    struct mbuf m;
+    unsigned int num_consumers  = ta->num_analyzers;
+    unsigned int batch          = 1;
+    unsigned int i              = 0;
+    enq_t enq                   = ta->enq;
 
-    udp_60_bytes_packet_get(&m);
-    (void)ta;
+    for (;;) {
+        struct worker *w = ta->workers + i;
+
+        enq(w, batch);
+        if (++i == num_consumers) {
+            i = 0;
+        }
+    }
+
     return NULL;
 }
 
 static void *
 analyze(void *opaque)
 {
-    struct worker *w = opaque;
-    (void)w;
+    struct worker *w   = opaque;
+    enq_t deq          = w->ta->deq;
+    unsigned int batch = 1;
+
+    for (;;) {
+        deq(w, batch);
+    }
+
     return NULL;
 }
 
@@ -169,6 +294,14 @@ main(int argc, char **argv)
 
     qsize = ffq ? iffq_size(ta->qlen) : blq_size(ta->qlen);
 
+    if (!strcmp(ta->qtype, "lq")) {
+        ta->enq = lq_enq;
+        ta->deq = lq_deq;
+    } else if (!strcmp(ta->qtype, "llq")) {
+        ta->enq = lq_enq;
+        ta->deq = lq_deq;
+    }
+
     /*
      * Setup phase.
      */
@@ -195,21 +328,16 @@ main(int argc, char **argv)
 
     ta->workers = szalloc(ta->num_analyzers * sizeof(ta->workers[0]));
 
-    if (pthread_create(&ta->lb_th, NULL, lb, ta)) {
-        printf("pthread_create(lb) failed\n");
-        exit(EXIT_FAILURE);
-    }
-
     {
         char *memory_cursor = memory;
 
         for (i = 0; i < ta->num_analyzers; i++) {
             struct worker *w = ta->workers + i;
-            if (pthread_create(&w->th, NULL, analyze, w)) {
-                printf("pthread_create(worker) failed\n");
-                exit(EXIT_FAILURE);
-            }
-            w->pool = (struct mbuf *)memory_cursor;
+
+            w->ta         = ta;
+            w->pool       = (struct mbuf *)memory_cursor;
+            w->mbuf_next  = 0;
+            w->pool_mbufs = worker_pool_mbufs(ta);
             memory_cursor += worker_pool_size(ta);
             if (!ffq) {
                 w->blq = (struct Blq *)memory_cursor;
@@ -221,6 +349,19 @@ main(int argc, char **argv)
             }
             memory_cursor += qsize;
         }
+    }
+
+    for (i = 0; i < ta->num_analyzers; i++) {
+        struct worker *w = ta->workers + i;
+        if (pthread_create(&w->th, NULL, analyze, w)) {
+            printf("pthread_create(worker) failed\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (pthread_create(&ta->lb_th, NULL, lb, ta)) {
+        printf("pthread_create(lb) failed\n");
+        exit(EXIT_FAILURE);
     }
 
     /*
