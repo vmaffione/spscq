@@ -193,6 +193,96 @@ lq_vswitch(struct client *c, unsigned int batch)
     return count;
 }
 
+static int
+llq_client(struct client *c, struct mbuf *sm)
+{
+    struct mbuf *m;
+
+    while ((m = (struct mbuf *)llq_read(c->blq[RXQ])) != NULL) {
+        mbuf_free(m);
+    }
+
+    return llq_write(c->blq[TXQ], (uintptr_t)sm);
+}
+
+static unsigned int
+llq_vswitch(struct client *c, unsigned int batch)
+{
+    struct mbuf **mbufs = c->vswitch->mbufs;
+    unsigned int count;
+    unsigned int i;
+
+    for (count = 0; count < batch; count++) {
+        mbufs[count] = (struct mbuf *)llq_read(c->blq[TXQ]);
+        if (mbufs[count] == NULL) {
+            break;
+        }
+    }
+
+    for (i = 0; i < count; i++) {
+        struct mbuf *m    = mbufs[i];
+        struct client *dc = dst_client(c, m);
+
+        if (llq_write(dc->blq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+    }
+
+    return count;
+}
+
+static int
+blq_client(struct client *c, struct mbuf *sm)
+{
+    unsigned int rspace = blq_rspace(c->blq[RXQ]);
+
+    for (; rspace > 0; rspace--) {
+        struct mbuf *m = (struct mbuf *)blq_read_local(c->blq[RXQ]);
+        mbuf_free(m);
+    }
+    blq_read_publish(c->blq[RXQ]);
+
+    if (blq_wspace(c->blq[TXQ]) == 0) {
+        return -1;
+    }
+
+    blq_write_local(c->blq[TXQ], (uintptr_t)sm);
+    blq_write_publish(c->blq[TXQ]);
+
+    return 0;
+}
+
+static unsigned int
+blq_vswitch(struct client *c, unsigned int batch)
+{
+    struct mbuf **mbufs = c->vswitch->mbufs;
+    unsigned int rspace = blq_rspace(c->blq[TXQ]);
+    unsigned int i;
+
+    if (batch > rspace) {
+        batch = rspace;
+    }
+
+    for (i = 0; i < batch; i++) {
+        mbufs[i] = (struct mbuf *)blq_read_local(c->blq[TXQ]);
+    }
+    blq_read_publish(c->blq[TXQ]);
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m    = mbufs[i];
+        struct client *dc = dst_client(c, m);
+        struct Blq *dblq  = dc->blq[RXQ];
+
+        if (blq_wspace(dblq) == 0) {
+            mbuf_free(m);
+        }
+        blq_write_local(dblq, (uintptr_t)m);
+        blq_write_publish(dblq);
+    }
+
+    return batch;
+}
+
 /*
  * Body of vswitch and clients.
  */
@@ -426,13 +516,13 @@ main(int argc, char **argv)
     if (!strcmp(ce->qtype, "lq")) {
         ce->vswitch_func = lq_vswitch;
         ce->client_func  = lq_client;
-#if 0
     } else if (!strcmp(ce->qtype, "llq")) {
         ce->vswitch_func = llq_vswitch;
         ce->client_func  = llq_client;
     } else if (!strcmp(ce->qtype, "blq")) {
         ce->vswitch_func = blq_vswitch;
         ce->client_func  = blq_client;
+#if 0
     } else if (!strcmp(ce->qtype, "ffq")) {
         ce->vswitch_func = ffq_vswitch;
         ce->client_func  = ffq_client;
