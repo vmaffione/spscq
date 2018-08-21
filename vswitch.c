@@ -284,6 +284,84 @@ blq_vswitch(struct client *c, unsigned int batch)
     return batch;
 }
 
+static int
+ffq_client(struct client *c, struct mbuf *sm)
+{
+    struct mbuf *m;
+
+    while ((m = (struct mbuf *)ffq_read(c->ffq[RXQ])) != NULL) {
+        mbuf_free(m);
+    }
+
+    return ffq_write(c->ffq[TXQ], (uintptr_t)sm);
+}
+
+static unsigned int
+ffq_vswitch(struct client *c, unsigned int batch)
+{
+    struct mbuf **mbufs = c->vswitch->mbufs;
+    unsigned int count;
+    unsigned int i;
+
+    for (count = 0; count < batch; count++) {
+        mbufs[count] = (struct mbuf *)ffq_read(c->ffq[TXQ]);
+        if (mbufs[count] == NULL) {
+            break;
+        }
+    }
+
+    for (i = 0; i < count; i++) {
+        struct mbuf *m    = mbufs[i];
+        struct client *dc = dst_client(c, m);
+
+        if (ffq_write(dc->ffq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+    }
+
+    return count;
+}
+
+static int
+iffq_client(struct client *c, struct mbuf *sm)
+{
+    struct mbuf *m;
+
+    while ((m = (struct mbuf *)iffq_extract(c->ffq[RXQ])) != NULL) {
+        mbuf_free(m);
+    }
+    iffq_clear(c->ffq[RXQ]);
+
+    return iffq_insert(c->ffq[TXQ], (uintptr_t)sm);
+}
+
+static unsigned int
+iffq_vswitch(struct client *c, unsigned int batch)
+{
+    struct mbuf **mbufs = c->vswitch->mbufs;
+    unsigned int count;
+    unsigned int i;
+
+    for (count = 0; count < batch; count++) {
+        mbufs[count] = (struct mbuf *)iffq_extract(c->ffq[TXQ]);
+        if (mbufs[count] == NULL) {
+            break;
+        }
+    }
+    iffq_clear(c->ffq[TXQ]);
+
+    for (i = 0; i < count; i++) {
+        struct mbuf *m    = mbufs[i];
+        struct client *dc = dst_client(c, m);
+
+        if (iffq_insert(dc->ffq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+    }
+
+    return count;
+}
+
 /*
  * Body of vswitch and clients.
  */
@@ -523,7 +601,6 @@ main(int argc, char **argv)
     } else if (!strcmp(ce->qtype, "blq")) {
         ce->vswitch_func = blq_vswitch;
         ce->client_func  = blq_client;
-#if 0
     } else if (!strcmp(ce->qtype, "ffq")) {
         ce->vswitch_func = ffq_vswitch;
         ce->client_func  = ffq_client;
@@ -531,9 +608,10 @@ main(int argc, char **argv)
         ce->vswitch_func = iffq_vswitch;
         ce->client_func  = iffq_client;
     } else if (!strcmp(ce->qtype, "biffq")) {
-        ce->vswitch_func = biffq_vswitch;
+        /* No reason to use biffq, as this program only
+         * batches on reads (and not on writes). */
+        ce->vswitch_func = iffq_vswitch;
         ce->client_func  = iffq_client;
-#endif
     }
 
     /*
