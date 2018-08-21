@@ -404,8 +404,7 @@ iffq_insert_publish(struct Iffq *ffq)
 {
     unsigned int i;
 
-    for (i = 0; i < ffq->prod_cache_write;
-         i++, ffq->prod_write++) {
+    for (i = 0; i < ffq->prod_cache_write; i++, ffq->prod_write++) {
         ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) =
             ffq->prod_cache[i];
     }

@@ -21,7 +21,7 @@ struct mbuf {
 struct traffic_analyzer;
 
 /* Context of a traffic analyzer thread (consumer). */
-struct worker {
+struct consumer {
     struct traffic_analyzer *ta;
     pthread_t th;
     struct mbuf *pool;
@@ -31,12 +31,22 @@ struct worker {
     struct Iffq *ffq;
 };
 
-typedef unsigned int (*enq_t)(struct worker *w, unsigned int batch);
-typedef void (*deq_t)(struct worker *w, unsigned int batch);
+struct producer {
+    struct traffic_analyzer *ta;
+    pthread_t th;
+    unsigned int first_analyzer;
+    unsigned int num_analyzers;
+};
+
+typedef unsigned int (*enq_t)(struct consumer *w, unsigned int batch);
+typedef void (*deq_t)(struct consumer *w, unsigned int batch);
 
 struct traffic_analyzer {
     /* Type of spsc queue to be used. */
     const char *qtype;
+
+    /* Number of (producer) threads performing load balancing. */
+    unsigned int num_load_balancers;
 
     /* Number of (consumer) threads performing traffic analysis. */
     unsigned int num_analyzers;
@@ -47,9 +57,6 @@ struct traffic_analyzer {
     /* Batch size (in packets) for producer and consumer operation. */
     unsigned int batch;
 
-    /* Load balancer thread (producer). */
-    pthread_t lb_th;
-
     /* Producer work. */
     enq_t enq;
 
@@ -57,17 +64,20 @@ struct traffic_analyzer {
     deq_t deq;
 
     /* Analyzer threads. */
-    struct worker *workers;
+    struct consumer *consumers;
+
+    /* Load balancer threads. */
+    struct producer *producers;
 };
 
 static size_t
-worker_pool_size(struct traffic_analyzer *ta)
+consumer_pool_size(struct traffic_analyzer *ta)
 {
     return ALIGNED_SIZE(sizeof(struct mbuf) * ta->qlen * 2);
 }
 
 static size_t
-worker_pool_mbufs(struct traffic_analyzer *ta)
+consumer_pool_mbufs(struct traffic_analyzer *ta)
 {
     return ta->qlen * 2;
 }
@@ -127,7 +137,7 @@ analyze_mbuf(struct mbuf *m)
  */
 
 static unsigned int
-lq_enq(struct worker *w, unsigned int batch)
+lq_enq(struct consumer *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -149,7 +159,7 @@ lq_enq(struct worker *w, unsigned int batch)
 }
 
 static void
-lq_deq(struct worker *w, unsigned batch)
+lq_deq(struct consumer *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)lq_read(w->blq);
@@ -162,7 +172,7 @@ lq_deq(struct worker *w, unsigned batch)
 }
 
 static unsigned int
-llq_enq(struct worker *w, unsigned int batch)
+llq_enq(struct consumer *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -184,7 +194,7 @@ llq_enq(struct worker *w, unsigned int batch)
 }
 
 static void
-llq_deq(struct worker *w, unsigned batch)
+llq_deq(struct consumer *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)llq_read(w->blq);
@@ -197,7 +207,7 @@ llq_deq(struct worker *w, unsigned batch)
 }
 
 static unsigned int
-blq_enq(struct worker *w, unsigned int batch)
+blq_enq(struct consumer *w, unsigned int batch)
 {
     struct Blq *blq        = w->blq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -225,7 +235,7 @@ blq_enq(struct worker *w, unsigned int batch)
 }
 
 static void
-blq_deq(struct worker *w, unsigned batch)
+blq_deq(struct consumer *w, unsigned batch)
 {
     struct Blq *blq     = w->blq;
     unsigned int rspace = blq_rspace(blq);
@@ -241,7 +251,7 @@ blq_deq(struct worker *w, unsigned batch)
 }
 
 static unsigned int
-ffq_enq(struct worker *w, unsigned int batch)
+ffq_enq(struct consumer *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -263,7 +273,7 @@ ffq_enq(struct worker *w, unsigned int batch)
 }
 
 static void
-ffq_deq(struct worker *w, unsigned batch)
+ffq_deq(struct consumer *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)ffq_read(w->ffq);
@@ -276,7 +286,7 @@ ffq_deq(struct worker *w, unsigned batch)
 }
 
 static unsigned int
-iffq_enq(struct worker *w, unsigned int batch)
+iffq_enq(struct consumer *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -298,7 +308,7 @@ iffq_enq(struct worker *w, unsigned int batch)
 }
 
 static void
-iffq_deq(struct worker *w, unsigned batch)
+iffq_deq(struct consumer *w, unsigned batch)
 {
     struct Iffq *ffq = w->ffq;
 
@@ -314,7 +324,7 @@ iffq_deq(struct worker *w, unsigned batch)
 }
 
 static unsigned int
-biffq_enq(struct worker *w, unsigned int batch)
+biffq_enq(struct consumer *w, unsigned int batch)
 {
     struct Iffq *ffq       = w->ffq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -346,17 +356,19 @@ static int stop = 0;
 static void *
 lb(void *opaque)
 {
-    struct traffic_analyzer *ta = opaque;
-    unsigned int num_consumers  = ta->num_analyzers;
-    unsigned int batch          = ta->batch;
-    unsigned int i              = 0;
-    enq_t enq                   = ta->enq;
-    unsigned long long count    = 0;
+    struct producer *p              = opaque;
+    struct consumer *first_consumer = p->ta->consumers + p->first_analyzer;
+    unsigned int num_consumers      = p->num_analyzers;
+    unsigned int batch              = p->ta->batch;
+    enq_t enq                       = p->ta->enq;
+    unsigned int i                  = 0;
+    unsigned long long count        = 0;
     struct timespec t_start, t_end;
 
+    printf("FC %u NC %u\n", p->first_analyzer, p->num_analyzers);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
-        struct worker *w = ta->workers + i;
+        struct consumer *w = first_consumer + i;
 
         count += enq(w, batch);
         if (++i == num_consumers) {
@@ -378,7 +390,7 @@ lb(void *opaque)
 static void *
 analyze(void *opaque)
 {
-    struct worker *w   = opaque;
+    struct consumer *w = opaque;
     deq_t deq          = w->ta->deq;
     unsigned int batch = w->ta->batch;
 
@@ -401,6 +413,7 @@ usage(const char *progname)
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
            "    [-n NUM_ANALYZERS = 2]\n"
+           "    [-N NUM_LOAD_BALANCERS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b BATCH_LENGTH = 8]\n",
@@ -432,13 +445,14 @@ main(int argc, char **argv)
     }
 
     memset(ta, 0, sizeof(*ta));
-    ta->num_analyzers = 2;
-    ta->qlen          = 256;
-    ta->qtype         = "lq";
-    ta->batch         = 8;
-    ffq               = 0;
+    ta->num_load_balancers = 1;
+    ta->num_analyzers      = 2;
+    ta->qlen               = 256;
+    ta->qtype              = "lq";
+    ta->batch              = 8;
+    ffq                    = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -448,6 +462,14 @@ main(int argc, char **argv)
             ta->num_analyzers = atoi(optarg);
             if (ta->num_analyzers == 0 || ta->num_analyzers > 1000) {
                 printf("    Invalid number of analyzers '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'N':
+            ta->num_load_balancers = atoi(optarg);
+            if (ta->num_load_balancers == 0 || ta->num_load_balancers > 1000) {
+                printf("    Invalid number of load balancers '%s'\n", optarg);
                 return -1;
             }
             break;
@@ -490,6 +512,12 @@ main(int argc, char **argv)
         }
     }
 
+    if (ta->num_load_balancers > ta->num_analyzers) {
+        printf("Invalid parameters: num_analyzers must be "
+               ">= num_load_balancers\n");
+        return -1;
+    }
+
     qsize = ffq ? iffq_size(ta->qlen) : blq_size(ta->qlen);
 
     if (!strcmp(ta->qtype, "lq")) {
@@ -518,7 +546,7 @@ main(int argc, char **argv)
     {
         int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 
-        memory_size = ta->num_analyzers * (worker_pool_size(ta) + qsize);
+        memory_size = ta->num_analyzers * (consumer_pool_size(ta) + qsize);
         printf("Allocating %lu bytes\n", (long unsigned int)memory_size);
         for (;;) {
             memory = mmap(NULL, memory_size, PROT_WRITE | PROT_READ, mmap_flags,
@@ -536,19 +564,20 @@ main(int argc, char **argv)
         }
     }
 
-    ta->workers = szalloc(ta->num_analyzers * sizeof(ta->workers[0]));
+    ta->consumers = szalloc(ta->num_analyzers * sizeof(ta->consumers[0]));
+    ta->producers = szalloc(ta->num_load_balancers * sizeof(ta->producers[0]));
 
     {
         char *memory_cursor = memory;
 
         for (i = 0; i < ta->num_analyzers; i++) {
-            struct worker *w = ta->workers + i;
+            struct consumer *w = ta->consumers + i;
 
             w->ta         = ta;
             w->pool       = (struct mbuf *)memory_cursor;
             w->mbuf_next  = 0;
-            w->pool_mbufs = worker_pool_mbufs(ta);
-            memory_cursor += worker_pool_size(ta);
+            w->pool_mbufs = consumer_pool_mbufs(ta);
+            memory_cursor += consumer_pool_size(ta);
             if (!ffq) {
                 w->blq = (struct Blq *)memory_cursor;
                 blq_init(w->blq, ta->qlen);
@@ -561,36 +590,63 @@ main(int argc, char **argv)
         }
     }
 
+    {
+        unsigned int stride        = ta->num_analyzers / ta->num_load_balancers;
+        unsigned int next_analyzer = 0;
+
+        for (i = 0; i < ta->num_load_balancers; i++) {
+            struct producer *p = ta->producers + i;
+
+            p->ta             = ta;
+            p->first_analyzer = next_analyzer;
+            p->num_analyzers  = (i + 1 == ta->num_load_balancers)
+                                   ? (ta->num_analyzers - next_analyzer)
+                                   : stride;
+            next_analyzer += p->num_analyzers;
+        }
+    }
+
     for (i = 0; i < ta->num_analyzers; i++) {
-        struct worker *w = ta->workers + i;
+        struct consumer *w = ta->consumers + i;
+
         if (pthread_create(&w->th, NULL, analyze, w)) {
-            printf("pthread_create(worker) failed\n");
+            printf("pthread_create(consumer) failed\n");
             exit(EXIT_FAILURE);
         }
     }
 
-    if (pthread_create(&ta->lb_th, NULL, lb, ta)) {
-        printf("pthread_create(lb) failed\n");
-        exit(EXIT_FAILURE);
+    for (i = 0; i < ta->num_load_balancers; i++) {
+        struct producer *p = ta->producers + i;
+
+        if (pthread_create(&p->th, NULL, lb, p)) {
+            printf("pthread_create(lb) failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     /*
      * Teardown phase.
      */
-    for (i = 0; i < ta->num_analyzers; i++) {
-        struct worker *w = ta->workers + i;
-        if (pthread_join(w->th, NULL)) {
-            printf("pthread_join(worker) failed\n");
+    for (i = 0; i < ta->num_load_balancers; i++) {
+        struct producer *p = ta->producers + i;
+
+        if (pthread_join(p->th, NULL)) {
+            printf("pthread_join(producer) failed\n");
             exit(EXIT_FAILURE);
         }
     }
 
-    if (pthread_join(ta->lb_th, NULL)) {
-        printf("pthread_join(lb) failed\n");
-        exit(EXIT_FAILURE);
+    for (i = 0; i < ta->num_analyzers; i++) {
+        struct consumer *w = ta->consumers + i;
+
+        if (pthread_join(w->th, NULL)) {
+            printf("pthread_join(consumer) failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
-    free(ta->workers);
+    free(ta->consumers);
+    free(ta->producers);
     munmap(memory, memory_size);
 
     return 0;
