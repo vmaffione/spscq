@@ -467,7 +467,7 @@ usage(const char *progname)
            "    [-n NUM_VSWITCHES = 2]\n"
            "    [-N NUM_CLIENTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
-           "    [-m MBUF_LEN = 256]\n"
+           "    [-m MBUF_LEN = 60]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b VSWITCH_BATCH = 8]\n"
            "    [-b CLIENT_BATCH = 8]\n"
