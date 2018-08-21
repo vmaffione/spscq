@@ -329,9 +329,10 @@ iffq_init(struct Iffq *ffq, unsigned int entries, unsigned int line_size,
     ffq->line_entries = entries_per_line;
     ffq->line_mask    = ~(entries_per_line - 1);
     ffq->entry_mask   = entries - 1;
-
+#if 0
     printf("iffq: line_entries %u line_mask %x entry_mask %x\n",
            ffq->line_entries, ffq->line_mask, ffq->entry_mask);
+#endif
 
     ffq->cons_clear       = 0;
     ffq->cons_read        = ffq->line_entries;

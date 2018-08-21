@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #include <arpa/inet.h>
+#include <sys/sysinfo.h>
 
 #include "mlib.h"
 #include "spscq.h"
@@ -85,7 +86,7 @@ struct vswitch_experiment {
     const char *qtype;
 
     /* Number of (vswitch) threads performing load balancing or transmission. */
-    unsigned int num_vswitchs;
+    unsigned int num_vswitches;
 
     /* Number of (client) threads performing traffic analysis or sender clients.
      */
@@ -93,6 +94,9 @@ struct vswitch_experiment {
 
     /* Length of each SPSC queue. */
     unsigned int qlen;
+
+    /* Boolean: should we pin threads to cores? */
+    int pin_threads;
 
     /* Length of each mbuf IP payload. */
     unsigned iplen;
@@ -111,7 +115,7 @@ struct vswitch_experiment {
     struct client *clients;
 
     /* Root nodes. */
-    struct vswitch *vswitchs;
+    struct vswitch *vswitches;
 
     /* Microseconds for sender usleep(). */
     unsigned int client_usleep;
@@ -374,7 +378,7 @@ vswitch_worker(void *opaque)
 {
     struct vswitch *p           = opaque;
     struct client *first_client = p->ce->clients + p->first_client;
-    unsigned vswitch_idx        = (unsigned int)(p - p->ce->vswitchs);
+    unsigned vswitch_idx        = (unsigned int)(p - p->ce->vswitches);
     unsigned int num_clients    = p->num_clients;
     unsigned int batch          = p->ce->vswitch_batch;
     vswitch_func_t vswitch_func = p->ce->vswitch_func;
@@ -457,7 +461,8 @@ usage(const char *progname)
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b ROOT_BATCH = 8]\n"
            "    [-b LEAF_BATCH = 8]\n"
-           "    [-u SENDER_USLEEP = 50]\n",
+           "    [-u SENDER_USLEEP = 50]\n"
+           "    [-p (pin theads to cores)\n",
            progname);
 }
 
@@ -487,7 +492,7 @@ main(int argc, char **argv)
     }
 
     memset(ce, 0, sizeof(*ce));
-    ce->num_vswitchs  = 1;
+    ce->num_vswitches = 1;
     ce->num_clients   = 2;
     ce->qlen          = 128;
     ce->iplen         = 60;
@@ -495,9 +500,10 @@ main(int argc, char **argv)
     ce->vswitch_batch = 8;
     ce->client_batch  = 1;
     ce->client_usleep = 50;
+    ce->pin_threads   = 0;
     ffq               = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:p")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -512,8 +518,8 @@ main(int argc, char **argv)
             break;
 
         case 'N':
-            ce->num_vswitchs = atoi(optarg);
-            if (ce->num_vswitchs == 0 || ce->num_vswitchs > 1000) {
+            ce->num_vswitches = atoi(optarg);
+            if (ce->num_vswitches == 0 || ce->num_vswitches > 1000) {
                 printf("    Invalid number of load balancers '%s'\n", optarg);
                 return -1;
             }
@@ -575,6 +581,10 @@ main(int argc, char **argv)
             }
             break;
 
+        case 'p':
+            ce->pin_threads = 1;
+            break;
+
         default:
             usage(argv[0]);
             return 0;
@@ -582,9 +592,9 @@ main(int argc, char **argv)
         }
     }
 
-    if (ce->num_vswitchs > ce->num_clients) {
+    if (ce->num_vswitches > ce->num_clients) {
         printf("Invalid parameters: num_clients must be "
-               ">= num_vswitchs\n");
+               ">= num_vswitches\n");
         return -1;
     }
 
@@ -639,8 +649,8 @@ main(int argc, char **argv)
         }
     }
 
-    ce->clients  = szalloc(ce->num_clients * sizeof(ce->clients[0]));
-    ce->vswitchs = szalloc(ce->num_vswitchs * sizeof(ce->vswitchs[0]));
+    ce->clients   = szalloc(ce->num_clients * sizeof(ce->clients[0]));
+    ce->vswitches = szalloc(ce->num_vswitches * sizeof(ce->vswitches[0]));
 
     {
         char *memory_cursor = memory;
@@ -667,12 +677,12 @@ main(int argc, char **argv)
 
     {
         unsigned int stride =
-            (ce->num_clients + ce->num_vswitchs - 1) / ce->num_vswitchs;
-        unsigned int overflow    = stride * ce->num_vswitchs - ce->num_clients;
+            (ce->num_clients + ce->num_vswitches - 1) / ce->num_vswitches;
+        unsigned int overflow    = stride * ce->num_vswitches - ce->num_clients;
         unsigned int next_client = 0;
 
-        for (i = 0; i < ce->num_vswitchs; i++) {
-            struct vswitch *p = ce->vswitchs + i;
+        for (i = 0; i < ce->num_vswitches; i++) {
+            struct vswitch *p = ce->vswitches + i;
             int j;
             p->ce           = ce;
             p->first_client = next_client;
@@ -695,8 +705,8 @@ main(int argc, char **argv)
         }
     }
 
-    for (i = 0; i < ce->num_vswitchs; i++) {
-        struct vswitch *p = ce->vswitchs + i;
+    for (i = 0; i < ce->num_vswitches; i++) {
+        struct vswitch *p = ce->vswitches + i;
 
         if (pthread_create(&p->th, NULL, vswitch_worker, p)) {
             printf("pthread_create(vswitch) failed\n");
@@ -709,8 +719,8 @@ main(int argc, char **argv)
     /*
      * Teardown phase.
      */
-    for (i = 0; i < ce->num_vswitchs; i++) {
-        struct vswitch *p = ce->vswitchs + i;
+    for (i = 0; i < ce->num_vswitches; i++) {
+        struct vswitch *p = ce->vswitches + i;
 
         if (pthread_join(p->th, NULL)) {
             printf("pthread_join(vswitch) failed\n");
@@ -730,8 +740,8 @@ main(int argc, char **argv)
     {
         double tot_mpps = 0.0;
 
-        for (i = 0; i < ce->num_vswitchs; i++) {
-            struct vswitch *p = ce->vswitchs + i;
+        for (i = 0; i < ce->num_vswitches; i++) {
+            struct vswitch *p = ce->vswitches + i;
 
             tot_mpps += p->mpps;
         }
@@ -740,7 +750,7 @@ main(int argc, char **argv)
     }
 
     free(ce->clients);
-    free(ce->vswitchs);
+    free(ce->vswitches);
     munmap(memory, memory_size);
 
     return 0;
