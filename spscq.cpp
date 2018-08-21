@@ -53,6 +53,7 @@ szalloc(size_t size, bool hugepages)
             printf("mmap allocation failure: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
+        assert(reinterpret_cast<uint64_t>(p) % ALIGN_SIZE == 0);
     } else {
         int ret = posix_memalign(&p, ALIGN_SIZE, size);
         if (ret) {
