@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <signal.h>
 #include <sys/prctl.h>
+#include <poll.h>
 
 //#define WITH_NETMAP
 #ifdef WITH_NETMAP
@@ -35,6 +36,7 @@ struct root {
     unsigned int num_leaves;
     struct mbuf sink[1];
 #ifdef WITH_NETMAP
+    struct nm_desc *nmd;
     struct netmap_ring *rx_ring;
     struct netmap_ring *tx_ring;
     unsigned int rx_slots_to_return;
@@ -76,10 +78,6 @@ struct experiment {
 
     /* Netmap interface name and other info. */
     const char *netmap_ifname;
-#ifdef WITH_NETMAP
-    int nmfd;
-    struct netmap_if *nifp;
-#endif /* WITH_NETMAP */
 
     /* Batch size (in packets) for root and leaf operation. */
     unsigned int root_batch;
@@ -99,6 +97,8 @@ struct experiment {
 
     /* Microseconds for leaf usleep(). */
     unsigned int leaf_usleep;
+
+    pthread_t netmap_gen_th;
 };
 
 static size_t
@@ -135,7 +135,7 @@ timerslack_reset(void)
     }
 }
 
-static const uint8_t bytes[] = {
+static const uint8_t template_pkt_bytes[] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x08, 0x00, 0x45, 0x10, 0x00, 0x2e, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
     0x26, 0xad, 0x0a, 0x00, 0x00, 0x01, 0x0a, 0x01, 0x00, 0x01, 0x04, 0xd2,
@@ -145,36 +145,41 @@ static const uint8_t bytes[] = {
 static inline void
 leaf_packet_get(struct mbuf *m)
 {
-    assert(sizeof(bytes) == 60);
-    m->len = sizeof(bytes);
-    memcpy(m->buf, bytes, sizeof(m->buf));
+    assert(sizeof(template_pkt_bytes) == 60);
+    m->len = sizeof(template_pkt_bytes);
+    memcpy(m->buf, template_pkt_bytes, sizeof(m->buf));
 }
 
 #ifdef WITH_NETMAP
-static inline void
+static inline int
 root_packet_get(struct root *root, struct mbuf *m)
 {
     struct netmap_ring *ring = root->rx_ring;
     unsigned int head        = ring->head;
 
-    while (nm_ring_empty(ring)) {
-        ioctl(root->ce->nmfd, NIOCRXSYNC, NULL);
+    if (unlikely(nm_ring_empty(ring))) {
+        ioctl(root->nmd->fd, NIOCRXSYNC, NULL);
         root->rx_slots_to_return = 0;
+        if (unlikely(nm_ring_empty(ring))) {
+            return -1;
+        }
     }
     memcpy(m->buf, NETMAP_BUF(ring, ring->slot[head].buf_idx), sizeof(m->buf));
     m->len     = sizeof(m->buf);
     ring->head = ring->cur = nm_ring_next(ring, head);
     if (unlikely(++root->rx_slots_to_return >= 512)) {
         root->rx_slots_to_return = 0;
-        ioctl(root->ce->nmfd, NIOCRXSYNC, NULL);
+        ioctl(root->nmd->fd, NIOCRXSYNC, NULL);
     }
+    return 0;
 }
 #else  /* !WITH_NETMAP */
-static inline void
+static inline int
 root_packet_get(struct root *root, struct mbuf *m)
 {
     (void)root;
     leaf_packet_get(m);
+    return 0;
 }
 #endif /* !WITH_NETMAP */
 static void
@@ -212,7 +217,9 @@ lq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         if (lq_write(w->blq, (uintptr_t)m)) {
             break;
         }
@@ -248,7 +255,9 @@ llq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         if (llq_write(w->blq, (uintptr_t)m)) {
             break;
         }
@@ -290,7 +299,9 @@ blq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         blq_write_local(blq, (uintptr_t)m);
         if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
@@ -329,7 +340,9 @@ ffq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         if (ffq_write(w->ffq, (uintptr_t)m)) {
             break;
         }
@@ -365,7 +378,9 @@ iffq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         if (iffq_insert(w->ffq, (uintptr_t)m)) {
             break;
         }
@@ -410,7 +425,9 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
     for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
-        root_packet_get(root, m);
+        if (unlikely(root_packet_get(root, m))) {
+            break;
+        }
         iffq_insert_local(ffq, (uintptr_t)m);
         if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
@@ -722,6 +739,84 @@ leaf_worker(void *opaque)
     return NULL;
 }
 
+#ifdef WITH_NETMAP
+static void
+netmap_ring_populate(struct netmap_ring *ring)
+{
+    int i;
+
+    for (i = 0; i < ring->num_slots; i++) {
+        struct netmap_slot *slot = ring->slot + i;
+
+        slot->len = sizeof(template_pkt_bytes);
+        memcpy(NETMAP_BUF(ring, slot->buf_idx), template_pkt_bytes,
+               sizeof(template_pkt_bytes));
+    }
+}
+
+static void *
+netmap_tx_worker(void *opaque)
+{
+    struct experiment *ce = opaque;
+    unsigned int n        = ce->num_roots;
+    struct nm_desc **nmds = szalloc(n * sizeof(struct nmd *));
+    struct pollfd *pfds   = szalloc(n * sizeof(struct pollfd));
+    int i;
+
+    /* Open a pipe for each root, prepare the poll() input array, and
+     * populate all the netmap buffers. */
+    for (i = 0; i < n; i++) {
+        char ifname[128];
+
+        snprintf(ifname, sizeof(ifname), "%s{%d", ce->netmap_ifname, i);
+        nmds[i] = nm_open(ifname, NULL, 0, NULL);
+        if (!nmds[i]) {
+            printf("Failed to nm_open(%s)\n", ifname);
+            exit(EXIT_FAILURE);
+        }
+        pfds[i].events = POLLOUT;
+        pfds[i].fd     = nmds[i]->fd;
+        netmap_ring_populate(NETMAP_TXRING(nmds[i]->nifp, 0));
+        netmap_ring_populate(NETMAP_RXRING(nmds[i]->nifp, 0));
+    }
+
+    while (!ACCESS_ONCE(stop)) {
+        /* In each iteration, poll the TX rings waiting for more
+         * transmit space. */
+        int ret = poll(pfds, n, 200 /*ms*/);
+
+        if (unlikely(ret <= 0)) {
+            if (ret < 0) {
+                perror("poll");
+                exit(EXIT_FAILURE);
+            }
+            continue;
+        }
+
+        for (i = 0; i < n; i++) {
+            struct netmap_ring *ring = NETMAP_TXRING(nmds[i]->nifp, 0);
+
+            if (nm_ring_empty(ring)) {
+                /* This TX ring is already full, so we have nothing to do. */
+                continue;
+            }
+
+            /* Advance the ring pointers, exposing the already populated
+             * buffers. */
+            ring->head = ring->cur = ring->tail;
+            ioctl(nmds[i]->fd, NIOCTXSYNC, NULL);
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        nm_close(nmds[i]);
+    }
+    free(nmds);
+
+    return NULL;
+}
+#endif /* WITH_NETMAP */
+
 /* A function to measure the cost of analyze_mbuf(). */
 static void
 analyzer_benchmark(void)
@@ -804,11 +899,7 @@ main(int argc, char **argv)
     ce->root_batch = ce->leaf_batch = 8;
     ce->leaf_usleep                 = 0;
     ce->netmap_ifname               = NULL;
-#ifdef WITH_NETMAP
-    ce->nmfd = -1;
-    ce->nifp = NULL;
-#endif /* WITH_NETMAP */
-    ffq = 0;
+    ffq                             = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:")) != -1) {
         switch (opt) {
@@ -973,64 +1064,6 @@ main(int argc, char **argv)
         usage(argv[0]);
         return -1;
     }
-    {
-        struct nmreq_register req;
-        struct nmreq_header hdr;
-        void *nm_mem;
-
-        ce->nmfd = open("/dev/netmap", O_RDWR);
-        if (ce->nmfd < 0) {
-            perror("open(/dev/netmap)");
-            return -1;
-        }
-
-        memset(&hdr, 0, sizeof(hdr));
-        hdr.nr_version = NETMAP_API;
-        snprintf(hdr.nr_name, sizeof(hdr.nr_name), "%s}%s", ce->netmap_ifname,
-                 "x");
-        strncpy(hdr.nr_name, ce->netmap_ifname, sizeof(hdr.nr_name) - 1);
-        hdr.nr_reqtype = NETMAP_REQ_REGISTER;
-        hdr.nr_body    = (uintptr_t)&req;
-        hdr.nr_options = (uintptr_t)NULL;
-
-        memset(&req, 0, sizeof(req));
-        req.nr_mem_id     = 1; /* global allocator */
-        req.nr_mode       = NR_REG_ALL_NIC;
-        req.nr_ringid     = 0;
-        req.nr_flags      = 0;
-        req.nr_tx_slots   = 1024;
-        req.nr_rx_slots   = 1024;
-        req.nr_tx_rings   = ce->num_roots;
-        req.nr_rx_rings   = ce->num_roots;
-        req.nr_extra_bufs = 0;
-        if (ioctl(ce->nmfd, NIOCCTRL, &hdr)) {
-            perror("ioctl(/dev/netmap, NIOCCTRL, REGISTER)");
-            return -1;
-        }
-        printf("nr_offset 0x%lx\n", req.nr_offset);
-        printf("nr_memsize %lu\n", req.nr_memsize);
-        printf("nr_tx_slots %u\n", req.nr_tx_slots);
-        printf("nr_rx_slots %u\n", req.nr_rx_slots);
-        printf("nr_tx_rings %u\n", req.nr_tx_rings);
-        printf("nr_rx_rings %u\n", req.nr_rx_rings);
-        printf("nr_mem_id %u\n", req.nr_mem_id);
-        printf("nr_extra_bufs %u\n", req.nr_extra_bufs);
-
-        if (req.nr_tx_rings != ce->num_roots ||
-            req.nr_rx_rings != ce->num_roots) {
-            printf(
-                "Could not get the necessary number of TX/RX netmap rings\n");
-            return -1;
-        }
-
-        nm_mem = mmap(0, req.nr_memsize, PROT_WRITE | PROT_READ, MAP_SHARED,
-                      ce->nmfd, 0);
-        if (nm_mem == MAP_FAILED) {
-            perror("mmap(/dev/netmap) failed");
-            return -1;
-        }
-        ce->nifp = NETMAP_IF(nm_mem, req.nr_offset);
-    }
 #endif /* WITH_NETMAP */
 
     {
@@ -1087,26 +1120,43 @@ main(int argc, char **argv)
         unsigned int next_leaf = 0;
 
         for (i = 0; i < ce->num_roots; i++) {
-            struct root *p = ce->roots + i;
+            struct root *r = ce->roots + i;
             int j;
 
-            p->ce         = ce;
-            p->first_leaf = next_leaf;
-            p->num_leaves = (i < overflow) ? (stride - 1) : stride;
-            next_leaf += p->num_leaves;
-            for (j = 0; j < p->num_leaves; j++) {
-                struct leaf *l = ce->leaves + p->first_leaf + j;
-                l->root        = p;
+            r->ce         = ce;
+            r->first_leaf = next_leaf;
+            r->num_leaves = (i < overflow) ? (stride - 1) : stride;
+            next_leaf += r->num_leaves;
+            for (j = 0; j < r->num_leaves; j++) {
+                struct leaf *l = ce->leaves + r->first_leaf + j;
+                l->root        = r;
             }
 #ifdef WITH_NETMAP
-            if (ce->nifp) {
-                p->rx_ring            = NETMAP_RXRING(ce->nifp, i);
-                p->tx_ring            = NETMAP_TXRING(ce->nifp, i);
-                p->rx_slots_to_return = 0;
+            {
+                char ifname[128];
+
+                snprintf(ifname, sizeof(ifname), "%s}%d", ce->netmap_ifname, i);
+                r->nmd = nm_open(ifname, NULL, 0, NULL);
+                if (!r->nmd) {
+                    printf("Failed to nm_open(%s)\n", ifname);
+                    return -1;
+                }
+                r->rx_ring = NETMAP_RXRING(r->nmd->nifp, 0);
+                r->tx_ring = NETMAP_TXRING(r->nmd->nifp, 0);
+                netmap_ring_populate(r->rx_ring);
+                netmap_ring_populate(r->tx_ring);
+                r->rx_slots_to_return = 0;
             }
 #endif /* WITH_NETMAP */
         }
     }
+
+#ifdef WITH_NETMAP
+    if (pthread_create(&ce->netmap_gen_th, NULL, netmap_tx_worker, ce)) {
+        printf("pthread_create(netmap_gen) failed\n");
+        exit(EXIT_FAILURE);
+    }
+#endif /* WITH_NETMAP */
 
     for (i = 0; i < ce->num_leaves; i++) {
         struct leaf *w = ce->leaves + i;
@@ -1118,9 +1168,9 @@ main(int argc, char **argv)
     }
 
     for (i = 0; i < ce->num_roots; i++) {
-        struct root *p = ce->roots + i;
+        struct root *r = ce->roots + i;
 
-        if (pthread_create(&p->th, NULL, root_worker, p)) {
+        if (pthread_create(&r->th, NULL, root_worker, r)) {
             printf("pthread_create(root) failed\n");
             exit(EXIT_FAILURE);
         }
@@ -1132,9 +1182,9 @@ main(int argc, char **argv)
      * Teardown phase.
      */
     for (i = 0; i < ce->num_roots; i++) {
-        struct root *p = ce->roots + i;
+        struct root *r = ce->roots + i;
 
-        if (pthread_join(p->th, NULL)) {
+        if (pthread_join(r->th, NULL)) {
             printf("pthread_join(root) failed\n");
             exit(EXIT_FAILURE);
         }
@@ -1149,13 +1199,24 @@ main(int argc, char **argv)
         }
     }
 
+#ifdef WITH_NETMAP
+    if (pthread_join(ce->netmap_gen_th, NULL)) {
+        printf("pthread_join(netmap_gen) failed\n");
+        exit(EXIT_FAILURE);
+    }
+    for (i = 0; i < ce->num_roots; i++) {
+        struct root *r = ce->roots + i;
+        nm_close(r->nmd);
+    }
+#endif /* WITH_NETMAP */
+
     {
         double tot_mpps = 0.0;
 
         for (i = 0; i < ce->num_roots; i++) {
-            struct root *p = ce->roots + i;
+            struct root *r = ce->roots + i;
 
-            tot_mpps += p->mpps;
+            tot_mpps += r->mpps;
         }
 
         printf("Total rate %.3f Mpps\n", tot_mpps);
