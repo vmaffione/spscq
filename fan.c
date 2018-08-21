@@ -804,7 +804,6 @@ netmap_tx_worker(void *opaque)
             /* Advance the ring pointers, exposing the already populated
              * buffers. */
             ring->head = ring->cur = ring->tail;
-            ioctl(nmds[i]->fd, NIOCTXSYNC, NULL);
         }
     }
 
