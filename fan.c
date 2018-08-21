@@ -34,13 +34,19 @@ struct root {
     pthread_t th;
     unsigned int first_leaf;
     unsigned int num_leaves;
-    struct mbuf sink[1];
 #ifdef WITH_NETMAP
     struct nm_desc *nmd;
+    /* Only one of the two rings is used, depending on the
+     * experiment name. */
     struct netmap_ring *rx_ring;
     struct netmap_ring *tx_ring;
-    unsigned int rx_slots_to_return;
-#endif /* WITH_NETMAP */
+    /* In case of TX ring, the number of slots to be submitted to
+     * netmap for transmission. in case of RX ring, the number of
+     * slots to be returned to netmap for reuse. */
+    unsigned int nm_slots_pending;
+#else  /* !WITH_NETMAP */
+    struct mbuf sink[1];
+#endif /* !WITH_NETMAP */
     double mpps;
 };
 
@@ -151,6 +157,7 @@ leaf_packet_get(struct mbuf *m)
 }
 
 #ifdef WITH_NETMAP
+
 static inline int
 root_packet_get(struct root *root, struct mbuf *m)
 {
@@ -159,7 +166,7 @@ root_packet_get(struct root *root, struct mbuf *m)
 
     if (unlikely(nm_ring_empty(ring))) {
         ioctl(root->nmd->fd, NIOCRXSYNC, NULL);
-        root->rx_slots_to_return = 0;
+        root->nm_slots_pending = 0;
         if (unlikely(nm_ring_empty(ring))) {
             return -1;
         }
@@ -167,13 +174,41 @@ root_packet_get(struct root *root, struct mbuf *m)
     memcpy(m->buf, NETMAP_BUF(ring, ring->slot[head].buf_idx), sizeof(m->buf));
     m->len     = sizeof(m->buf);
     ring->head = ring->cur = nm_ring_next(ring, head);
-    if (unlikely(++root->rx_slots_to_return >= 512)) {
-        root->rx_slots_to_return = 0;
+    if (unlikely(++root->nm_slots_pending >= 512)) {
+        root->nm_slots_pending = 0;
         ioctl(root->nmd->fd, NIOCRXSYNC, NULL);
     }
+
     return 0;
 }
-#else  /* !WITH_NETMAP */
+
+static inline int
+root_packet_put(struct root *root, struct mbuf *m)
+{
+    struct netmap_ring *ring = root->tx_ring;
+    unsigned int head        = ring->head;
+    struct netmap_slot *slot = ring->slot + head;
+
+    if (unlikely(nm_ring_empty(ring))) {
+        ioctl(root->nmd->fd, NIOCTXSYNC, NULL);
+        root->nm_slots_pending = 0;
+        if (unlikely(nm_ring_empty(ring))) {
+            return -1;
+        }
+    }
+    memcpy(NETMAP_BUF(ring, slot->buf_idx), m->buf, sizeof(m->buf));
+    slot->len  = sizeof(m->buf);
+    ring->head = ring->cur = nm_ring_next(ring, head);
+    if (unlikely(++root->nm_slots_pending >= 512)) {
+        root->nm_slots_pending = 0;
+        ioctl(root->nmd->fd, NIOCTXSYNC, NULL);
+    }
+
+    return 0;
+}
+
+#else /* !WITH_NETMAP */
+
 static inline int
 root_packet_get(struct root *root, struct mbuf *m)
 {
@@ -181,7 +216,20 @@ root_packet_get(struct root *root, struct mbuf *m)
     leaf_packet_get(m);
     return 0;
 }
+
+static inline int
+root_packet_put(struct root *root, struct mbuf *m)
+{
+    volatile struct mbuf *dst = &root->sink[0];
+
+    dst->len = m->len;
+    memcpy((void *)dst->buf, m->buf, m->len);
+
+    return 0;
+}
+
 #endif /* !WITH_NETMAP */
+
 static void
 analyze_mbuf(struct mbuf *m)
 {
@@ -447,7 +495,7 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
 static unsigned int
 lq_root_transmitter(struct leaf *w, unsigned int batch)
 {
-    volatile struct mbuf *dst = &w->root->sink[0];
+    struct root *root = w->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
@@ -457,8 +505,9 @@ lq_root_transmitter(struct leaf *w, unsigned int batch)
             break;
         }
 
-        dst->len = src->len;
-        memcpy((void *)dst->buf, src->buf, src->len);
+        if (root_packet_put(root, src)) {
+            break;
+        }
     }
 
     return count;
@@ -486,7 +535,7 @@ lq_leaf_sender(struct leaf *w, unsigned int batch)
 static unsigned int
 llq_root_transmitter(struct leaf *w, unsigned int batch)
 {
-    volatile struct mbuf *dst = &w->root->sink[0];
+    struct root *root = w->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
@@ -496,8 +545,9 @@ llq_root_transmitter(struct leaf *w, unsigned int batch)
             break;
         }
 
-        dst->len = src->len;
-        memcpy((void *)dst->buf, src->buf, src->len);
+        if (root_packet_put(root, src)) {
+            break;
+        }
     }
 
     return count;
@@ -525,9 +575,9 @@ llq_leaf_sender(struct leaf *w, unsigned int batch)
 static unsigned int
 blq_root_transmitter(struct leaf *w, unsigned int batch)
 {
-    volatile struct mbuf *dst = &w->root->sink[0];
-    struct Blq *blq           = w->blq;
-    unsigned int rspace       = blq_rspace(blq);
+    struct Blq *blq     = w->blq;
+    unsigned int rspace = blq_rspace(blq);
+    struct root *root   = w->root;
     int i;
 
     if (batch > rspace) {
@@ -536,8 +586,9 @@ blq_root_transmitter(struct leaf *w, unsigned int batch)
     for (i = 0; i < batch; i++) {
         struct mbuf *src = (struct mbuf *)blq_read_local(blq);
 
-        dst->len = src->len;
-        memcpy((void *)dst->buf, src->buf, src->len);
+        if (root_packet_put(root, src)) {
+            break;
+        }
     }
     blq_read_publish(blq);
 
@@ -572,7 +623,7 @@ blq_leaf_sender(struct leaf *w, unsigned int batch)
 static unsigned int
 ffq_root_transmitter(struct leaf *w, unsigned int batch)
 {
-    volatile struct mbuf *dst = &w->root->sink[0];
+    struct root *root = w->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
@@ -582,8 +633,9 @@ ffq_root_transmitter(struct leaf *w, unsigned int batch)
             break;
         }
 
-        dst->len = src->len;
-        memcpy((void *)dst->buf, src->buf, src->len);
+        if (root_packet_put(root, src)) {
+            break;
+        }
     }
 
     return count;
@@ -611,8 +663,8 @@ ffq_leaf_sender(struct leaf *w, unsigned int batch)
 static unsigned int
 iffq_root_transmitter(struct leaf *w, unsigned int batch)
 {
-    volatile struct mbuf *dst = &w->root->sink[0];
-    struct Iffq *ffq          = w->ffq;
+    struct root *root = w->root;
+    struct Iffq *ffq  = w->ffq;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
@@ -622,8 +674,9 @@ iffq_root_transmitter(struct leaf *w, unsigned int batch)
             break;
         }
 
-        dst->len = src->len;
-        memcpy((void *)dst->buf, src->buf, src->len);
+        if (root_packet_put(root, src)) {
+            break;
+        }
     }
     iffq_clear(ffq);
 
@@ -755,12 +808,13 @@ netmap_ring_populate(struct netmap_ring *ring)
 }
 
 static void *
-netmap_tx_worker(void *opaque)
+netmap_worker(void *opaque)
 {
     struct experiment *ce = opaque;
     unsigned int n        = ce->num_roots;
     struct nm_desc **nmds = szalloc(n * sizeof(struct nmd *));
     struct pollfd *pfds   = szalloc(n * sizeof(struct pollfd));
+    int transmitter       = !strcmp(ce->expname, "fanout"); /* boolean */
     int i;
 
     /* Open a pipe for each root, prepare the poll() input array, and
@@ -774,7 +828,7 @@ netmap_tx_worker(void *opaque)
             printf("Failed to nm_open(%s)\n", ifname);
             exit(EXIT_FAILURE);
         }
-        pfds[i].events = POLLOUT;
+        pfds[i].events = transmitter ? POLLOUT : POLLIN;
         pfds[i].fd     = nmds[i]->fd;
         netmap_ring_populate(NETMAP_TXRING(nmds[i]->nifp, 0));
         netmap_ring_populate(NETMAP_RXRING(nmds[i]->nifp, 0));
@@ -794,15 +848,12 @@ netmap_tx_worker(void *opaque)
         }
 
         for (i = 0; i < n; i++) {
-            struct netmap_ring *ring = NETMAP_TXRING(nmds[i]->nifp, 0);
-
-            if (nm_ring_empty(ring)) {
-                /* This TX ring is already full, so we have nothing to do. */
-                continue;
-            }
+            struct netmap_ring *ring = transmitter
+                                           ? NETMAP_TXRING(nmds[i]->nifp, 0)
+                                           : NETMAP_RXRING(nmds[i]->nifp, 0);
 
             /* Advance the ring pointers, exposing the already populated
-             * buffers. */
+             * buffers (TX), or consuming the new buffers (RX).  */
             ring->head = ring->cur = ring->tail;
         }
     }
@@ -858,6 +909,7 @@ usage(const char *progname)
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b ROOT_BATCH = 8]\n"
            "    [-b LEAF_BATCH = 8]\n"
+           "    [-i NETMAP_IFNAME]\n"
            "    [-u LEAF_USLEEP = 0]\n"
            "    [-j (run leaf benchmark)]\n",
            progname);
@@ -897,7 +949,7 @@ main(int argc, char **argv)
     ce->qtype      = "lq";
     ce->root_batch = ce->leaf_batch = 8;
     ce->leaf_usleep                 = 0;
-    ce->netmap_ifname               = NULL;
+    ce->netmap_ifname               = "netmap:fan";
     ffq                             = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:")) != -1) {
@@ -1057,14 +1109,6 @@ main(int argc, char **argv)
     /*
      * Setup phase.
      */
-#ifdef WITH_NETMAP
-    if (ce->netmap_ifname == NULL) {
-        printf("Missing netmap inteface\n");
-        usage(argv[0]);
-        return -1;
-    }
-#endif /* WITH_NETMAP */
-
     {
         int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 
@@ -1144,14 +1188,14 @@ main(int argc, char **argv)
                 r->tx_ring = NETMAP_TXRING(r->nmd->nifp, 0);
                 netmap_ring_populate(r->rx_ring);
                 netmap_ring_populate(r->tx_ring);
-                r->rx_slots_to_return = 0;
+                r->nm_slots_pending = 0;
             }
 #endif /* WITH_NETMAP */
         }
     }
 
 #ifdef WITH_NETMAP
-    if (pthread_create(&ce->netmap_gen_th, NULL, netmap_tx_worker, ce)) {
+    if (pthread_create(&ce->netmap_gen_th, NULL, netmap_worker, ce)) {
         printf("pthread_create(netmap_gen) failed\n");
         exit(EXIT_FAILURE);
     }
