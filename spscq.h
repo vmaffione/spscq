@@ -402,7 +402,9 @@ iffq_insert_local(struct Iffq *ffq, uintptr_t m)
 inline void
 iffq_insert_publish(struct Iffq *ffq)
 {
-    for (unsigned int i = 0; i < ffq->prod_cache_write;
+    unsigned int i;
+
+    for (i = 0; i < ffq->prod_cache_write;
          i++, ffq->prod_write++) {
         ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) =
             ffq->prod_cache[i];
