@@ -1,3 +1,4 @@
 On XEON40:
-$ ./vswitch -p -u0 -n 20 -t llq
-$ ./vswitch -p -u0 -n 20 -t iffq
+$ ./vswitch -p -u0 -n 20 -t XYZ
+
+$ ./fan -n 30 -N5 -u0  -t XYZ
