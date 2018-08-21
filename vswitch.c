@@ -629,8 +629,8 @@ usage(const char *progname)
 {
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
-           "    [-n NUM_VSWITCHES = 2]\n"
-           "    [-N NUM_CLIENTS = 1]\n"
+           "    [-n NUM_VSWITCHES = 1]\n"
+           "    [-N NUM_CLIENTS = 2]\n"
            "    [-l SPSC_QUEUES_LEN = 128]\n"
            "    [-m MBUF_LEN = 60]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
