@@ -531,11 +531,11 @@ usage(const char *progname)
            "    [-h (show this help and exit)]\n"
            "    [-n NUM_VSWITCHES = 2]\n"
            "    [-N NUM_CLIENTS = 1]\n"
-           "    [-l SPSC_QUEUES_LEN = 256]\n"
+           "    [-l SPSC_QUEUES_LEN = 128]\n"
            "    [-m MBUF_LEN = 60]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b VSWITCH_BATCH = 8]\n"
-           "    [-b CLIENT_BATCH = 8]\n"
+           "    [-b CLIENT_BATCH = 1]\n"
            "    [-u SENDER_USLEEP = 50]\n"
            "    [-p (pin theads to cores)\n",
            progname);
