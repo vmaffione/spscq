@@ -34,12 +34,6 @@ is_power_of_two(int x)
     return !x || !(x & (x - 1));
 }
 
-inline unsigned int
-roundup(unsigned int x, unsigned int y)
-{
-    return ((x + (y - 1)) / y) * y;
-}
-
 /*
  * Multi-section queue, based on the Lamport classic queue.
  * All indices are free running.
@@ -303,7 +297,7 @@ inline size_t
 iffq_size(unsigned int entries)
 {
     struct Iffq *ffq;
-    return roundup(sizeof(*ffq) + entries * sizeof(ffq->q[0]), 64);
+    return ALIGNED_SIZE(sizeof(*ffq) + entries * sizeof(ffq->q[0]));
 }
 
 /**
