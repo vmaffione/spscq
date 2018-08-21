@@ -275,9 +275,10 @@ blq_vswitch(struct client *c, unsigned int batch)
 
         if (blq_wspace(dblq) == 0) {
             mbuf_free(m);
+        } else {
+            blq_write_local(dblq, (uintptr_t)m);
+            blq_write_publish(dblq);
         }
-        blq_write_local(dblq, (uintptr_t)m);
-        blq_write_publish(dblq);
     }
 
     return batch;
