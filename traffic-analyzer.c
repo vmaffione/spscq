@@ -36,6 +36,7 @@ struct producer {
     pthread_t th;
     unsigned int first_analyzer;
     unsigned int num_analyzers;
+    double mpps;
 };
 
 typedef unsigned int (*enq_t)(struct consumer *w, unsigned int batch);
@@ -383,6 +384,7 @@ lb(void *opaque)
             (t_end.tv_nsec - t_start.tv_nsec);
         double rate = (double)count * 1000.0 / (double)ns;
         printf("lb throughput: %.3f Mpps\n", rate);
+        p->mpps = rate;
     }
 
     return NULL;
@@ -644,6 +646,18 @@ main(int argc, char **argv)
             printf("pthread_join(consumer) failed\n");
             exit(EXIT_FAILURE);
         }
+    }
+
+    {
+        double tot_mpps = 0.0;
+
+        for (i = 0; i < ta->num_load_balancers; i++) {
+            struct producer *p = ta->producers + i;
+
+            tot_mpps += p->mpps;
+        }
+
+        printf("Total rate %.3f Mpps\n", tot_mpps);
     }
 
     free(ta->consumers);
