@@ -77,6 +77,9 @@ struct experiment {
 
     /* Root nodes. */
     struct root *roots;
+
+    /* Microseconds for sender usleep(). */
+    unsigned int sender_usleep;
 };
 
 static size_t
@@ -404,7 +407,7 @@ lq_leaf_sender(struct leaf *w, unsigned int batch)
         if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
         }
-        usleep(100);
+        usleep(w->ce->sender_usleep);
     }
     w->mbuf_next = mbuf_next;
 }
@@ -505,6 +508,7 @@ usage(const char *progname)
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b BATCH_LENGTH = 8]\n"
+           "    [-u SENDER_USLEEP = 50]\n"
            "    [-j (run leaf benchmark)]\n",
            progname);
 }
@@ -535,15 +539,16 @@ main(int argc, char **argv)
     }
 
     memset(ce, 0, sizeof(*ce));
-    ce->num_roots  = 1;
-    ce->num_leaves = 2;
-    ce->qlen       = 256;
-    ce->expname    = "fanout";
-    ce->qtype      = "lq";
-    ce->batch      = 8;
-    ffq            = 0;
+    ce->num_roots     = 1;
+    ce->num_leaves    = 2;
+    ce->qlen          = 256;
+    ce->expname       = "fanout";
+    ce->qtype         = "lq";
+    ce->batch         = 8;
+    ce->sender_usleep = 50;
+    ffq               = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -606,6 +611,14 @@ main(int argc, char **argv)
                 return -1;
             }
             ce->expname = optarg;
+            break;
+
+        case 'u':
+            ce->sender_usleep = atoi(optarg);
+            if (ce->sender_usleep < 0 || ce->sender_usleep > 1000) {
+                printf("    Invalid sender usleep argument '%s'\n", optarg);
+                return -1;
+            }
             break;
 
         default:
