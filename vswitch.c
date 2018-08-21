@@ -172,6 +172,20 @@ timerslack_reset(void)
     }
 }
 
+static inline void
+mbuf_list_append(struct vswitch *v, struct mbuf *m)
+{
+    struct vswitch_list *list;
+
+    list = v->lists + mbuf_dst(m);
+    if (list->tail) {
+        list->tail->next = m;
+        list->tail       = m;
+    } else {
+        list->tail = list->head = m;
+    }
+}
+
 /*
  * Queue-specific client and vswitch implementations.
  */
@@ -193,20 +207,6 @@ lq_client(struct client *c, unsigned int batch)
     }
 
     return i;
-}
-
-static inline void
-mbuf_list_append(struct vswitch *v, struct mbuf *m)
-{
-    struct vswitch_list *list;
-
-    list = v->lists + mbuf_dst(m);
-    if (list->tail) {
-        list->tail->next = m;
-        list->tail       = m;
-    } else {
-        list->tail = list->head = m;
-    }
 }
 
 static unsigned int
@@ -240,7 +240,6 @@ lq_vswitch_push(struct client *c, struct mbuf *m)
     } while (m != NULL);
 }
 
-#if 0
 static int
 llq_client(struct client *c, unsigned int batch)
 {
@@ -261,29 +260,34 @@ llq_client(struct client *c, unsigned int batch)
 }
 
 static unsigned int
-llq_vswitch(struct client *c, unsigned int batch)
+llq_vswitch_pull(struct client *c, unsigned int batch)
 {
-    struct mbuf **mbufs = c->vswitch->mbufs;
+    struct vswitch *v = c->vswitch;
     unsigned int count;
-    unsigned int i;
 
     for (count = 0; count < batch; count++) {
-        mbufs[count] = (struct mbuf *)llq_read(c->blq[TXQ]);
-        if (mbufs[count] == NULL) {
+        struct mbuf *m = (struct mbuf *)llq_read(c->blq[TXQ]);
+
+        if (m == NULL) {
             break;
         }
-    }
-
-    for (i = 0; i < count; i++) {
-        struct mbuf *m    = mbufs[i];
-        struct client *dc = dst_client(c, m);
-
-        if (llq_write(dc->blq[RXQ], (uintptr_t)m)) {
-            mbuf_free(m);
-        }
+        mbuf_list_append(v, m);
     }
 
     return count;
+}
+
+static void
+llq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    do {
+        struct mbuf *next = m->next;
+
+        if (llq_write(c->blq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+        m = next;
+    } while (m != NULL);
 }
 
 static int
@@ -311,35 +315,44 @@ blq_client(struct client *c, unsigned int batch)
 }
 
 static unsigned int
-blq_vswitch(struct client *c, unsigned int batch)
+blq_vswitch_pull(struct client *c, unsigned int batch)
 {
-    struct mbuf **mbufs = c->vswitch->mbufs;
     unsigned int rspace = blq_rspace(c->blq[TXQ]);
-    unsigned int i;
+    struct vswitch *v   = c->vswitch;
+    unsigned int count;
 
     if (batch > rspace) {
         batch = rspace;
     }
 
-    for (i = 0; i < batch; i++) {
-        mbufs[i] = (struct mbuf *)blq_read_local(c->blq[TXQ]);
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = (struct mbuf *)blq_read_local(c->blq[TXQ]);
+        mbuf_list_append(v, m);
     }
     blq_read_publish(c->blq[TXQ]);
 
-    for (i = 0; i < batch; i++) {
-        struct mbuf *m    = mbufs[i];
-        struct client *dc = dst_client(c, m);
-        struct Blq *dblq  = dc->blq[RXQ];
+    return count;
+}
 
-        if (blq_wspace(dblq) == 0) {
-            mbuf_free(m);
+static void
+blq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    struct Blq *blq     = c->blq[RXQ];
+    unsigned int wspace = blq_wspace(blq);
+
+    do {
+        struct mbuf *next = m->next;
+
+        if (wspace > 0) {
+            blq_write_local(blq, (uintptr_t)m);
+            wspace--;
         } else {
-            blq_write_local(dblq, (uintptr_t)m);
-            blq_write_publish(dblq);
+            mbuf_free(m);
         }
-    }
+        m = next;
+    } while (m != NULL);
 
-    return batch;
+    blq_write_publish(blq);
 }
 
 static int
@@ -362,29 +375,34 @@ ffq_client(struct client *c, unsigned int batch)
 }
 
 static unsigned int
-ffq_vswitch(struct client *c, unsigned int batch)
+ffq_vswitch_pull(struct client *c, unsigned int batch)
 {
-    struct mbuf **mbufs = c->vswitch->mbufs;
+    struct vswitch *v = c->vswitch;
     unsigned int count;
-    unsigned int i;
 
     for (count = 0; count < batch; count++) {
-        mbufs[count] = (struct mbuf *)ffq_read(c->ffq[TXQ]);
-        if (mbufs[count] == NULL) {
+        struct mbuf *m = (struct mbuf *)ffq_read(c->ffq[TXQ]);
+
+        if (m == NULL) {
             break;
         }
-    }
-
-    for (i = 0; i < count; i++) {
-        struct mbuf *m    = mbufs[i];
-        struct client *dc = dst_client(c, m);
-
-        if (ffq_write(dc->ffq[RXQ], (uintptr_t)m)) {
-            mbuf_free(m);
-        }
+        mbuf_list_append(v, m);
     }
 
     return count;
+}
+
+static void
+ffq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    do {
+        struct mbuf *next = m->next;
+
+        if (ffq_write(c->ffq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+        m = next;
+    } while (m != NULL);
 }
 
 static int
@@ -408,30 +426,35 @@ iffq_client(struct client *c, unsigned int batch)
 }
 
 static unsigned int
-iffq_vswitch(struct client *c, unsigned int batch)
+iffq_vswitch_pull(struct client *c, unsigned int batch)
 {
-    struct mbuf **mbufs = c->vswitch->mbufs;
+    struct vswitch *v = c->vswitch;
     unsigned int count;
-    unsigned int i;
 
     for (count = 0; count < batch; count++) {
-        mbufs[count] = (struct mbuf *)iffq_extract(c->ffq[TXQ]);
-        if (mbufs[count] == NULL) {
+        struct mbuf *m = (struct mbuf *)iffq_extract(c->ffq[TXQ]);
+
+        if (m == NULL) {
             break;
         }
+        mbuf_list_append(v, m);
     }
     iffq_clear(c->ffq[TXQ]);
 
-    for (i = 0; i < count; i++) {
-        struct mbuf *m    = mbufs[i];
-        struct client *dc = dst_client(c, m);
+    return count;
+}
 
-        if (iffq_insert(dc->ffq[RXQ], (uintptr_t)m)) {
+static void
+iffq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    do {
+        struct mbuf *next = m->next;
+
+        if (iffq_insert(c->ffq[RXQ], (uintptr_t)m)) {
             mbuf_free(m);
         }
-    }
-
-    return count;
+        m = next;
+    } while (m != NULL);
 }
 
 static int
@@ -457,7 +480,27 @@ biffq_client(struct client *c, unsigned int batch)
 
     return batch;
 }
-#endif
+
+static void
+biffq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    struct Iffq *ffq    = c->ffq[RXQ];
+    unsigned int wspace = iffq_wspace(ffq);
+
+    do {
+        struct mbuf *next = m->next;
+
+        if (wspace > 0) {
+            iffq_insert_local(ffq, (uintptr_t)m);
+            wspace--;
+        } else {
+            mbuf_free(m);
+        }
+        m = next;
+    } while (m != NULL);
+
+    iffq_insert_publish(ffq);
+}
 
 /*
  * Body of vswitch and clients.
@@ -740,25 +783,26 @@ main(int argc, char **argv)
         ce->vswitch_pull_func = lq_vswitch_pull;
         ce->vswitch_push_func = lq_vswitch_push;
         ce->client_func       = lq_client;
-#if 0
     } else if (!strcmp(ce->qtype, "llq")) {
-        ce->vswitch_func = llq_vswitch;
-        ce->client_func  = llq_client;
+        ce->vswitch_pull_func = llq_vswitch_pull;
+        ce->vswitch_push_func = llq_vswitch_push;
+        ce->client_func       = llq_client;
     } else if (!strcmp(ce->qtype, "blq")) {
-        ce->vswitch_func = blq_vswitch;
-        ce->client_func  = blq_client;
+        ce->vswitch_pull_func = blq_vswitch_pull;
+        ce->vswitch_push_func = blq_vswitch_push;
+        ce->client_func       = blq_client;
     } else if (!strcmp(ce->qtype, "ffq")) {
-        ce->vswitch_func = ffq_vswitch;
-        ce->client_func  = ffq_client;
+        ce->vswitch_pull_func = ffq_vswitch_pull;
+        ce->vswitch_push_func = ffq_vswitch_push;
+        ce->client_func       = ffq_client;
     } else if (!strcmp(ce->qtype, "iffq")) {
-        ce->vswitch_func = iffq_vswitch;
-        ce->client_func  = iffq_client;
+        ce->vswitch_pull_func = iffq_vswitch_pull;
+        ce->vswitch_push_func = iffq_vswitch_push;
+        ce->client_func       = iffq_client;
     } else if (!strcmp(ce->qtype, "biffq")) {
-        /* No reason to use biffq, as this program only
-         * batches on reads (and not on writes). */
-        ce->vswitch_func = iffq_vswitch;
-        ce->client_func  = biffq_client;
-#endif
+        ce->vswitch_pull_func = iffq_vswitch_pull;
+        ce->vswitch_push_func = biffq_vswitch_push;
+        ce->client_func       = biffq_client;
     }
 
     /*
