@@ -20,6 +20,7 @@
 #include <chrono>
 #include <signal.h>
 #include <sstream>
+#include <sys/mman.h>
 
 #include "mlib.h"
 
@@ -42,15 +43,24 @@ sigint_handler(int signum)
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
 static void *
-szalloc(size_t size)
+szalloc(size_t size, bool hugepages)
 {
-    void *p;
-    int ret = posix_memalign(&p, ALIGN_SIZE, size);
-    if (ret) {
-        printf("allocation failure: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
+    void *p = NULL;
+    if (hugepages) {
+        p = mmap(0, size, PROT_WRITE | PROT_READ,
+                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
+        if (p == MAP_FAILED) {
+            printf("mmap allocation failure: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        int ret = posix_memalign(&p, ALIGN_SIZE, size);
+        if (ret) {
+            printf("allocation failure: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        memset(p, 0, size);
     }
-    memset(p, 0, size);
     return p;
 }
 
@@ -187,6 +197,9 @@ struct Global {
      * queue slots. This should reduce the noise in the cache miss
      * behaviour. */
     bool deceive_hw_data_prefetcher = false;
+
+    /* Allocate memory from hugepages. */
+    bool hugepages = false;
 
     MbufMode mbuf_mode = MbufMode::NoAccess;
 
@@ -436,10 +449,10 @@ struct Blq {
 };
 
 static Blq *
-blq_create(int qlen, int prod_batch, int cons_batch)
+blq_create(int qlen, int prod_batch, int cons_batch, bool hugepages)
 {
-    Blq *blq =
-        static_cast<Blq *>(szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0])));
+    Blq *blq = static_cast<Blq *>(
+        szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0]), hugepages));
 
     if (qlen < 2 || !is_power_of_two(qlen)) {
         printf("Error: queue length %d is not a power of two\n", qlen);
@@ -1090,12 +1103,13 @@ iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
  * Both entries and line_size must be a power of 2.
  */
 Iffq *
-__iffq_create(unsigned int entries, unsigned int line_size, bool improved)
+__iffq_create(unsigned int entries, unsigned int line_size, bool hugepages,
+              bool improved)
 {
     Iffq *ffq;
     int err;
 
-    ffq = static_cast<Iffq *>(szalloc(iffq_size(entries)));
+    ffq = static_cast<Iffq *>(szalloc(iffq_size(entries), hugepages));
 
     err = iffq_init(ffq, entries, line_size, improved);
     if (err) {
@@ -1116,15 +1130,15 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool improved)
 }
 
 Iffq *
-iffq_create(unsigned int entries, unsigned int line_size)
+iffq_create(unsigned int entries, unsigned int line_size, bool hugepages)
 {
-    return __iffq_create(entries, line_size, /*improved=*/true);
+    return __iffq_create(entries, line_size, hugepages, /*improved=*/true);
 }
 
 Iffq *
-ffq_create(unsigned int entries, unsigned int line_size)
+ffq_create(unsigned int entries, unsigned int line_size, bool hugepages)
 {
-    return __iffq_create(entries, line_size, /*improved=*/false);
+    return __iffq_create(entries, line_size, hugepages, /*improved=*/false);
 }
 
 /**
@@ -1570,7 +1584,7 @@ out:
 #define biffq_client iffq_client
 #define biffq_server iffq_server
 
-    /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 #if 1
 using pc_function_t = void (*)(Global *const);
@@ -1757,20 +1771,23 @@ run_test(Global *g)
 
     if (g->test_type == "lq" || g->test_type == "llq" ||
         g->test_type == "blq") {
-        g->blq = blq_create(g->qlen, g->prod_batch, g->cons_batch);
+        g->blq =
+            blq_create(g->qlen, g->prod_batch, g->cons_batch, g->hugepages);
         if (!g->blq) {
             exit(EXIT_FAILURE);
         }
         blq_dump("P", g->blq);
         if (g->latency) {
-            g->blq_back = blq_create(g->qlen, g->prod_batch, g->cons_batch);
+            g->blq_back =
+                blq_create(g->qlen, g->prod_batch, g->cons_batch, g->hugepages);
             if (!g->blq_back) {
                 exit(EXIT_FAILURE);
             }
         }
     } else if (g->test_type == "ffq") {
         g->ffq = ffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                            g->hugepages);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
@@ -1778,7 +1795,8 @@ run_test(Global *g)
         if (g->latency) {
             g->ffq_back =
                 ffq_create(g->qlen,
-                           /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                           /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                           g->hugepages);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
             }
@@ -1786,7 +1804,8 @@ run_test(Global *g)
     } else if (g->test_type == "iffq" || g->test_type == "biffq") {
         (void)iffq_prefetch;
         g->ffq = iffq_create(g->qlen,
-                             /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                             /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                             g->hugepages);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
@@ -1794,7 +1813,8 @@ run_test(Global *g)
         if (g->latency) {
             g->ffq_back =
                 iffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t));
+                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                            g->hugepages);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
             }
@@ -1804,7 +1824,8 @@ run_test(Global *g)
     }
 
     /* Allocate mbuf pool and init the mask. */
-    g->pool = static_cast<Mbuf *>(szalloc(2 * g->qlen * sizeof(g->pool[0])));
+    g->pool = static_cast<Mbuf *>(
+        szalloc(2 * g->qlen * sizeof(g->pool[0]), g->hugepages));
     g->pool_mask = (2 * g->qlen) - 1;
 
     pth = std::thread(funcs.first, g);
@@ -1867,6 +1888,7 @@ usage(const char *progname)
         "    [-p (use CPU performance counters)]\n"
         "    [-T (carry out latency tests rather than throughput tests)]\n"
         "    [-w (try to prevent the hw prefetcher to prefetch queue slots)]\n"
+        "    [-H (allocate memory from hugepages)]\n"
         "\n",
         progname, Global::DFLT_D, Global::DFLT_BATCH, Global::DFLT_BATCH,
         Global::DFLT_QLEN, Global::DFLT_LINE_ENTRIES);
@@ -1891,7 +1913,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:Tw")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:b:l:c:t:L:P:C:Mr:RpD:TwH")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -2024,6 +2046,10 @@ main(int argc, char **argv)
             g->deceive_hw_data_prefetcher = true;
             break;
 
+        case 'H':
+            g->hugepages = true;
+            break;
+
         default:
             usage(argv[0]);
             return 0;
@@ -2033,8 +2059,8 @@ main(int argc, char **argv)
 
     tsc_init();
     {
-        smap =
-            static_cast<unsigned short *>(szalloc(g->qlen * sizeof(SMAP(0))));
+        smap = static_cast<unsigned short *>(
+            szalloc(g->qlen * sizeof(SMAP(0)), g->hugepages));
         qslotmap_init(smap, g->qlen, g->deceive_hw_data_prefetcher);
 #if 0
         for (unsigned i = 0; i < g->qlen; i++) {
