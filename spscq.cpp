@@ -1773,7 +1773,7 @@ run_test(Global *g)
         exit(EXIT_FAILURE);
     }
 
-    size_t pool_size          = (2 * g->qlen * sizeof(g->pool[0]));
+    size_t pool_size          = ALIGNED_SIZE(2 * g->qlen * sizeof(g->pool[0]));
     size_t pool_and_smap_size = pool_size + (g->qlen * sizeof(SMAP(0)));
     /* Allocate mbuf pool and smap together. */
     void *pool_and_smap = szalloc(pool_and_smap_size, g->hugepages);

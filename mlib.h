@@ -33,6 +33,8 @@ tsc_sleep_till(uint64_t when)
 #define ALIGN_SIZE 128
 #define CACHELINE_ALIGNED __attribute__((aligned(ALIGN_SIZE)))
 
+#define ALIGNED_SIZE(_sz) ((_sz + ALIGN_SIZE - 1) & (ALIGN_SIZE - 1))
+
 void runon(const char *prefix, int cpuid);
 
 #ifdef __cplusplus
