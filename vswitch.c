@@ -73,6 +73,7 @@ struct client {
     pthread_t th;
     int cpu;
     unsigned int idx;
+    struct mbuf **mbufs;
 #define TXQ 0
 #define RXQ 1
 #define MAXQ 2
@@ -81,7 +82,7 @@ struct client {
 };
 
 typedef unsigned int (*vswitch_func_t)(struct client *c, unsigned int batch);
-typedef int (*client_func_t)(struct client *c, struct mbuf *m);
+typedef int (*client_func_t)(struct client *c, unsigned int batch);
 
 struct vswitch_experiment {
     /* Type of spsc queue to be used. */
@@ -163,15 +164,22 @@ timerslack_reset(void)
  */
 
 static int
-lq_client(struct client *c, struct mbuf *sm)
+lq_client(struct client *c, unsigned int batch)
 {
     struct mbuf *m;
+    unsigned int i;
 
     while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) != NULL) {
         mbuf_free(m);
     }
 
-    return lq_write(c->blq[TXQ], (uintptr_t)sm);
+    for (i = 0; i < batch; i++) {
+        if (lq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+    }
+
+    return i;
 }
 
 static unsigned int
@@ -201,15 +209,22 @@ lq_vswitch(struct client *c, unsigned int batch)
 }
 
 static int
-llq_client(struct client *c, struct mbuf *sm)
+llq_client(struct client *c, unsigned int batch)
 {
     struct mbuf *m;
+    unsigned int i;
 
     while ((m = (struct mbuf *)llq_read(c->blq[RXQ])) != NULL) {
         mbuf_free(m);
     }
 
-    return llq_write(c->blq[TXQ], (uintptr_t)sm);
+    for (i = 0; i < batch; i++) {
+        if (llq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+    }
+
+    return i;
 }
 
 static unsigned int
@@ -239,24 +254,27 @@ llq_vswitch(struct client *c, unsigned int batch)
 }
 
 static int
-blq_client(struct client *c, struct mbuf *sm)
+blq_client(struct client *c, unsigned int batch)
 {
-    unsigned int rspace = blq_rspace(c->blq[RXQ]);
+    unsigned int space = blq_rspace(c->blq[RXQ]);
+    unsigned int i;
 
-    for (; rspace > 0; rspace--) {
+    for (; space > 0; space--) {
         struct mbuf *m = (struct mbuf *)blq_read_local(c->blq[RXQ]);
         mbuf_free(m);
     }
     blq_read_publish(c->blq[RXQ]);
 
-    if (blq_wspace(c->blq[TXQ]) == 0) {
-        return -1;
+    space = blq_wspace(c->blq[TXQ]);
+    if (batch > space) {
+        batch = space;
     }
-
-    blq_write_local(c->blq[TXQ], (uintptr_t)sm);
+    for (i = 0; i < batch; i++) {
+        blq_write_local(c->blq[TXQ], (uintptr_t)c->mbufs[i]);
+    }
     blq_write_publish(c->blq[TXQ]);
 
-    return 0;
+    return i;
 }
 
 static unsigned int
@@ -292,15 +310,22 @@ blq_vswitch(struct client *c, unsigned int batch)
 }
 
 static int
-ffq_client(struct client *c, struct mbuf *sm)
+ffq_client(struct client *c, unsigned int batch)
 {
     struct mbuf *m;
+    unsigned int i;
 
     while ((m = (struct mbuf *)ffq_read(c->ffq[RXQ])) != NULL) {
         mbuf_free(m);
     }
 
-    return ffq_write(c->ffq[TXQ], (uintptr_t)sm);
+    for (i = 0; i < batch; i++) {
+        if (ffq_write(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+    }
+
+    return i;
 }
 
 static unsigned int
@@ -330,16 +355,23 @@ ffq_vswitch(struct client *c, unsigned int batch)
 }
 
 static int
-iffq_client(struct client *c, struct mbuf *sm)
+iffq_client(struct client *c, unsigned int batch)
 {
     struct mbuf *m;
+    unsigned int i;
 
     while ((m = (struct mbuf *)iffq_extract(c->ffq[RXQ])) != NULL) {
         mbuf_free(m);
     }
     iffq_clear(c->ffq[RXQ]);
 
-    return iffq_insert(c->ffq[TXQ], (uintptr_t)sm);
+    for (i = 0; i < batch; i++) {
+        if (iffq_insert(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+    }
+
+    return i;
 }
 
 static unsigned int
@@ -367,6 +399,30 @@ iffq_vswitch(struct client *c, unsigned int batch)
     }
 
     return count;
+}
+
+static int
+biffq_client(struct client *c, unsigned int batch)
+{
+    unsigned int wspace;
+    struct mbuf *m;
+    unsigned int i;
+
+    while ((m = (struct mbuf *)iffq_extract(c->ffq[RXQ])) != NULL) {
+        mbuf_free(m);
+    }
+    iffq_clear(c->ffq[RXQ]);
+
+    wspace = iffq_wspace(c->ffq[TXQ]);
+    if (batch > wspace) {
+        batch = wspace;
+    }
+    for (i = 0; i < batch; i++) {
+        iffq_insert_local(c->ffq[TXQ], (uintptr_t)c->mbufs[i]);
+    }
+    iffq_insert_publish(c->ffq[TXQ]);
+
+    return batch;
 }
 
 /*
@@ -424,6 +480,7 @@ client_worker(void *opaque)
     unsigned int last_client   = first_client + c->vswitch->num_clients;
     unsigned int dst_idx       = first_client;
     unsigned int client_usleep = c->ce->client_usleep;
+    unsigned int batch         = c->ce->client_batch;
 
     if (c->cpu >= 0) {
         runon("client", c->cpu);
@@ -432,21 +489,29 @@ client_worker(void *opaque)
     timerslack_reset();
 
     while (!ACCESS_ONCE(stop)) {
-        struct mbuf *m;
+        unsigned int i;
 
         if (client_usleep > 0) {
             usleep(client_usleep);
         }
 
-        /* Allocate and initialize an mbuf. */
-        m = mbuf_alloc(iplen, c->idx, dst_idx);
-        if (++dst_idx >= last_client) {
-            dst_idx = first_client;
+        /* Allocate and initialize a pool of mbufs. */
+        for (i = 0; i < batch; i++) {
+            c->mbufs[i] = mbuf_alloc(iplen, c->idx, dst_idx);
+            if (++dst_idx >= last_client) {
+                dst_idx = first_client;
+            }
         }
 
-        /* Receive arrived mbufs and send the new one. */
-        if (client_func(c, m)) {
-            mbuf_free(m);
+        /* Receive arrived mbufs and send the new ones. */
+        i = client_func(c, batch);
+
+        /* Drop all the ones that were not transmitted. */
+        if (i < batch) {
+            // usleep(1);
+            for (; i < batch; i++) {
+                mbuf_free(c->mbufs[i]);
+            }
         }
     }
 
@@ -633,7 +698,7 @@ main(int argc, char **argv)
         /* No reason to use biffq, as this program only
          * batches on reads (and not on writes). */
         ce->vswitch_func = iffq_vswitch;
-        ce->client_func  = iffq_client;
+        ce->client_func  = biffq_client;
     }
 
     /*
@@ -671,9 +736,10 @@ main(int argc, char **argv)
             struct client *c = ce->clients + i;
             int j;
 
-            c->ce  = ce;
-            c->idx = i;
-            c->cpu = ce->pin_threads ? cpu_next : -1;
+            c->ce    = ce;
+            c->idx   = i;
+            c->cpu   = ce->pin_threads ? cpu_next : -1;
+            c->mbufs = szalloc(ce->client_batch * sizeof(c->mbufs[0]));
             for (j = 0; j < MAXQ; j++) {
                 if (!ffq) {
                     c->blq[j] = (struct Blq *)memory_cursor;
@@ -703,6 +769,7 @@ main(int argc, char **argv)
             int j;
             p->ce           = ce;
             p->cpu          = ce->pin_threads ? (i % ncpus) : -1;
+            p->mbufs        = szalloc(ce->vswitch_batch * sizeof(p->mbufs[0]));
             p->first_client = next_client;
             p->num_clients  = (i < overflow) ? (stride - 1) : stride;
             next_client += p->num_clients;
@@ -710,7 +777,6 @@ main(int argc, char **argv)
                 struct client *l = ce->clients + p->first_client + j;
                 l->vswitch       = p;
             }
-            p->mbufs = szalloc(ce->vswitch_batch * sizeof(p->mbufs[0]));
         }
     }
 
