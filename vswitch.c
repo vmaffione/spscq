@@ -78,7 +78,7 @@ struct client {
 };
 
 typedef unsigned int (*vswitch_func_t)(struct client *c, unsigned int batch);
-typedef void (*client_func_t)(struct client *c, struct mbuf *m);
+typedef int (*client_func_t)(struct client *c, struct mbuf *m);
 
 struct vswitch_experiment {
     /* Type of spsc queue to be used. */
@@ -151,7 +151,11 @@ timerslack_reset(void)
     }
 }
 
-static void
+/*
+ * Queue-specific client and vswitch implementations.
+ */
+
+static int
 lq_client(struct client *c, struct mbuf *sm)
 {
     struct mbuf *m;
@@ -160,9 +164,7 @@ lq_client(struct client *c, struct mbuf *sm)
         mbuf_free(m);
     }
 
-    while (lq_write(c->blq[TXQ], (uintptr_t)sm)) {
-        usleep(10);
-    }
+    return lq_write(c->blq[TXQ], (uintptr_t)sm);
 }
 
 static unsigned int
@@ -235,19 +237,22 @@ vswitch_worker(void *opaque)
 static void *
 client_worker(void *opaque)
 {
-    struct client *c          = opaque;
-    client_func_t client_func = c->ce->client_func;
-    size_t iplen              = c->ce->iplen;
-    unsigned int first_client = c->vswitch->first_client;
-    unsigned int last_client  = first_client + c->vswitch->num_clients;
-    unsigned int dst_idx      = first_client;
+    struct client *c           = opaque;
+    client_func_t client_func  = c->ce->client_func;
+    size_t iplen               = c->ce->iplen;
+    unsigned int first_client  = c->vswitch->first_client;
+    unsigned int last_client   = first_client + c->vswitch->num_clients;
+    unsigned int dst_idx       = first_client;
+    unsigned int sender_usleep = c->ce->sender_usleep;
 
     timerslack_reset();
 
     while (!ACCESS_ONCE(stop)) {
         struct mbuf *m;
 
-        usleep(c->ce->sender_usleep);
+        if (sender_usleep > 0) {
+            usleep(sender_usleep);
+        }
 
         /* Allocate and initialize an mbuf. */
         m = mbuf_alloc(iplen, c->idx, dst_idx);
@@ -256,7 +261,9 @@ client_worker(void *opaque)
         }
 
         /* Receive arrived mbufs and send the new one. */
-        client_func(c, m);
+        if (client_func(c, m)) {
+            mbuf_free(m);
+        }
     }
 
     return NULL;
