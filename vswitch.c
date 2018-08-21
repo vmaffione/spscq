@@ -59,6 +59,7 @@ struct vswitch_experiment;
 struct vswitch {
     struct vswitch_experiment *ce;
     pthread_t th;
+    int cpu;
     unsigned int first_client;
     unsigned int num_clients;
     struct mbuf **mbufs;
@@ -70,6 +71,7 @@ struct client {
     struct vswitch_experiment *ce;
     struct vswitch *vswitch;
     pthread_t th;
+    int cpu;
     unsigned int idx;
 #define TXQ 0
 #define RXQ 1
@@ -387,6 +389,10 @@ vswitch_worker(void *opaque)
     struct timespec t_start, t_end;
 
     printf("vswitch %u handles %u clients\n", vswitch_idx, num_clients);
+    if (p->cpu >= 0) {
+        runon("vswitch", p->cpu);
+    }
+
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
         for (i = 0; i < num_clients; i++) {
@@ -418,6 +424,10 @@ client_worker(void *opaque)
     unsigned int last_client   = first_client + c->vswitch->num_clients;
     unsigned int dst_idx       = first_client;
     unsigned int client_usleep = c->ce->client_usleep;
+
+    if (c->cpu >= 0) {
+        runon("client", c->cpu);
+    }
 
     timerslack_reset();
 
@@ -477,6 +487,7 @@ main(int argc, char **argv)
     int opt;
     int ffq; /* boolean */
     int got_b_option = 0;
+    int ncpus        = get_nprocs();
     int i;
 
     {
@@ -654,6 +665,7 @@ main(int argc, char **argv)
 
     {
         char *memory_cursor = memory;
+        int cpu_next        = ce->num_vswitches % ncpus;
 
         for (i = 0; i < ce->num_clients; i++) {
             struct client *c = ce->clients + i;
@@ -661,6 +673,7 @@ main(int argc, char **argv)
 
             c->ce  = ce;
             c->idx = i;
+            c->cpu = ce->pin_threads ? cpu_next : -1;
             for (j = 0; j < MAXQ; j++) {
                 if (!ffq) {
                     c->blq[j] = (struct Blq *)memory_cursor;
@@ -671,6 +684,10 @@ main(int argc, char **argv)
                               /*improved=*/!strcmp(ce->qtype, "iffq"));
                 }
                 memory_cursor += qsize;
+            }
+
+            if (++cpu_next >= ncpus) {
+                cpu_next = ce->num_vswitches % ncpus;
             }
         }
     }
@@ -685,6 +702,7 @@ main(int argc, char **argv)
             struct vswitch *p = ce->vswitches + i;
             int j;
             p->ce           = ce;
+            p->cpu          = ce->pin_threads ? (i % ncpus) : -1;
             p->first_client = next_client;
             p->num_clients  = (i < overflow) ? (stride - 1) : stride;
             next_client += p->num_clients;

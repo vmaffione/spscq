@@ -18,8 +18,8 @@ fan: fan.o
 fan.o: fan.c mlib.h spscq.h
 	gcc -c fan.c -Wall -Werror -O2 -g
 
-vswitch: vswitch.o
-	gcc -o vswitch vswitch.o -lpthread -Wall -Werror -O2 -g
+vswitch: vswitch.o mlib.o
+	gcc -o vswitch vswitch.o mlib.o -lpthread -Wall -Werror -O2 -g
 
 vswitch.o: vswitch.c mlib.h spscq.h
 	gcc -c vswitch.c -Wall -Werror -O2 -g
