@@ -410,8 +410,7 @@ qslotmap_init(unsigned short *qslotmap, unsigned qlen, bool shuffle)
 static Blq *
 blq_create(int qlen, bool hugepages)
 {
-    Blq *blq = static_cast<Blq *>(
-        szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0]), hugepages));
+    Blq *blq = static_cast<Blq *>(szalloc(blq_size(qlen), hugepages));
     int ret;
 
     ret = blq_init(blq, qlen);
@@ -443,7 +442,7 @@ static void
 blq_free(Blq *blq, bool hugepages)
 {
     memset(blq, 0, sizeof(*blq));
-    sfree(blq, sizeof(*blq) + blq->qlen * sizeof(blq->q[0]), hugepages);
+    sfree(blq, blq_size(blq->qlen), hugepages);
 }
 
 template <MbufMode kMbufMode>

@@ -73,6 +73,13 @@ struct Blq {
     uintptr_t q[0];
 };
 
+inline size_t
+blq_size(int qlen)
+{
+    struct Blq *blq;
+    return sizeof(*blq) + qlen * sizeof(blq->q[0]);
+}
+
 inline int
 blq_init(struct Blq *blq, int qlen)
 {
@@ -295,7 +302,8 @@ ffq_read(struct Iffq *ffq)
 inline size_t
 iffq_size(unsigned int entries)
 {
-    return roundup(sizeof(struct Iffq) + entries * sizeof(uintptr_t), 64);
+    struct Iffq *ffq;
+    return roundup(sizeof(*ffq) + entries * sizeof(ffq->q[0]), 64);
 }
 
 /**
