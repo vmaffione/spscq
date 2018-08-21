@@ -82,12 +82,6 @@ sfree(void *ptr, size_t size, bool hugepages)
     }
 }
 
-static unsigned int
-roundup(unsigned int x, unsigned int y)
-{
-    return ((x + (y - 1)) / y) * y;
-}
-
 unsigned int
 ilog2(unsigned int x)
 {
@@ -105,9 +99,6 @@ ilog2(unsigned int x)
 
     return ret;
 }
-
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#define likely(x) __builtin_expect(!!(x), 1)
 
 struct RateLimitedStats {
     std::chrono::system_clock::time_point last;
@@ -163,7 +154,6 @@ enum class EmulatedOverhead {
     SpinCycles,
 };
 
-struct Blq;
 struct Iffq;
 
 struct Global {
@@ -717,64 +707,6 @@ blq_consumer(Global *const g)
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
-/*
- * FastForward queue.
- * Many fields are only used by the Improved FastFoward queue (see below).
- */
-struct Iffq {
-#define IFFQ_PROD_CACHE_ENTRIES 256
-    uintptr_t prod_cache[IFFQ_PROD_CACHE_ENTRIES];
-
-    CACHELINE_ALIGNED
-    /* Shared (constant) fields. */
-    unsigned int entry_mask;
-    unsigned int line_entries;
-    unsigned int line_mask;
-
-    /* Producer fields. */
-    CACHELINE_ALIGNED
-    unsigned int prod_write;
-    unsigned int prod_check;
-    unsigned int prod_cache_write;
-
-    /* Consumer fields. */
-    CACHELINE_ALIGNED
-    unsigned int cons_clear;
-    unsigned int cons_read;
-
-    /* The queue. */
-    CACHELINE_ALIGNED
-    uintptr_t q[0];
-};
-
-static inline int
-ffq_write(Iffq *ffq, Mbuf *m)
-{
-    uintptr_t *qslot = &ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)];
-
-    if (ACCESS_ONCE(*qslot) != 0) {
-        return -1; /* no space */
-    }
-    ACCESS_ONCE(*qslot) = reinterpret_cast<uintptr_t>(m);
-    ffq->prod_write++;
-
-    return 0;
-}
-
-static inline Mbuf *
-ffq_read(Iffq *ffq)
-{
-    uintptr_t *qslot = &ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)];
-    Mbuf *m          = reinterpret_cast<Mbuf *>(ACCESS_ONCE(*qslot));
-
-    if (m != nullptr) {
-        ACCESS_ONCE(*qslot) = 0; /* clear */
-        ffq->cons_read++;
-    }
-
-    return m;
-}
-
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
           EmulatedOverhead kEmulatedOverhead>
 static void
@@ -798,7 +730,7 @@ ffq_producer(Global *const g)
         if (kMbufMode != MbufMode::NoAccess) {
             compiler_barrier();
         }
-        while (ffq_write(ffq, m)) {
+        while (ffq_write(ffq, (uintptr_t)m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
@@ -825,7 +757,7 @@ ffq_consumer(Global *const g)
     g->consumer_header();
 
     for (;;) {
-        m = ffq_read(ffq);
+        m = (Mbuf *)ffq_read(ffq);
         if (m) {
             ++batch_packets;
             ++g->pkt_cnt;
@@ -851,64 +783,6 @@ ffq_consumer(Global *const g)
 }
 
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-
-/*
- * Improved FastForward queue, used by pspat.
- */
-static inline size_t
-iffq_size(unsigned int entries)
-{
-    return roundup(sizeof(Iffq) + entries * sizeof(uintptr_t), 64);
-}
-
-/**
- * iffq_init - initialize a pre-allocated mailbox
- * @m: the mailbox to be initialized
- * @entries: the number of entries
- * @line_size: the line size in bytes
- *
- * Both entries and line_size must be a power of 2.
- * Returns 0 on success, -errno on failure.
- */
-int
-iffq_init(Iffq *m, unsigned int entries, unsigned int line_size, bool improved)
-{
-    unsigned int entries_per_line;
-    unsigned int i;
-
-    if (!is_power_of_two(entries) || !is_power_of_two(line_size) ||
-        (improved && entries * sizeof(uintptr_t) <= 2 * line_size) ||
-        line_size < sizeof(uintptr_t)) {
-        printf("Error: invalid entries/linesize parameters\n");
-        return -EINVAL;
-    }
-
-    entries_per_line = line_size / sizeof(uintptr_t);
-
-    m->line_entries = entries_per_line;
-    m->line_mask    = ~(entries_per_line - 1);
-    m->entry_mask   = entries - 1;
-
-    printf("iffq: line_entries %u line_mask %x entry_mask %x\n",
-           m->line_entries, m->line_mask, m->entry_mask);
-
-    m->cons_clear       = 0;
-    m->cons_read        = m->line_entries;
-    m->prod_write       = m->line_entries;
-    m->prod_check       = m->line_entries;
-    m->prod_cache_write = 0;
-
-    if (improved) {
-        /* For iffq and biffq we need to have something different
-         * from nullptr in [cons_clear, cons_read[, or the producer
-         * can get confused. */
-        for (i = m->cons_clear; i != m->cons_read; i++) {
-            ACCESS_ONCE(m->q[SMAP(i)]) = (uintptr_t)1; /* garbage */
-        }
-    }
-
-    return 0;
-}
 
 /**
  * iffq_create - create a new mailbox
@@ -958,110 +832,12 @@ ffq_create(unsigned int entries, unsigned int line_size, bool hugepages)
 
 /**
  * iffq_free - delete a mailbox
- * @m: the mailbox to be deleted
+ * @ffq: the mailbox to be deleted
  */
 void
 iffq_free(Iffq *ffq, bool hugepages)
 {
     sfree(ffq, iffq_size(ffq->entry_mask + 1), hugepages);
-}
-
-void
-iffq_dump(const char *prefix, Iffq *ffq)
-{
-    printf("[%s]: cc %u, cr %u, pw %u, pc %u\n", prefix, ffq->cons_clear,
-           ffq->cons_read, ffq->prod_write, ffq->prod_check);
-}
-
-/**
- * iffq_insert - enqueue a new value
- * @m: the mailbox where to enqueue
- * @v: the value to be enqueued
- *
- * Returns 0 on success, -ENOBUFS on failure.
- */
-static inline int
-iffq_insert(Iffq *ffq, Mbuf *m)
-{
-    if (unlikely(ffq->prod_write == ffq->prod_check)) {
-        /* Leave a cache line empty. */
-        if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                                    ffq->entry_mask)]))
-            return -ENOBUFS;
-        ffq->prod_check += ffq->line_entries;
-    }
-    ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) = (uintptr_t)m;
-    ffq->prod_write++;
-    return 0;
-}
-
-static inline unsigned int
-iffq_wspace(Iffq *ffq)
-{
-    if (unlikely(ffq->prod_write == ffq->prod_check)) {
-        /* Leave a cache line empty. */
-        if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                                    ffq->entry_mask)]))
-            return 0;
-        ffq->prod_check += ffq->line_entries;
-    }
-    return ffq->prod_check - ffq->prod_write;
-}
-
-static inline void
-iffq_insert_local(Iffq *ffq, Mbuf *m)
-{
-    ffq->prod_cache[ffq->prod_cache_write++] = (uintptr_t)m;
-}
-
-static inline void
-iffq_insert_publish(Iffq *ffq)
-{
-    for (unsigned int i = 0; i < ffq->prod_cache_write;
-         i++, ffq->prod_write++) {
-        ACCESS_ONCE(ffq->q[SMAP(ffq->prod_write & ffq->entry_mask)]) =
-            ffq->prod_cache[i];
-    }
-    ffq->prod_cache_write = 0;
-}
-
-/**
- * iffq_extract - extract a value
- * @ffq: the mailbox where to extract from
- *
- * Returns the extracted value, NULL if the mailbox
- * is empty. It does not free up any entry, use
- * iffq_clear for that
- */
-static inline Mbuf *
-iffq_extract(Iffq *ffq)
-{
-    uintptr_t m = ACCESS_ONCE(ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)]);
-    if (m) {
-        ffq->cons_read++;
-    }
-    return (Mbuf *)m;
-}
-
-/**
- * iffq_clear - clear the previously extracted entries
- * @ffq: the mailbox to be cleared
- *
- */
-static inline void
-iffq_clear(Iffq *ffq)
-{
-    unsigned int s = (ffq->cons_read - ffq->line_entries) & ffq->line_mask;
-
-    for (; (ffq->cons_clear /* & ffq->line_mask */) != s; ffq->cons_clear++) {
-        ACCESS_ONCE(ffq->q[SMAP(ffq->cons_clear & ffq->entry_mask)]) = 0;
-    }
-}
-
-static inline void
-iffq_prefetch(Iffq *ffq)
-{
-    __builtin_prefetch((void *)ffq->q[SMAP(ffq->cons_read & ffq->entry_mask)]);
 }
 
 template <MbufMode kMbufMode, RateLimitMode kRateLimitMode,
@@ -1070,7 +846,7 @@ static void
 iffq_producer(Global *const g)
 {
     const uint64_t spin        = g->prod_spin_ticks;
-    Iffq *const ffq            = g->ffq;
+    struct Iffq *const ffq     = g->ffq;
     unsigned int batch_packets = 0;
     unsigned int batches       = 0;
     unsigned int trash         = 0;
@@ -1091,7 +867,7 @@ iffq_producer(Global *const g)
              * mbufs to be reordered after the write to the queue slot. */
             compiler_barrier();
         }
-        while (iffq_insert(ffq, m)) {
+        while (iffq_insert(ffq, (uintptr_t)m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
@@ -1121,7 +897,7 @@ iffq_consumer(Global *const g)
 #ifdef QDEBUG
         iffq_dump("C", ffq);
 #endif
-        m = iffq_extract(ffq);
+        m = (Mbuf *)iffq_extract(ffq);
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
@@ -1178,7 +954,7 @@ biffq_producer(Global *const g)
                     spin_for<kMbufMode>(spin, &trash);
                 }
                 Mbuf *m = mbuf_get<kMbufMode>(g, trash);
-                iffq_insert_local(ffq, m);
+                iffq_insert_local(ffq, (uintptr_t)m);
             }
             if (kMbufMode != MbufMode::NoAccess) {
                 compiler_barrier();
@@ -1311,9 +1087,10 @@ ffq_client(Global *const g)
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, 0);
-        ret     = ffq_write(ffq, m);
+        ret     = ffq_write(ffq, (uintptr_t)m);
         assert(ret == 0);
-        while ((m = ffq_read(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
+        while ((m = (Mbuf *)ffq_read(ffq_back)) == nullptr &&
+               !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1333,13 +1110,13 @@ ffq_server(Global *const g)
     g->consumer_header();
     for (;;) {
         Mbuf *m;
-        while ((m = ffq_read(ffq)) == nullptr) {
+        while ((m = (Mbuf *)ffq_read(ffq)) == nullptr) {
             if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
         mbuf_put<kMbufMode>(m, &csum, &trash);
-        ret = ffq_write(ffq_back, m);
+        ret = ffq_write(ffq_back, (uintptr_t)m);
         assert(ret == 0);
     }
 out:
@@ -1359,9 +1136,10 @@ iffq_client(Global *const g)
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, 0);
-        ret     = iffq_insert(ffq, m);
+        ret     = iffq_insert(ffq, (uintptr_t)m);
         assert(ret == 0);
-        while ((m = iffq_extract(ffq_back)) == nullptr && !ACCESS_ONCE(stop)) {
+        while ((m = (Mbuf *)iffq_extract(ffq_back)) == nullptr &&
+               !ACCESS_ONCE(stop)) {
         }
         iffq_clear(ffq_back);
         ++g->pkt_cnt;
@@ -1382,14 +1160,14 @@ iffq_server(Global *const g)
     g->consumer_header();
     for (;;) {
         Mbuf *m;
-        while ((m = iffq_extract(ffq)) == nullptr) {
+        while ((m = (Mbuf *)iffq_extract(ffq)) == nullptr) {
             if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
         iffq_clear(ffq);
         mbuf_put<kMbufMode>(m, &csum, &trash);
-        ret = iffq_insert(ffq_back, m);
+        ret = iffq_insert(ffq_back, (uintptr_t)m);
         assert(ret == 0);
     }
 out:
