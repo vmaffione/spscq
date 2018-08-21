@@ -1,6 +1,6 @@
 CC=g++
 #CC=clang++
-PROGS=spscq
+PROGS=spscq traffic-analyzer
 CFLAGS=-Wall -Werror -g
 CXXFLAGS=$(CFLAGS) -std=c++11
 CFLAGS+=-O2
@@ -11,6 +11,12 @@ all: $(PROGS)
 spscq: spscq.o mlib.o
 mlib.o: mlib.h
 spscq.o: mlib.h
+
+traffic-analyzer: traffic-analyzer.o
+	gcc -o traffic-analyzer traffic-analyzer.o -lpthread -Wall -Werror -O2 -g
+
+traffic-analyzer.o: traffic-analyzer.c
+	gcc -c traffic-analyzer.c -Wall -Werror -O2 -g
 
 clean:
 	-rm -rf *.o $(PROGS)

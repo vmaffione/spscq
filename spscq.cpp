@@ -1897,7 +1897,8 @@ static void
 usage(const char *progname)
 {
     printf(
-        "%s [-h]\n"
+        "%s\n"
+        "    [-h (show this help and exit)]\n"
         "    [-n NUM_PACKETS (in millions) = inf]\n"
         "    [-D DURATION (in seconds) = %d]\n"
         "    [-b MAX_PRODUCER_BATCH = %d]\n"
