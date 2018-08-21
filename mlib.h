@@ -19,21 +19,14 @@ rdtsc(void)
     return (uint64_t)lo | ((uint64_t)hi << 32);
 }
 
-#define compiler_barrier() asm volatile("" ::: "memory")
-
 static inline void
 tsc_sleep_till(uint64_t when)
 {
-    while (rdtsc() < when)
-        compiler_barrier();
+    while (rdtsc() < when) {
+        /* compiler_barrier() */
+        asm volatile("" ::: "memory");
+    }
 }
-
-/* Prepend this to a struct field to make it aligned. */
-#define CACHELINE_SIZE 64
-#define ALIGN_SIZE 128
-#define CACHELINE_ALIGNED __attribute__((aligned(ALIGN_SIZE)))
-
-#define ALIGNED_SIZE(_sz) ((_sz + ALIGN_SIZE - 1) & (~(ALIGN_SIZE - 1)))
 
 void runon(const char *prefix, int cpuid);
 

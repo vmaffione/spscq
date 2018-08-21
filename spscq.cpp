@@ -23,6 +23,7 @@
 #include <sys/mman.h>
 
 #include "mlib.h"
+#include "spscq.h"
 
 //#define RATE_LIMITING_CONSUMER /* Enable support for rate limiting consumer */
 

@@ -10,12 +10,12 @@ all: $(PROGS)
 
 spscq: spscq.o mlib.o
 mlib.o: mlib.h
-spscq.o: mlib.h
+spscq.o: mlib.h spscq.h
 
 traffic-analyzer: traffic-analyzer.o
 	gcc -o traffic-analyzer traffic-analyzer.o -lpthread -Wall -Werror -O2 -g
 
-traffic-analyzer.o: traffic-analyzer.c
+traffic-analyzer.o: traffic-analyzer.c mlib.h spscq.h
 	gcc -c traffic-analyzer.c -Wall -Werror -O2 -g
 
 clean:

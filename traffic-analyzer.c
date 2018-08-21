@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 
 #include "mlib.h"
+#include "spscq.h"
 
 struct mbuf {
     uint32_t len;
