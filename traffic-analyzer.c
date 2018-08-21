@@ -44,6 +44,9 @@ struct traffic_analyzer {
     /* Length of each SPSC queue. */
     unsigned int qlen;
 
+    /* Batch size (in packets) for producer and consumer operation. */
+    unsigned int batch;
+
     /* Load balancer thread (producer). */
     pthread_t lb_th;
 
@@ -195,7 +198,7 @@ lb(void *opaque)
 {
     struct traffic_analyzer *ta = opaque;
     unsigned int num_consumers  = ta->num_analyzers;
-    unsigned int batch          = 1;
+    unsigned int batch          = ta->batch;
     unsigned int i              = 0;
     enq_t enq                   = ta->enq;
     unsigned long long count    = 0;
@@ -227,7 +230,7 @@ analyze(void *opaque)
 {
     struct worker *w   = opaque;
     deq_t deq          = w->ta->deq;
-    unsigned int batch = 1;
+    unsigned int batch = w->ta->batch;
 
     while (!ACCESS_ONCE(stop)) {
         deq(w, batch);
@@ -249,7 +252,8 @@ usage(const char *progname)
            "    [-h (show this help and exit)]\n"
            "    [-n NUM_ANALYZERS = 2]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
-           "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n",
+           "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
+           "    [-b BATCH_LENGTH = 8]\n",
            progname);
 }
 
@@ -281,9 +285,10 @@ main(int argc, char **argv)
     ta->num_analyzers = 2;
     ta->qlen          = 256;
     ta->qtype         = "lq";
+    ta->batch         = 8;
     ffq               = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -318,6 +323,14 @@ main(int argc, char **argv)
                 return -1;
             }
             ta->qtype = optarg;
+            break;
+
+        case 'b':
+            ta->batch = atoi(optarg);
+            if (ta->batch < 1 || ta->batch > 8192) {
+                printf("    Invalid batch length '%s'\n", optarg);
+                return -1;
+            }
             break;
 
         default:
