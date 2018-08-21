@@ -1398,9 +1398,9 @@ run_test(Global *g)
             }
         }
     } else if (g->test_type == "ffq") {
-        g->ffq = ffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
-                            g->hugepages);
+        g->ffq = ffq_create(
+            g->qlen,
+            /*line_size=*/g->line_entries * sizeof(g->ffq->q[0]), g->hugepages);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
@@ -1408,7 +1408,7 @@ run_test(Global *g)
         if (g->latency) {
             g->ffq_back =
                 ffq_create(g->qlen,
-                           /*line_size=*/g->line_entries * sizeof(uintptr_t),
+                           /*line_size=*/g->line_entries * sizeof(g->ffq->q[0]),
                            g->hugepages);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
@@ -1416,18 +1416,18 @@ run_test(Global *g)
         }
     } else if (g->test_type == "iffq" || g->test_type == "biffq") {
         (void)iffq_prefetch;
-        g->ffq = iffq_create(g->qlen,
-                             /*line_size=*/g->line_entries * sizeof(uintptr_t),
-                             g->hugepages);
+        g->ffq = iffq_create(
+            g->qlen,
+            /*line_size=*/g->line_entries * sizeof(g->ffq->q[0]), g->hugepages);
         if (!g->ffq) {
             exit(EXIT_FAILURE);
         }
         iffq_dump("P", g->ffq);
         if (g->latency) {
-            g->ffq_back =
-                iffq_create(g->qlen,
-                            /*line_size=*/g->line_entries * sizeof(uintptr_t),
-                            g->hugepages);
+            g->ffq_back = iffq_create(
+                g->qlen,
+                /*line_size=*/g->line_entries * sizeof(g->ffq->q[0]),
+                g->hugepages);
             if (!g->ffq_back) {
                 exit(EXIT_FAILURE);
             }

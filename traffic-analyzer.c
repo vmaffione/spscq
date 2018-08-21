@@ -19,9 +19,14 @@ struct mbuf {
 struct worker {
     pthread_t th;
     struct mbuf *pool;
+    struct Blq *blq;
+    struct Iffq *ffq;
 };
 
 struct traffic_analyzer {
+    /* Type of spsc queue to be used. */
+    const char *qtype;
+
     /* Number of (consumer) threads performing traffic analysis. */
     unsigned int num_analyzers;
 
@@ -95,7 +100,8 @@ usage(const char *progname)
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
            "    [-n NUM_ANALYZERS = 2]\n"
-           "    [-l SPSC_QUEUES_LEN = 256]\n",
+           "    [-l SPSC_QUEUES_LEN = 256]\n"
+           "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n",
            progname);
 }
 
@@ -105,15 +111,19 @@ main(int argc, char **argv)
     struct traffic_analyzer _ta;
     struct traffic_analyzer *ta = &_ta;
     size_t memory_size          = 0;
+    size_t qsize                = 0;
     char *memory                = NULL;
     int opt;
+    int ffq; /* boolean */
     int i;
 
     memset(ta, 0, sizeof(*ta));
     ta->num_analyzers = 2;
     ta->qlen          = 256;
+    ta->qtype         = "lq";
+    ffq               = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -123,6 +133,7 @@ main(int argc, char **argv)
             ta->num_analyzers = atoi(optarg);
             if (ta->num_analyzers == 0 || ta->num_analyzers > 1000) {
                 printf("    Invalid number of analyzers '%s'\n", optarg);
+                return -1;
             }
             break;
 
@@ -131,7 +142,22 @@ main(int argc, char **argv)
             if (ta->qlen % sizeof(uintptr_t) != 0 || ta->qlen == 0 ||
                 ta->qlen > 8192) {
                 printf("    Invalid queue length '%s'\n", optarg);
+                return -1;
             }
+            break;
+
+        case 't':
+            if (!strcmp("lq", optarg) || !strcmp("llq", optarg) ||
+                !strcmp("blq", optarg)) {
+                ffq = 0;
+            } else if (!strcmp("ffq", optarg) || !strcmp("iffq", optarg) ||
+                       !strcmp("biffq", optarg)) {
+                ffq = 1;
+            } else {
+                printf("    Invalid queue type %s\n", optarg);
+                return -1;
+            }
+            ta->qtype = optarg;
             break;
 
         default:
@@ -141,14 +167,15 @@ main(int argc, char **argv)
         }
     }
 
+    qsize = ffq ? iffq_size(ta->qlen) : blq_size(ta->qlen);
+
     /*
      * Setup phase.
      */
     {
         int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 
-        memory_size = ta->num_analyzers * worker_pool_size(ta);
-        ;
+        memory_size = ta->num_analyzers * (worker_pool_size(ta) + qsize);
         printf("Allocating %lu bytes\n", (long unsigned int)memory_size);
         for (;;) {
             memory = mmap(NULL, memory_size, PROT_WRITE | PROT_READ, mmap_flags,
@@ -184,6 +211,15 @@ main(int argc, char **argv)
             }
             w->pool = (struct mbuf *)memory_cursor;
             memory_cursor += worker_pool_size(ta);
+            if (!ffq) {
+                w->blq = (struct Blq *)memory_cursor;
+                blq_init(w->blq, ta->qlen);
+            } else {
+                w->ffq = (struct Iffq *)memory_cursor;
+                iffq_init(w->ffq, ta->qlen, 32 * sizeof(w->ffq->q[0]),
+                          /*improved=*/!strcmp(ta->qtype, "iffq"));
+            }
+            memory_cursor += qsize;
         }
     }
 

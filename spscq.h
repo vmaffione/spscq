@@ -71,7 +71,7 @@ inline size_t
 blq_size(int qlen)
 {
     struct Blq *blq;
-    return sizeof(*blq) + qlen * sizeof(blq->q[0]);
+    return ALIGNED_SIZE(sizeof(*blq) + qlen * sizeof(blq->q[0]));
 }
 
 inline int
