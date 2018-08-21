@@ -69,7 +69,7 @@ struct client {
     struct vswitch_experiment *ce;
     struct vswitch *vswitch;
     pthread_t th;
-    unsigned int src_idx;
+    unsigned int idx;
 #define TXQ 0
 #define RXQ 1
 #define MAXQ 2
@@ -122,6 +122,10 @@ dst_client(struct client *c, struct mbuf *m)
 {
     uint16_t dst_idx = ntohs(*((uint16_t *)&m->dst_mac[4]));
 
+#ifdef DEBUG
+    printf("send %u --> %u\n", c->idx, dst_idx);
+#endif /* DEBUG */
+
     return c->ce->clients + dst_idx;
 }
 
@@ -153,18 +157,12 @@ lq_client(struct client *c, struct mbuf *sm)
     struct mbuf *m;
 
     while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) != NULL) {
-#ifdef DEBUG
-        printf("cli %u receives %p\n", c->src_idx, m);
-#endif /* DEBUG */
         mbuf_free(m);
     }
 
     while (lq_write(c->blq[TXQ], (uintptr_t)sm)) {
         usleep(10);
     }
-#ifdef DEBUG
-    printf("cli %u sends %p\n", c->src_idx, sm);
-#endif /* DEBUG */
 }
 
 static unsigned int
@@ -179,9 +177,6 @@ lq_vswitch(struct client *c, unsigned int batch)
         if (mbufs[count] == NULL) {
             break;
         }
-#ifdef DEBUG
-        printf("vswitch recv %p from %u\n", mbufs[count], c->src_idx);
-#endif /* DEBUG */
     }
 
     for (i = 0; i < count; i++) {
@@ -191,9 +186,6 @@ lq_vswitch(struct client *c, unsigned int batch)
         if (lq_write(dc->blq[RXQ], (uintptr_t)m)) {
             mbuf_free(m);
         }
-#ifdef DEBUG
-        printf("vswitch sent %p from %u to %u\n", m, c->src_idx, dc->src_idx);
-#endif /* DEBUG */
     }
 
     return count;
@@ -217,8 +209,6 @@ vswitch_worker(void *opaque)
     unsigned int i              = 0;
     unsigned long long count    = 0;
     struct timespec t_start, t_end;
-
-    timerslack_reset();
 
     printf("vswitch %u handles %u clients\n", vswitch_idx, num_clients);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
@@ -258,10 +248,14 @@ client_worker(void *opaque)
         struct mbuf *m;
 
         usleep(c->ce->sender_usleep);
-        m = mbuf_alloc(iplen, c->src_idx, dst_idx);
+
+        /* Allocate and initialize an mbuf. */
+        m = mbuf_alloc(iplen, c->idx, dst_idx);
         if (++dst_idx >= last_client) {
             dst_idx = first_client;
         }
+
+        /* Receive arrived mbufs and send the new one. */
         client_func(c, m);
     }
 
@@ -282,6 +276,7 @@ usage(const char *progname)
            "    [-n NUM_LEAVES = 2]\n"
            "    [-N NUM_ROOTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
+           "    [-m MBUF_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b ROOT_BATCH = 8]\n"
            "    [-b LEAF_BATCH = 8]\n"
@@ -352,6 +347,14 @@ main(int argc, char **argv)
             if (ce->qlen % sizeof(uintptr_t) != 0 || ce->qlen == 0 ||
                 ce->qlen > 8192) {
                 printf("    Invalid queue length '%s'\n", optarg);
+                return -1;
+            }
+            break;
+
+        case 'm':
+            ce->iplen = atoi(optarg);
+            if (ce->iplen < 60 || ce->iplen > 1500) {
+                printf("    Invalid mbuf length '%s'\n", optarg);
                 return -1;
             }
             break;
@@ -469,8 +472,8 @@ main(int argc, char **argv)
             struct client *c = ce->clients + i;
             int j;
 
-            c->ce      = ce;
-            c->src_idx = i;
+            c->ce  = ce;
+            c->idx = i;
             for (j = 0; j < MAXQ; j++) {
                 if (!ffq) {
                     c->blq[j] = (struct Blq *)memory_cursor;
