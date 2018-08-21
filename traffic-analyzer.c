@@ -122,7 +122,10 @@ analyze_mbuf(struct mbuf *m)
     }
 }
 
-/* Enqueue and dequeue wrappers. */
+/*
+ * Enqueue and dequeue wrappers.
+ */
+
 static unsigned int
 lq_enq(struct worker *w, unsigned int batch)
 {
@@ -136,7 +139,7 @@ lq_enq(struct worker *w, unsigned int batch)
         if (lq_write(w->blq, (uintptr_t)m)) {
             break;
         }
-        if (++mbuf_next == w->pool_mbufs) {
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
@@ -158,38 +161,84 @@ lq_deq(struct worker *w, unsigned batch)
     }
 }
 
-/*
-static int
-blq_enq(struct worker *w, struct mbuf *m)
+static unsigned int
+llq_enq(struct worker *w, unsigned int batch)
 {
-    struct Blq *blq = w->blq;
-    unsigned int wspace = blq_wspace(blq);
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int count;
 
-    if (wspace == 0) {
-        return -1;
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (llq_write(w->blq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    return count;
+}
+
+static void
+llq_deq(struct worker *w, unsigned batch)
+{
+    for (; batch > 0; batch--) {
+        struct mbuf *m = (struct mbuf *)llq_read(w->blq);
+
+        if (m == NULL) {
+            return;
+        }
+        analyze_mbuf(m);
+    }
+}
+
+static unsigned int
+blq_enq(struct worker *w, unsigned int batch)
+{
+    struct Blq *blq        = w->blq;
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int wspace    = blq_wspace(blq);
+    unsigned int count;
+
+    if (batch > wspace) {
+        batch = wspace;
     }
 
-    blq_write_local(blq, (uintptr_t)m);
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        blq_write_local(w->blq, (uintptr_t)m);
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+
     blq_write_publish(blq);
+    w->mbuf_next = mbuf_next;
 
-    return 0;
+    return count;
 }
 
-static struct mbuf *
-blq_deq(struct worker *w)
+static void
+blq_deq(struct worker *w, unsigned batch)
 {
-    struct Blq *blq = w->blq;
+    struct Blq *blq     = w->blq;
     unsigned int rspace = blq_rspace(blq);
-    struct mbuf *m;
 
-    if (rspace == 0) {
-        return NULL;
+    if (batch > rspace) {
+        batch = rspace;
     }
-
-    m = blq_read_local(blq);
-
+    for (; batch > 0; batch--) {
+        struct mbuf *m = (struct mbuf *)blq_read_local(w->blq);
+        analyze_mbuf(m);
+    }
+    blq_read_publish(blq);
 }
-*/
 
 static int stop = 0;
 
@@ -346,8 +395,11 @@ main(int argc, char **argv)
         ta->enq = lq_enq;
         ta->deq = lq_deq;
     } else if (!strcmp(ta->qtype, "llq")) {
-        ta->enq = lq_enq;
-        ta->deq = lq_deq;
+        ta->enq = llq_enq;
+        ta->deq = llq_deq;
+    } else if (!strcmp(ta->qtype, "blq")) {
+        ta->enq = blq_enq;
+        ta->deq = blq_deq;
     }
 
     /*
