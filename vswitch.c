@@ -120,7 +120,8 @@ struct vswitch_experiment {
 static inline struct client *
 dst_client(struct client *c, struct mbuf *m)
 {
-    uint16_t dst_idx = ntohs(*((uint16_t *)&m->dst_mac[4]));
+    uint16_t *dst_ptr = (uint16_t *)&m->dst_mac[4];
+    uint16_t dst_idx  = ntohs(*dst_ptr);
 
 #ifdef DEBUG
     printf("send %u --> %u\n", c->idx, dst_idx);
