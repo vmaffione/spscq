@@ -40,8 +40,8 @@ struct root {
     double mpps;
 };
 
-typedef unsigned int (*enq_t)(struct leaf *w, unsigned int batch);
-typedef void (*deq_t)(struct leaf *w, unsigned int batch);
+typedef unsigned int (*root_func_t)(struct leaf *w, unsigned int batch);
+typedef void (*leaf_func_t)(struct leaf *w, unsigned int batch);
 
 struct cast_experiment {
     /* Type of spsc queue to be used. */
@@ -61,10 +61,10 @@ struct cast_experiment {
     unsigned int batch;
 
     /* Root work. */
-    enq_t enq;
+    root_func_t root_func;
 
     /* Leaf work. */
-    deq_t deq;
+    leaf_func_t leaf_func;
 
     /* Leaf nodes. */
     struct leaf *leaves;
@@ -140,7 +140,7 @@ analyze_mbuf(struct mbuf *m)
  */
 
 static unsigned int
-lq_enq(struct leaf *w, unsigned int batch)
+lq_root_lb(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -162,7 +162,7 @@ lq_enq(struct leaf *w, unsigned int batch)
 }
 
 static void
-lq_deq(struct leaf *w, unsigned batch)
+lq_leaf_analyze(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)lq_read(w->blq);
@@ -175,7 +175,7 @@ lq_deq(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-llq_enq(struct leaf *w, unsigned int batch)
+llq_root_lb(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -197,7 +197,7 @@ llq_enq(struct leaf *w, unsigned int batch)
 }
 
 static void
-llq_deq(struct leaf *w, unsigned batch)
+llq_leaf_analyze(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)llq_read(w->blq);
@@ -210,7 +210,7 @@ llq_deq(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-blq_enq(struct leaf *w, unsigned int batch)
+blq_root_lb(struct leaf *w, unsigned int batch)
 {
     struct Blq *blq        = w->blq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -238,7 +238,7 @@ blq_enq(struct leaf *w, unsigned int batch)
 }
 
 static void
-blq_deq(struct leaf *w, unsigned batch)
+blq_leaf_analyze(struct leaf *w, unsigned batch)
 {
     struct Blq *blq     = w->blq;
     unsigned int rspace = blq_rspace(blq);
@@ -254,7 +254,7 @@ blq_deq(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-ffq_enq(struct leaf *w, unsigned int batch)
+ffq_root_lb(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -276,7 +276,7 @@ ffq_enq(struct leaf *w, unsigned int batch)
 }
 
 static void
-ffq_deq(struct leaf *w, unsigned batch)
+ffq_leaf_analyze(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)ffq_read(w->ffq);
@@ -289,7 +289,7 @@ ffq_deq(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-iffq_enq(struct leaf *w, unsigned int batch)
+iffq_root_lb(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -311,7 +311,7 @@ iffq_enq(struct leaf *w, unsigned int batch)
 }
 
 static void
-iffq_deq(struct leaf *w, unsigned batch)
+iffq_leaf_analyze(struct leaf *w, unsigned batch)
 {
     struct Iffq *ffq = w->ffq;
 
@@ -327,7 +327,7 @@ iffq_deq(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-biffq_enq(struct leaf *w, unsigned int batch)
+biffq_root_lb(struct leaf *w, unsigned int batch)
 {
     struct Iffq *ffq       = w->ffq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -357,25 +357,25 @@ biffq_enq(struct leaf *w, unsigned int batch)
 static int stop = 0;
 
 static void *
-lb(void *opaque)
+root_worker(void *opaque)
 {
     struct root *p              = opaque;
     struct leaf *first_consumer = p->ce->leaves + p->first_analyzer;
     unsigned lb_idx             = (unsigned int)(p - p->ce->roots);
-    unsigned int num_consumers  = p->num_leaves;
+    unsigned int num_leaves     = p->num_leaves;
     unsigned int batch          = p->ce->batch;
-    enq_t enq                   = p->ce->enq;
+    root_func_t root_func       = p->ce->root_func;
     unsigned int i              = 0;
     unsigned long long count    = 0;
     struct timespec t_start, t_end;
 
-    printf("lb %u handles %u analyzers\n", lb_idx, num_consumers);
+    printf("root %u handles %u leaves\n", lb_idx, num_leaves);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
         struct leaf *w = first_consumer + i;
 
-        count += enq(w, batch);
-        if (++i == num_consumers) {
+        count += root_func(w, batch);
+        if (++i == num_leaves) {
             i = 0;
         }
     }
@@ -385,7 +385,7 @@ lb(void *opaque)
             1000000000ULL * (t_end.tv_sec - t_start.tv_sec) +
             (t_end.tv_nsec - t_start.tv_nsec);
         double rate = (double)count * 1000.0 / (double)ns;
-        printf("lb throughput: %.3f Mpps\n", rate);
+        printf("root throughput: %.3f Mpps\n", rate);
         p->mpps = rate;
     }
 
@@ -393,14 +393,14 @@ lb(void *opaque)
 }
 
 static void *
-analyze(void *opaque)
+leaf_worker(void *opaque)
 {
-    struct leaf *w     = opaque;
-    deq_t deq          = w->ce->deq;
-    unsigned int batch = w->ce->batch;
+    struct leaf *w        = opaque;
+    leaf_func_t leaf_func = w->ce->leaf_func;
+    unsigned int batch    = w->ce->batch;
 
     while (!ACCESS_ONCE(stop)) {
-        deq(w, batch);
+        leaf_func(w, batch);
     }
 
     return NULL;
@@ -561,23 +561,23 @@ main(int argc, char **argv)
     qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
     if (!strcmp(ce->qtype, "lq")) {
-        ce->enq = lq_enq;
-        ce->deq = lq_deq;
+        ce->root_func = lq_root_lb;
+        ce->leaf_func = lq_leaf_analyze;
     } else if (!strcmp(ce->qtype, "llq")) {
-        ce->enq = llq_enq;
-        ce->deq = llq_deq;
+        ce->root_func = llq_root_lb;
+        ce->leaf_func = llq_leaf_analyze;
     } else if (!strcmp(ce->qtype, "blq")) {
-        ce->enq = blq_enq;
-        ce->deq = blq_deq;
+        ce->root_func = blq_root_lb;
+        ce->leaf_func = blq_leaf_analyze;
     } else if (!strcmp(ce->qtype, "ffq")) {
-        ce->enq = ffq_enq;
-        ce->deq = ffq_deq;
+        ce->root_func = ffq_root_lb;
+        ce->leaf_func = ffq_leaf_analyze;
     } else if (!strcmp(ce->qtype, "iffq")) {
-        ce->enq = iffq_enq;
-        ce->deq = iffq_deq;
+        ce->root_func = iffq_root_lb;
+        ce->leaf_func = iffq_leaf_analyze;
     } else if (!strcmp(ce->qtype, "biffq")) {
-        ce->enq = biffq_enq;
-        ce->deq = iffq_deq;
+        ce->root_func = biffq_root_lb;
+        ce->leaf_func = iffq_leaf_analyze;
     }
 
     /*
@@ -648,7 +648,7 @@ main(int argc, char **argv)
     for (i = 0; i < ce->num_leaves; i++) {
         struct leaf *w = ce->leaves + i;
 
-        if (pthread_create(&w->th, NULL, analyze, w)) {
+        if (pthread_create(&w->th, NULL, leaf_worker, w)) {
             printf("pthread_create(leaf) failed\n");
             exit(EXIT_FAILURE);
         }
@@ -657,8 +657,8 @@ main(int argc, char **argv)
     for (i = 0; i < ce->num_roots; i++) {
         struct root *p = ce->roots + i;
 
-        if (pthread_create(&p->th, NULL, lb, p)) {
-            printf("pthread_create(lb) failed\n");
+        if (pthread_create(&p->th, NULL, root_worker, p)) {
+            printf("pthread_create(root) failed\n");
             exit(EXIT_FAILURE);
         }
     }
