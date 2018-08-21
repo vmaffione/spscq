@@ -7,6 +7,7 @@ N=10
 DURATION=5
 STEP=10
 #MORE="--dry-run"
+MORE=-H
 
 ./run-tests.py -vw $MORE --duration $DURATION --max-trials $TRIALS --step $STEP \
                 --spin-min $SPMIN --num-points $N -S square | tee $EXPDIR/001
