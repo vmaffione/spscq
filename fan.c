@@ -64,7 +64,8 @@ struct experiment {
     unsigned int qlen;
 
     /* Batch size (in packets) for root and leaf operation. */
-    unsigned int batch;
+    unsigned int root_batch;
+    unsigned int leaf_batch;
 
     /* Root work. */
     root_func_t root_func;
@@ -635,7 +636,7 @@ root_worker(void *opaque)
     struct leaf *first_leaf  = p->ce->leaves + p->first_leaf;
     unsigned lb_idx          = (unsigned int)(p - p->ce->roots);
     unsigned int num_leaves  = p->num_leaves;
-    unsigned int batch       = p->ce->batch;
+    unsigned int batch       = p->ce->root_batch;
     root_func_t root_func    = p->ce->root_func;
     unsigned int i           = 0;
     unsigned long long count = 0;
@@ -671,7 +672,7 @@ leaf_worker(void *opaque)
 {
     struct leaf *w        = opaque;
     leaf_func_t leaf_func = w->ce->leaf_func;
-    unsigned int batch    = w->ce->batch;
+    unsigned int batch    = w->ce->leaf_batch;
 
     timerslack_reset();
 
@@ -722,7 +723,8 @@ usage(const char *progname)
            "    [-N NUM_ROOTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
-           "    [-b BATCH_LENGTH = 8]\n"
+           "    [-b ROOT_BATCH = 8]\n"
+           "    [-b LEAF_BATCH = 8]\n"
            "    [-u SENDER_USLEEP = 50]\n"
            "    [-j (run leaf benchmark)]\n",
            progname);
@@ -737,8 +739,9 @@ main(int argc, char **argv)
     size_t qsize          = 0;
     char *memory          = NULL;
     int opt;
-    int ffq;           /* boolean */
-    int benchmark = 0; /* boolean */
+    int ffq;              /* boolean */
+    int benchmark    = 0; /* boolean */
+    int got_b_option = 0;
     int i;
 
     {
@@ -754,14 +757,14 @@ main(int argc, char **argv)
     }
 
     memset(ce, 0, sizeof(*ce));
-    ce->num_roots     = 1;
-    ce->num_leaves    = 2;
-    ce->qlen          = 256;
-    ce->expname       = "fanout";
-    ce->qtype         = "lq";
-    ce->batch         = 8;
-    ce->sender_usleep = 50;
-    ffq               = 0;
+    ce->num_roots  = 1;
+    ce->num_leaves = 2;
+    ce->qlen       = 256;
+    ce->expname    = "fanout";
+    ce->qtype      = "lq";
+    ce->root_batch = ce->leaf_batch = 8;
+    ce->sender_usleep               = 50;
+    ffq                             = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:")) != -1) {
         switch (opt) {
@@ -809,10 +812,19 @@ main(int argc, char **argv)
             break;
 
         case 'b':
-            ce->batch = atoi(optarg);
-            if (ce->batch < 1 || ce->batch > 8192) {
-                printf("    Invalid batch length '%s'\n", optarg);
-                return -1;
+            if (!got_b_option) {
+                got_b_option   = 1;
+                ce->root_batch = atoi(optarg);
+                if (ce->root_batch < 1 || ce->root_batch > 8192) {
+                    printf("    Invalid root batch '%s'\n", optarg);
+                    return -1;
+                }
+            } else {
+                ce->leaf_batch = atoi(optarg);
+                if (ce->leaf_batch < 1 || ce->leaf_batch > 8192) {
+                    printf("    Invalid leaf batch '%s'\n", optarg);
+                    return -1;
+                }
             }
             break;
 
