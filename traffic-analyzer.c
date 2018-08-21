@@ -44,6 +44,9 @@ typedef unsigned int (*root_func_t)(struct leaf *w, unsigned int batch);
 typedef void (*leaf_func_t)(struct leaf *w, unsigned int batch);
 
 struct cast_experiment {
+    /* Experiment name. */
+    const char *expname;
+
     /* Type of spsc queue to be used. */
     const char *qtype;
 
@@ -440,6 +443,7 @@ usage(const char *progname)
 {
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
+           "    [-e EXPNAME = (fanout, fanin)]\n"
            "    [-n NUM_LEAVES = 2]\n"
            "    [-N NUM_ROOTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
@@ -478,11 +482,12 @@ main(int argc, char **argv)
     ce->num_roots  = 1;
     ce->num_leaves = 2;
     ce->qlen       = 256;
+    ce->expname    = "fanout";
     ce->qtype      = "lq";
     ce->batch      = 8;
     ffq            = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:j")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -539,6 +544,14 @@ main(int argc, char **argv)
             benchmark = 1;
             break;
 
+        case 'e':
+            if (strcmp(optarg, "fanout") && strcmp(optarg, "fanin")) {
+                printf("    Invalid experiment name '%s'\n", optarg);
+                return -1;
+            }
+            ce->expname = optarg;
+            break;
+
         default:
             usage(argv[0]);
             return 0;
@@ -560,24 +573,29 @@ main(int argc, char **argv)
 
     qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
-    if (!strcmp(ce->qtype, "lq")) {
-        ce->root_func = lq_root_lb;
-        ce->leaf_func = lq_leaf_analyze;
-    } else if (!strcmp(ce->qtype, "llq")) {
-        ce->root_func = llq_root_lb;
-        ce->leaf_func = llq_leaf_analyze;
-    } else if (!strcmp(ce->qtype, "blq")) {
-        ce->root_func = blq_root_lb;
-        ce->leaf_func = blq_leaf_analyze;
-    } else if (!strcmp(ce->qtype, "ffq")) {
-        ce->root_func = ffq_root_lb;
-        ce->leaf_func = ffq_leaf_analyze;
-    } else if (!strcmp(ce->qtype, "iffq")) {
-        ce->root_func = iffq_root_lb;
-        ce->leaf_func = iffq_leaf_analyze;
-    } else if (!strcmp(ce->qtype, "biffq")) {
-        ce->root_func = biffq_root_lb;
-        ce->leaf_func = iffq_leaf_analyze;
+    if (!strcmp(ce->expname, "fanout")) {
+        if (!strcmp(ce->qtype, "lq")) {
+            ce->root_func = lq_root_lb;
+            ce->leaf_func = lq_leaf_analyze;
+        } else if (!strcmp(ce->qtype, "llq")) {
+            ce->root_func = llq_root_lb;
+            ce->leaf_func = llq_leaf_analyze;
+        } else if (!strcmp(ce->qtype, "blq")) {
+            ce->root_func = blq_root_lb;
+            ce->leaf_func = blq_leaf_analyze;
+        } else if (!strcmp(ce->qtype, "ffq")) {
+            ce->root_func = ffq_root_lb;
+            ce->leaf_func = ffq_leaf_analyze;
+        } else if (!strcmp(ce->qtype, "iffq")) {
+            ce->root_func = iffq_root_lb;
+            ce->leaf_func = iffq_leaf_analyze;
+        } else if (!strcmp(ce->qtype, "biffq")) {
+            ce->root_func = biffq_root_lb;
+            ce->leaf_func = iffq_leaf_analyze;
+        }
+    } else {
+        printf("Not supported yet ...\n");
+        return -1;
     }
 
     /*
