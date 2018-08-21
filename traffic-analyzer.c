@@ -212,7 +212,7 @@ blq_enq(struct worker *w, unsigned int batch)
         struct mbuf *m = w->pool + mbuf_next;
 
         udp_60_bytes_packet_get(m);
-        blq_write_local(w->blq, (uintptr_t)m);
+        blq_write_local(blq, (uintptr_t)m);
         if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
         }
@@ -234,7 +234,7 @@ blq_deq(struct worker *w, unsigned batch)
         batch = rspace;
     }
     for (; batch > 0; batch--) {
-        struct mbuf *m = (struct mbuf *)blq_read_local(w->blq);
+        struct mbuf *m = (struct mbuf *)blq_read_local(blq);
         analyze_mbuf(m);
     }
     blq_read_publish(blq);
@@ -300,15 +300,45 @@ iffq_enq(struct worker *w, unsigned int batch)
 static void
 iffq_deq(struct worker *w, unsigned batch)
 {
+    struct Iffq *ffq = w->ffq;
+
     for (; batch > 0; batch--) {
-        struct mbuf *m = (struct mbuf *)iffq_extract(w->ffq);
+        struct mbuf *m = (struct mbuf *)iffq_extract(ffq);
 
         if (m == NULL) {
             return;
         }
         analyze_mbuf(m);
     }
-    iffq_clear(w->ffq);
+    iffq_clear(ffq);
+}
+
+static unsigned int
+biffq_enq(struct worker *w, unsigned int batch)
+{
+    struct Iffq *ffq       = w->ffq;
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int wspace    = iffq_wspace(ffq);
+    unsigned int count;
+
+    if (batch > wspace) {
+        batch = wspace;
+    }
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        iffq_insert_local(ffq, (uintptr_t)m);
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+
+    iffq_insert_publish(ffq);
+    w->mbuf_next = mbuf_next;
+
+    return count;
 }
 
 static int stop = 0;
@@ -476,6 +506,9 @@ main(int argc, char **argv)
         ta->deq = ffq_deq;
     } else if (!strcmp(ta->qtype, "iffq")) {
         ta->enq = iffq_enq;
+        ta->deq = iffq_deq;
+    } else if (!strcmp(ta->qtype, "biffq")) {
+        ta->enq = biffq_enq;
         ta->deq = iffq_deq;
     }
 
