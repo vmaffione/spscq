@@ -405,6 +405,29 @@ analyze(void *opaque)
 }
 
 static void
+consumer_benchmark(void)
+{
+    struct timespec t_start, t_end;
+    unsigned long long count = 0;
+    struct mbuf m;
+
+    udp_60_bytes_packet_get(&m);
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
+    while (!ACCESS_ONCE(stop)) {
+        analyze_mbuf(&m);
+        count++;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+    {
+        unsigned long long ns =
+            1000000000ULL * (t_end.tv_sec - t_start.tv_sec) +
+            (t_end.tv_nsec - t_start.tv_nsec);
+        double rate = (double)count * 1000.0 / (double)ns;
+        printf("Consumer benchmark: %.3f Mpps\n", rate);
+    }
+}
+
+static void
 sigint_handler(int signum)
 {
     ACCESS_ONCE(stop) = 1;
@@ -419,7 +442,8 @@ usage(const char *progname)
            "    [-N NUM_LOAD_BALANCERS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
-           "    [-b BATCH_LENGTH = 8]\n",
+           "    [-b BATCH_LENGTH = 8]\n"
+           "    [-j (run consumer benchmark)]\n",
            progname);
 }
 
@@ -432,7 +456,8 @@ main(int argc, char **argv)
     size_t qsize                = 0;
     char *memory                = NULL;
     int opt;
-    int ffq; /* boolean */
+    int ffq;           /* boolean */
+    int benchmark = 0; /* boolean */
     int i;
 
     {
@@ -455,7 +480,7 @@ main(int argc, char **argv)
     ta->batch              = 8;
     ffq                    = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:j")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -508,6 +533,10 @@ main(int argc, char **argv)
             }
             break;
 
+        case 'j':
+            benchmark = 1;
+            break;
+
         default:
             usage(argv[0]);
             return 0;
@@ -519,6 +548,11 @@ main(int argc, char **argv)
         printf("Invalid parameters: num_analyzers must be "
                ">= num_load_balancers\n");
         return -1;
+    }
+
+    if (benchmark) {
+        consumer_benchmark();
+        return 0;
     }
 
     qsize = ffq ? iffq_size(ta->qlen) : blq_size(ta->qlen);
