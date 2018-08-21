@@ -464,13 +464,13 @@ usage(const char *progname)
 {
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
-           "    [-n NUM_LEAVES = 2]\n"
-           "    [-N NUM_ROOTS = 1]\n"
+           "    [-n NUM_VSWITCHES = 2]\n"
+           "    [-N NUM_CLIENTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-m MBUF_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
-           "    [-b ROOT_BATCH = 8]\n"
-           "    [-b LEAF_BATCH = 8]\n"
+           "    [-b VSWITCH_BATCH = 8]\n"
+           "    [-b CLIENT_BATCH = 8]\n"
            "    [-u SENDER_USLEEP = 50]\n"
            "    [-p (pin theads to cores)\n",
            progname);
