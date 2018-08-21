@@ -18,11 +18,11 @@ struct mbuf {
 };
 
 /* Forward declaration */
-struct cast_experiment;
+struct experiment;
 
 /* Context of a leaf thread (traffic analyzer or sender clients). */
 struct leaf {
-    struct cast_experiment *ce;
+    struct experiment *ce;
     pthread_t th;
     struct mbuf *pool;
     unsigned int mbuf_next;
@@ -33,7 +33,7 @@ struct leaf {
 
 /* Context of a root thread (load balancer or scheduling). */
 struct root {
-    struct cast_experiment *ce;
+    struct experiment *ce;
     pthread_t th;
     unsigned int first_analyzer;
     unsigned int num_leaves;
@@ -43,7 +43,7 @@ struct root {
 typedef unsigned int (*root_func_t)(struct leaf *w, unsigned int batch);
 typedef void (*leaf_func_t)(struct leaf *w, unsigned int batch);
 
-struct cast_experiment {
+struct experiment {
     /* Experiment name. */
     const char *expname;
 
@@ -77,13 +77,13 @@ struct cast_experiment {
 };
 
 static size_t
-leaf_pool_size(struct cast_experiment *ce)
+leaf_pool_size(struct experiment *ce)
 {
     return ALIGNED_SIZE(sizeof(struct mbuf) * ce->qlen * 2);
 }
 
 static size_t
-leaf_pool_mbufs(struct cast_experiment *ce)
+leaf_pool_mbufs(struct experiment *ce)
 {
     return ce->qlen * 2;
 }
@@ -456,11 +456,11 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-    struct cast_experiment _ce;
-    struct cast_experiment *ce = &_ce;
-    size_t memory_size         = 0;
-    size_t qsize               = 0;
-    char *memory               = NULL;
+    struct experiment _ce;
+    struct experiment *ce = &_ce;
+    size_t memory_size    = 0;
+    size_t qsize          = 0;
+    char *memory          = NULL;
     int opt;
     int ffq;           /* boolean */
     int benchmark = 0; /* boolean */
