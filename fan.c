@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <sys/mman.h>
 #include <signal.h>
+#include <sys/prctl.h>
 
 #include "mlib.h"
 #include "spscq.h"
@@ -102,6 +103,14 @@ szalloc(size_t size)
     }
     memset(p, 0, size);
     return p;
+}
+
+static void
+timerslack_reset(void)
+{
+    if (prctl(PR_SET_TIMERSLACK, /*nanoseconds=*/1)) {
+        printf("Failed to set the timerslack!\n");
+    }
 }
 
 static const uint8_t bytes[] = {
@@ -415,6 +424,8 @@ root_worker(void *opaque)
     unsigned long long count = 0;
     struct timespec t_start, t_end;
 
+    timerslack_reset();
+
     printf("root %u handles %u leaves\n", lb_idx, num_leaves);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
@@ -444,6 +455,8 @@ leaf_worker(void *opaque)
     struct leaf *w        = opaque;
     leaf_func_t leaf_func = w->ce->leaf_func;
     unsigned int batch    = w->ce->batch;
+
+    timerslack_reset();
 
     while (!ACCESS_ONCE(stop)) {
         leaf_func(w, batch);
