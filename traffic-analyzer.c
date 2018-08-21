@@ -18,11 +18,11 @@ struct mbuf {
 };
 
 /* Forward declaration */
-struct traffic_analyzer;
+struct cast_experiment;
 
-/* Context of a traffic analyzer thread (consumer). */
-struct consumer {
-    struct traffic_analyzer *ta;
+/* Context of a leaf thread (traffic analyzer or sender clients). */
+struct leaf {
+    struct cast_experiment *ce;
     pthread_t th;
     struct mbuf *pool;
     unsigned int mbuf_next;
@@ -31,56 +31,58 @@ struct consumer {
     struct Iffq *ffq;
 };
 
-struct producer {
-    struct traffic_analyzer *ta;
+/* Context of a root thread (load balancer or scheduling). */
+struct root {
+    struct cast_experiment *ce;
     pthread_t th;
     unsigned int first_analyzer;
-    unsigned int num_analyzers;
+    unsigned int num_leaves;
     double mpps;
 };
 
-typedef unsigned int (*enq_t)(struct consumer *w, unsigned int batch);
-typedef void (*deq_t)(struct consumer *w, unsigned int batch);
+typedef unsigned int (*enq_t)(struct leaf *w, unsigned int batch);
+typedef void (*deq_t)(struct leaf *w, unsigned int batch);
 
-struct traffic_analyzer {
+struct cast_experiment {
     /* Type of spsc queue to be used. */
     const char *qtype;
 
-    /* Number of (producer) threads performing load balancing. */
-    unsigned int num_load_balancers;
+    /* Number of (root) threads performing load balancing or scheduler. */
+    unsigned int num_roots;
 
-    /* Number of (consumer) threads performing traffic analysis. */
-    unsigned int num_analyzers;
+    /* Number of (leaf) threads performing traffic analysis or sender clients.
+     */
+    unsigned int num_leaves;
 
     /* Length of each SPSC queue. */
     unsigned int qlen;
 
-    /* Batch size (in packets) for producer and consumer operation. */
+    /* Batch size (in packets) for root and leaf operation. */
     unsigned int batch;
 
-    /* Producer work. */
+    /* Root work. */
     enq_t enq;
 
-    /* Consumer work. */
+    /* Leaf work. */
     deq_t deq;
 
-    /* Analyzer threads. */
-    struct consumer *consumers;
+    /* Leaf nodes. */
+    struct leaf *leaves;
 
-    /* Load balancer threads. */
-    struct producer *producers;
+    /* Root nodes. */
+    struct root *roots;
 };
 
 static size_t
-consumer_pool_size(struct traffic_analyzer *ta)
+leaf_pool_size(struct cast_experiment *ce)
 {
-    return ALIGNED_SIZE(sizeof(struct mbuf) * ta->qlen * 2);
+    return ALIGNED_SIZE(sizeof(struct mbuf) * ce->qlen * 2);
 }
 
 static size_t
-consumer_pool_mbufs(struct traffic_analyzer *ta)
+leaf_pool_mbufs(struct cast_experiment *ce)
 {
-    return ta->qlen * 2;
+    return ce->qlen * 2;
 }
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
@@ -138,7 +140,7 @@ analyze_mbuf(struct mbuf *m)
  */
 
 static unsigned int
-lq_enq(struct consumer *w, unsigned int batch)
+lq_enq(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -160,7 +162,7 @@ lq_enq(struct consumer *w, unsigned int batch)
 }
 
 static void
-lq_deq(struct consumer *w, unsigned batch)
+lq_deq(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)lq_read(w->blq);
@@ -173,7 +175,7 @@ lq_deq(struct consumer *w, unsigned batch)
 }
 
 static unsigned int
-llq_enq(struct consumer *w, unsigned int batch)
+llq_enq(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -195,7 +197,7 @@ llq_enq(struct consumer *w, unsigned int batch)
 }
 
 static void
-llq_deq(struct consumer *w, unsigned batch)
+llq_deq(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)llq_read(w->blq);
@@ -208,7 +210,7 @@ llq_deq(struct consumer *w, unsigned batch)
 }
 
 static unsigned int
-blq_enq(struct consumer *w, unsigned int batch)
+blq_enq(struct leaf *w, unsigned int batch)
 {
     struct Blq *blq        = w->blq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -236,7 +238,7 @@ blq_enq(struct consumer *w, unsigned int batch)
 }
 
 static void
-blq_deq(struct consumer *w, unsigned batch)
+blq_deq(struct leaf *w, unsigned batch)
 {
     struct Blq *blq     = w->blq;
     unsigned int rspace = blq_rspace(blq);
@@ -252,7 +254,7 @@ blq_deq(struct consumer *w, unsigned batch)
 }
 
 static unsigned int
-ffq_enq(struct consumer *w, unsigned int batch)
+ffq_enq(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -274,7 +276,7 @@ ffq_enq(struct consumer *w, unsigned int batch)
 }
 
 static void
-ffq_deq(struct consumer *w, unsigned batch)
+ffq_deq(struct leaf *w, unsigned batch)
 {
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)ffq_read(w->ffq);
@@ -287,7 +289,7 @@ ffq_deq(struct consumer *w, unsigned batch)
 }
 
 static unsigned int
-iffq_enq(struct consumer *w, unsigned int batch)
+iffq_enq(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
     unsigned int count;
@@ -309,7 +311,7 @@ iffq_enq(struct consumer *w, unsigned int batch)
 }
 
 static void
-iffq_deq(struct consumer *w, unsigned batch)
+iffq_deq(struct leaf *w, unsigned batch)
 {
     struct Iffq *ffq = w->ffq;
 
@@ -325,7 +327,7 @@ iffq_deq(struct consumer *w, unsigned batch)
 }
 
 static unsigned int
-biffq_enq(struct consumer *w, unsigned int batch)
+biffq_enq(struct leaf *w, unsigned int batch)
 {
     struct Iffq *ffq       = w->ffq;
     unsigned int mbuf_next = w->mbuf_next;
@@ -357,20 +359,20 @@ static int stop = 0;
 static void *
 lb(void *opaque)
 {
-    struct producer *p              = opaque;
-    struct consumer *first_consumer = p->ta->consumers + p->first_analyzer;
-    unsigned lb_idx                 = (unsigned int)(p - p->ta->producers);
-    unsigned int num_consumers      = p->num_analyzers;
-    unsigned int batch              = p->ta->batch;
-    enq_t enq                       = p->ta->enq;
-    unsigned int i                  = 0;
-    unsigned long long count        = 0;
+    struct root *p              = opaque;
+    struct leaf *first_consumer = p->ce->leaves + p->first_analyzer;
+    unsigned lb_idx             = (unsigned int)(p - p->ce->roots);
+    unsigned int num_consumers  = p->num_leaves;
+    unsigned int batch          = p->ce->batch;
+    enq_t enq                   = p->ce->enq;
+    unsigned int i              = 0;
+    unsigned long long count    = 0;
     struct timespec t_start, t_end;
 
     printf("lb %u handles %u analyzers\n", lb_idx, num_consumers);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
-        struct consumer *w = first_consumer + i;
+        struct leaf *w = first_consumer + i;
 
         count += enq(w, batch);
         if (++i == num_consumers) {
@@ -393,9 +395,9 @@ lb(void *opaque)
 static void *
 analyze(void *opaque)
 {
-    struct consumer *w = opaque;
-    deq_t deq          = w->ta->deq;
-    unsigned int batch = w->ta->batch;
+    struct leaf *w     = opaque;
+    deq_t deq          = w->ce->deq;
+    unsigned int batch = w->ce->batch;
 
     while (!ACCESS_ONCE(stop)) {
         deq(w, batch);
@@ -405,7 +407,7 @@ analyze(void *opaque)
 }
 
 static void
-consumer_benchmark(void)
+analyzer_benchmark(void)
 {
     struct timespec t_start, t_end;
     unsigned long long count = 0;
@@ -438,23 +440,23 @@ usage(const char *progname)
 {
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
-           "    [-n NUM_ANALYZERS = 2]\n"
-           "    [-N NUM_LOAD_BALANCERS = 1]\n"
+           "    [-n NUM_LEAVES = 2]\n"
+           "    [-N NUM_ROOTS = 1]\n"
            "    [-l SPSC_QUEUES_LEN = 256]\n"
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b BATCH_LENGTH = 8]\n"
-           "    [-j (run consumer benchmark)]\n",
+           "    [-j (run leaf benchmark)]\n",
            progname);
 }
 
 int
 main(int argc, char **argv)
 {
-    struct traffic_analyzer _ta;
-    struct traffic_analyzer *ta = &_ta;
-    size_t memory_size          = 0;
-    size_t qsize                = 0;
-    char *memory                = NULL;
+    struct cast_experiment _ce;
+    struct cast_experiment *ce = &_ce;
+    size_t memory_size         = 0;
+    size_t qsize               = 0;
+    char *memory               = NULL;
     int opt;
     int ffq;           /* boolean */
     int benchmark = 0; /* boolean */
@@ -472,13 +474,13 @@ main(int argc, char **argv)
         }
     }
 
-    memset(ta, 0, sizeof(*ta));
-    ta->num_load_balancers = 1;
-    ta->num_analyzers      = 2;
-    ta->qlen               = 256;
-    ta->qtype              = "lq";
-    ta->batch              = 8;
-    ffq                    = 0;
+    memset(ce, 0, sizeof(*ce));
+    ce->num_roots  = 1;
+    ce->num_leaves = 2;
+    ce->qlen       = 256;
+    ce->qtype      = "lq";
+    ce->batch      = 8;
+    ffq            = 0;
 
     while ((opt = getopt(argc, argv, "hn:l:t:b:N:j")) != -1) {
         switch (opt) {
@@ -487,25 +489,25 @@ main(int argc, char **argv)
             return 0;
 
         case 'n':
-            ta->num_analyzers = atoi(optarg);
-            if (ta->num_analyzers == 0 || ta->num_analyzers > 1000) {
+            ce->num_leaves = atoi(optarg);
+            if (ce->num_leaves == 0 || ce->num_leaves > 1000) {
                 printf("    Invalid number of analyzers '%s'\n", optarg);
                 return -1;
             }
             break;
 
         case 'N':
-            ta->num_load_balancers = atoi(optarg);
-            if (ta->num_load_balancers == 0 || ta->num_load_balancers > 1000) {
+            ce->num_roots = atoi(optarg);
+            if (ce->num_roots == 0 || ce->num_roots > 1000) {
                 printf("    Invalid number of load balancers '%s'\n", optarg);
                 return -1;
             }
             break;
 
         case 'l':
-            ta->qlen = atoi(optarg);
-            if (ta->qlen % sizeof(uintptr_t) != 0 || ta->qlen == 0 ||
-                ta->qlen > 8192) {
+            ce->qlen = atoi(optarg);
+            if (ce->qlen % sizeof(uintptr_t) != 0 || ce->qlen == 0 ||
+                ce->qlen > 8192) {
                 printf("    Invalid queue length '%s'\n", optarg);
                 return -1;
             }
@@ -522,12 +524,12 @@ main(int argc, char **argv)
                 printf("    Invalid queue type %s\n", optarg);
                 return -1;
             }
-            ta->qtype = optarg;
+            ce->qtype = optarg;
             break;
 
         case 'b':
-            ta->batch = atoi(optarg);
-            if (ta->batch < 1 || ta->batch > 8192) {
+            ce->batch = atoi(optarg);
+            if (ce->batch < 1 || ce->batch > 8192) {
                 printf("    Invalid batch length '%s'\n", optarg);
                 return -1;
             }
@@ -544,38 +546,38 @@ main(int argc, char **argv)
         }
     }
 
-    if (ta->num_load_balancers > ta->num_analyzers) {
-        printf("Invalid parameters: num_analyzers must be "
-               ">= num_load_balancers\n");
+    if (ce->num_roots > ce->num_leaves) {
+        printf("Invalid parameters: num_leaves must be "
+               ">= num_roots\n");
         return -1;
     }
 
     if (benchmark) {
-        printf("Running consumer benchmark: CTRL-C to stop\n");
-        consumer_benchmark();
+        printf("Running leaf benchmark: CTRL-C to stop\n");
+        analyzer_benchmark();
         return 0;
     }
 
-    qsize = ffq ? iffq_size(ta->qlen) : blq_size(ta->qlen);
+    qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
-    if (!strcmp(ta->qtype, "lq")) {
-        ta->enq = lq_enq;
-        ta->deq = lq_deq;
-    } else if (!strcmp(ta->qtype, "llq")) {
-        ta->enq = llq_enq;
-        ta->deq = llq_deq;
-    } else if (!strcmp(ta->qtype, "blq")) {
-        ta->enq = blq_enq;
-        ta->deq = blq_deq;
-    } else if (!strcmp(ta->qtype, "ffq")) {
-        ta->enq = ffq_enq;
-        ta->deq = ffq_deq;
-    } else if (!strcmp(ta->qtype, "iffq")) {
-        ta->enq = iffq_enq;
-        ta->deq = iffq_deq;
-    } else if (!strcmp(ta->qtype, "biffq")) {
-        ta->enq = biffq_enq;
-        ta->deq = iffq_deq;
+    if (!strcmp(ce->qtype, "lq")) {
+        ce->enq = lq_enq;
+        ce->deq = lq_deq;
+    } else if (!strcmp(ce->qtype, "llq")) {
+        ce->enq = llq_enq;
+        ce->deq = llq_deq;
+    } else if (!strcmp(ce->qtype, "blq")) {
+        ce->enq = blq_enq;
+        ce->deq = blq_deq;
+    } else if (!strcmp(ce->qtype, "ffq")) {
+        ce->enq = ffq_enq;
+        ce->deq = ffq_deq;
+    } else if (!strcmp(ce->qtype, "iffq")) {
+        ce->enq = iffq_enq;
+        ce->deq = iffq_deq;
+    } else if (!strcmp(ce->qtype, "biffq")) {
+        ce->enq = biffq_enq;
+        ce->deq = iffq_deq;
     }
 
     /*
@@ -584,7 +586,7 @@ main(int argc, char **argv)
     {
         int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
 
-        memory_size = ta->num_analyzers * (consumer_pool_size(ta) + qsize);
+        memory_size = ce->num_leaves * (leaf_pool_size(ce) + qsize);
         printf("Allocating %lu bytes\n", (long unsigned int)memory_size);
         for (;;) {
             memory = mmap(NULL, memory_size, PROT_WRITE | PROT_READ, mmap_flags,
@@ -602,59 +604,58 @@ main(int argc, char **argv)
         }
     }
 
-    ta->consumers = szalloc(ta->num_analyzers * sizeof(ta->consumers[0]));
-    ta->producers = szalloc(ta->num_load_balancers * sizeof(ta->producers[0]));
+    ce->leaves = szalloc(ce->num_leaves * sizeof(ce->leaves[0]));
+    ce->roots  = szalloc(ce->num_roots * sizeof(ce->roots[0]));
 
     {
         char *memory_cursor = memory;
 
-        for (i = 0; i < ta->num_analyzers; i++) {
-            struct consumer *w = ta->consumers + i;
+        for (i = 0; i < ce->num_leaves; i++) {
+            struct leaf *w = ce->leaves + i;
 
-            w->ta         = ta;
+            w->ce         = ce;
             w->pool       = (struct mbuf *)memory_cursor;
             w->mbuf_next  = 0;
-            w->pool_mbufs = consumer_pool_mbufs(ta);
-            memory_cursor += consumer_pool_size(ta);
+            w->pool_mbufs = leaf_pool_mbufs(ce);
+            memory_cursor += leaf_pool_size(ce);
             if (!ffq) {
                 w->blq = (struct Blq *)memory_cursor;
-                blq_init(w->blq, ta->qlen);
+                blq_init(w->blq, ce->qlen);
             } else {
                 w->ffq = (struct Iffq *)memory_cursor;
-                iffq_init(w->ffq, ta->qlen, 32 * sizeof(w->ffq->q[0]),
-                          /*improved=*/!strcmp(ta->qtype, "iffq"));
+                iffq_init(w->ffq, ce->qlen, 32 * sizeof(w->ffq->q[0]),
+                          /*improved=*/!strcmp(ce->qtype, "iffq"));
             }
             memory_cursor += qsize;
         }
     }
 
     {
-        unsigned int stride = (ta->num_analyzers + ta->num_load_balancers - 1) /
-                              ta->num_load_balancers;
-        unsigned int overflow =
-            stride * ta->num_load_balancers - ta->num_analyzers;
+        unsigned int stride =
+            (ce->num_leaves + ce->num_roots - 1) / ce->num_roots;
+        unsigned int overflow      = stride * ce->num_roots - ce->num_leaves;
         unsigned int next_analyzer = 0;
 
-        for (i = 0; i < ta->num_load_balancers; i++) {
-            struct producer *p = ta->producers + i;
-            p->ta              = ta;
-            p->first_analyzer  = next_analyzer;
-            p->num_analyzers   = (i < overflow) ? (stride - 1) : stride;
-            next_analyzer += p->num_analyzers;
+        for (i = 0; i < ce->num_roots; i++) {
+            struct root *p    = ce->roots + i;
+            p->ce             = ce;
+            p->first_analyzer = next_analyzer;
+            p->num_leaves     = (i < overflow) ? (stride - 1) : stride;
+            next_analyzer += p->num_leaves;
         }
     }
 
-    for (i = 0; i < ta->num_analyzers; i++) {
-        struct consumer *w = ta->consumers + i;
+    for (i = 0; i < ce->num_leaves; i++) {
+        struct leaf *w = ce->leaves + i;
 
         if (pthread_create(&w->th, NULL, analyze, w)) {
-            printf("pthread_create(consumer) failed\n");
+            printf("pthread_create(leaf) failed\n");
             exit(EXIT_FAILURE);
         }
     }
 
-    for (i = 0; i < ta->num_load_balancers; i++) {
-        struct producer *p = ta->producers + i;
+    for (i = 0; i < ce->num_roots; i++) {
+        struct root *p = ce->roots + i;
 
         if (pthread_create(&p->th, NULL, lb, p)) {
             printf("pthread_create(lb) failed\n");
@@ -667,20 +668,20 @@ main(int argc, char **argv)
     /*
      * Teardown phase.
      */
-    for (i = 0; i < ta->num_load_balancers; i++) {
-        struct producer *p = ta->producers + i;
+    for (i = 0; i < ce->num_roots; i++) {
+        struct root *p = ce->roots + i;
 
         if (pthread_join(p->th, NULL)) {
-            printf("pthread_join(producer) failed\n");
+            printf("pthread_join(root) failed\n");
             exit(EXIT_FAILURE);
         }
     }
 
-    for (i = 0; i < ta->num_analyzers; i++) {
-        struct consumer *w = ta->consumers + i;
+    for (i = 0; i < ce->num_leaves; i++) {
+        struct leaf *w = ce->leaves + i;
 
         if (pthread_join(w->th, NULL)) {
-            printf("pthread_join(consumer) failed\n");
+            printf("pthread_join(leaf) failed\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -688,8 +689,8 @@ main(int argc, char **argv)
     {
         double tot_mpps = 0.0;
 
-        for (i = 0; i < ta->num_load_balancers; i++) {
-            struct producer *p = ta->producers + i;
+        for (i = 0; i < ce->num_roots; i++) {
+            struct root *p = ce->roots + i;
 
             tot_mpps += p->mpps;
         }
@@ -697,8 +698,8 @@ main(int argc, char **argv)
         printf("Total rate %.3f Mpps\n", tot_mpps);
     }
 
-    free(ta->consumers);
-    free(ta->producers);
+    free(ce->leaves);
+    free(ce->roots);
     munmap(memory, memory_size);
 
     return 0;
