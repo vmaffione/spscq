@@ -275,6 +275,42 @@ ffq_deq(struct worker *w, unsigned batch)
     }
 }
 
+static unsigned int
+iffq_enq(struct worker *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (iffq_insert(w->ffq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    return count;
+}
+
+static void
+iffq_deq(struct worker *w, unsigned batch)
+{
+    for (; batch > 0; batch--) {
+        struct mbuf *m = (struct mbuf *)iffq_extract(w->ffq);
+
+        if (m == NULL) {
+            return;
+        }
+        analyze_mbuf(m);
+    }
+    iffq_clear(w->ffq);
+}
+
 static int stop = 0;
 
 static void *
@@ -438,6 +474,9 @@ main(int argc, char **argv)
     } else if (!strcmp(ta->qtype, "ffq")) {
         ta->enq = ffq_enq;
         ta->deq = ffq_deq;
+    } else if (!strcmp(ta->qtype, "iffq")) {
+        ta->enq = iffq_enq;
+        ta->deq = iffq_deq;
     }
 
     /*
