@@ -713,7 +713,7 @@ usage(const char *progname)
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b ROOT_BATCH = 8]\n"
            "    [-b LEAF_BATCH = 8]\n"
-           "    [-u SENDER_USLEEP = 50]\n"
+           "    [-u LEAF_USLEEP = 0]\n"
            "    [-j (run leaf benchmark)]\n",
            progname);
 }
