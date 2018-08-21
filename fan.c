@@ -20,24 +20,26 @@ struct mbuf {
 /* Forward declaration */
 struct experiment;
 
+/* Context of a root thread (load balancer or transmission). */
+struct root {
+    struct experiment *ce;
+    pthread_t th;
+    unsigned int first_leaf;
+    unsigned int num_leaves;
+    struct mbuf sink[1];
+    double mpps;
+};
+
 /* Context of a leaf thread (traffic analyzer or sender clients). */
 struct leaf {
     struct experiment *ce;
+    struct root *root;
     pthread_t th;
     struct mbuf *pool;
     unsigned int mbuf_next;
     unsigned int pool_mbufs;
     struct Blq *blq;
     struct Iffq *ffq;
-};
-
-/* Context of a root thread (load balancer or scheduling). */
-struct root {
-    struct experiment *ce;
-    pthread_t th;
-    unsigned int first_leaf;
-    unsigned int num_leaves;
-    double mpps;
 };
 
 typedef unsigned int (*root_func_t)(struct leaf *w, unsigned int batch);
@@ -50,7 +52,7 @@ struct experiment {
     /* Type of spsc queue to be used. */
     const char *qtype;
 
-    /* Number of (root) threads performing load balancing or scheduler. */
+    /* Number of (root) threads performing load balancing or transmission. */
     unsigned int num_roots;
 
     /* Number of (leaf) threads performing traffic analysis or sender clients.
@@ -357,6 +359,47 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
     return count;
 }
 
+static unsigned int
+lq_root_transmitter(struct leaf *w, unsigned int batch)
+{
+    volatile struct mbuf *dst = &w->root->sink[0];
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *src = (struct mbuf *)lq_read(w->blq);
+
+        if (!src) {
+            break;
+        }
+
+        dst->len = src->len;
+        memcpy((void *)dst->buf, src->buf, src->len);
+    }
+
+    return count;
+}
+
+static void
+lq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (lq_write(w->blq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+        usleep(100);
+    }
+    w->mbuf_next = mbuf_next;
+}
+
 static int stop = 0;
 
 static void *
@@ -594,8 +637,13 @@ main(int argc, char **argv)
             ce->leaf_func = iffq_leaf_analyze;
         }
     } else {
-        printf("Not supported yet ...\n");
-        return -1;
+        if (!strcmp(ce->qtype, "lq")) {
+            ce->root_func = lq_root_transmitter;
+            ce->leaf_func = lq_leaf_sender;
+        } else {
+            printf("Not implemented yet ...\n");
+            return -1;
+        }
     }
 
     /*
@@ -656,10 +704,15 @@ main(int argc, char **argv)
 
         for (i = 0; i < ce->num_roots; i++) {
             struct root *p = ce->roots + i;
-            p->ce          = ce;
-            p->first_leaf  = next_leaf;
-            p->num_leaves  = (i < overflow) ? (stride - 1) : stride;
+            int j;
+            p->ce         = ce;
+            p->first_leaf = next_leaf;
+            p->num_leaves = (i < overflow) ? (stride - 1) : stride;
             next_leaf += p->num_leaves;
+            for (j = 0; j < p->num_leaves; j++) {
+                struct leaf *l = ce->leaves + p->first_leaf + j;
+                l->root        = p;
+            }
         }
     }
 
