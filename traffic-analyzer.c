@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 #include "mlib.h"
 #include "spscq.h"
@@ -30,7 +31,7 @@ struct worker {
     struct Iffq *ffq;
 };
 
-typedef void (*enq_t)(struct worker *w, unsigned int batch);
+typedef unsigned int (*enq_t)(struct worker *w, unsigned int batch);
 typedef void (*deq_t)(struct worker *w, unsigned int batch);
 
 struct traffic_analyzer {
@@ -119,12 +120,13 @@ analyze_mbuf(struct mbuf *m)
 }
 
 /* Enqueue and dequeue wrappers. */
-static void
+static unsigned int
 lq_enq(struct worker *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
+    unsigned int count;
 
-    for (; batch > 0; batch--) {
+    for (count = 0; count < batch; count++) {
         struct mbuf *m = w->pool + mbuf_next;
 
         udp_60_bytes_packet_get(m);
@@ -136,6 +138,8 @@ lq_enq(struct worker *w, unsigned int batch)
         }
     }
     w->mbuf_next = mbuf_next;
+
+    return count;
 }
 
 static void
@@ -184,6 +188,8 @@ blq_deq(struct worker *w)
 }
 */
 
+static int stop = 0;
+
 static void *
 lb(void *opaque)
 {
@@ -192,14 +198,25 @@ lb(void *opaque)
     unsigned int batch          = 1;
     unsigned int i              = 0;
     enq_t enq                   = ta->enq;
+    unsigned long long count    = 0;
+    struct timespec t_start, t_end;
 
-    for (;;) {
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
+    while (!ACCESS_ONCE(stop)) {
         struct worker *w = ta->workers + i;
 
-        enq(w, batch);
+        count += enq(w, batch);
         if (++i == num_consumers) {
             i = 0;
         }
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+    {
+        unsigned long long ns =
+            1000000000ULL * (t_end.tv_sec - t_start.tv_sec) +
+            (t_end.tv_nsec - t_start.tv_nsec);
+        double rate = (double)count * 1000.0 / (double)ns;
+        printf("lb throughput: %.3f Mpps\n", rate);
     }
 
     return NULL;
@@ -209,14 +226,20 @@ static void *
 analyze(void *opaque)
 {
     struct worker *w   = opaque;
-    enq_t deq          = w->ta->deq;
+    deq_t deq          = w->ta->deq;
     unsigned int batch = 1;
 
-    for (;;) {
+    while (!ACCESS_ONCE(stop)) {
         deq(w, batch);
     }
 
     return NULL;
+}
+
+static void
+sigint_handler(int signum)
+{
+    ACCESS_ONCE(stop) = 1;
 }
 
 static void
@@ -241,6 +264,18 @@ main(int argc, char **argv)
     int opt;
     int ffq; /* boolean */
     int i;
+
+    {
+        struct sigaction sa;
+
+        sa.sa_handler = sigint_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        if (sigaction(SIGINT, &sa, NULL)) {
+            perror("sigaction(SIGINT)");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     memset(ta, 0, sizeof(*ta));
     ta->num_analyzers = 2;
