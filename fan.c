@@ -507,6 +507,125 @@ blq_leaf_sender(struct leaf *w, unsigned int batch)
     usleep(w->ce->sender_usleep);
 }
 
+static unsigned int
+ffq_root_transmitter(struct leaf *w, unsigned int batch)
+{
+    volatile struct mbuf *dst = &w->root->sink[0];
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *src = (struct mbuf *)ffq_read(w->ffq);
+
+        if (!src) {
+            break;
+        }
+
+        dst->len = src->len;
+        memcpy((void *)dst->buf, src->buf, src->len);
+    }
+
+    return count;
+}
+
+static void
+ffq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (ffq_write(w->ffq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    /* Don't be greedy, and wait a little while. */
+    usleep(w->ce->sender_usleep);
+}
+
+static unsigned int
+iffq_root_transmitter(struct leaf *w, unsigned int batch)
+{
+    volatile struct mbuf *dst = &w->root->sink[0];
+    struct Iffq *ffq          = w->ffq;
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *src = (struct mbuf *)iffq_extract(ffq);
+
+        if (!src) {
+            break;
+        }
+
+        dst->len = src->len;
+        memcpy((void *)dst->buf, src->buf, src->len);
+    }
+    iffq_clear(ffq);
+
+    return count;
+}
+
+static void
+iffq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+    struct Iffq *ffq       = w->ffq;
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (iffq_insert(ffq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    /* Don't be greedy, and wait a little while. */
+    usleep(w->ce->sender_usleep);
+}
+
+static void
+biffq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    struct Iffq *ffq       = w->ffq;
+    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int wspace    = iffq_wspace(ffq);
+
+    if (batch > wspace) {
+        batch = wspace;
+    }
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        iffq_insert_local(ffq, (uintptr_t)m);
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+
+    iffq_insert_publish(ffq);
+    w->mbuf_next = mbuf_next;
+
+    /* Don't be greedy, and wait a little while. */
+    usleep(w->ce->sender_usleep);
+}
+
+/*
+ * Generic root and leaf workers.
+ */
+
 static int stop = 0;
 
 static void *
@@ -563,6 +682,7 @@ leaf_worker(void *opaque)
     return NULL;
 }
 
+/* A function to measure the cost of analyze_mbuf(). */
 static void
 analyzer_benchmark(void)
 {
@@ -757,7 +877,7 @@ main(int argc, char **argv)
             ce->root_func = biffq_root_lb;
             ce->leaf_func = iffq_leaf_analyze;
         }
-    } else {
+    } else { /* fanin */
         if (!strcmp(ce->qtype, "lq")) {
             ce->root_func = lq_root_transmitter;
             ce->leaf_func = lq_leaf_sender;
@@ -767,9 +887,15 @@ main(int argc, char **argv)
         } else if (!strcmp(ce->qtype, "blq")) {
             ce->root_func = blq_root_transmitter;
             ce->leaf_func = blq_leaf_sender;
-        } else {
-            printf("Not implemented yet ...\n");
-            return -1;
+        } else if (!strcmp(ce->qtype, "ffq")) {
+            ce->root_func = ffq_root_transmitter;
+            ce->leaf_func = ffq_leaf_sender;
+        } else if (!strcmp(ce->qtype, "iffq")) {
+            ce->root_func = iffq_root_transmitter;
+            ce->leaf_func = iffq_leaf_sender;
+        } else if (!strcmp(ce->qtype, "biffq")) {
+            ce->root_func = iffq_root_transmitter;
+            ce->leaf_func = biffq_leaf_sender;
         }
     }
 
