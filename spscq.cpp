@@ -23,6 +23,15 @@
 #include <sys/mman.h>
 
 #include "mlib.h"
+
+/* This must be defined before including spscq.h. */
+static unsigned short *smap = nullptr;
+#if 1
+#define SMAP(x) smap[x]
+#else
+#define SMAP(x) x
+#endif
+
 #include "spscq.h"
 
 //#define RATE_LIMITING_CONSUMER /* Enable support for rate limiting consumer */
@@ -32,9 +41,6 @@
 #define ONEBILLION (1000LL * 1000000LL) /* 1 billion */
 
 static int stop = 0;
-
-#define ACCESS_ONCE(x)                                                         \
-    (*static_cast<std::remove_reference<decltype(x)>::type volatile *>(&(x)))
 
 static void
 sigint_handler(int signum)
@@ -74,12 +80,6 @@ sfree(void *ptr, size_t size, bool hugepages)
     } else {
         free(ptr);
     }
-}
-
-static int
-is_power_of_two(int x)
-{
-    return !x || !(x & (x - 1));
 }
 
 static unsigned int
@@ -274,13 +274,6 @@ struct Global {
     void print_results();
 };
 
-static unsigned short *smap = nullptr;
-#if 1
-#define SMAP(x) smap[x]
-#else
-#define SMAP(x) x
-#endif
-
 static void
 miss_rate_print(const char *prefix, double mpps, float read_miss_rate,
                 float write_miss_rate)
@@ -424,57 +417,17 @@ qslotmap_init(unsigned short *qslotmap, unsigned qlen, bool shuffle)
     }
 }
 
-/*
- * Multi-section queue, based on the Lamport classic queue.
- * All indices are free running.
- */
-typedef Mbuf *blq_entry_t;
-struct Blq {
-    /* Producer private data. */
-    CACHELINE_ALIGNED
-    unsigned int write_priv;
-    unsigned int read_shadow;
-
-    /* Producer write, consumer read. */
-    CACHELINE_ALIGNED
-    unsigned int write;
-
-    /* Consumer private data. */
-    CACHELINE_ALIGNED
-    unsigned int read_priv;
-    unsigned int write_shadow;
-
-    /* Producer read, consumer write. */
-    CACHELINE_ALIGNED
-    unsigned int read;
-
-    /* Shared read only data. */
-    CACHELINE_ALIGNED
-    unsigned int qlen;
-    unsigned int qmask;
-    unsigned int prod_batch;
-    unsigned int cons_batch;
-
-    /* The queue. */
-    CACHELINE_ALIGNED
-    blq_entry_t q[0];
-};
-
 static Blq *
-blq_create(int qlen, int prod_batch, int cons_batch, bool hugepages)
+blq_create(int qlen, bool hugepages)
 {
     Blq *blq = static_cast<Blq *>(
         szalloc(sizeof(*blq) + qlen * sizeof(blq->q[0]), hugepages));
+    int ret;
 
-    if (qlen < 2 || !is_power_of_two(qlen)) {
-        printf("Error: queue length %d is not a power of two\n", qlen);
+    ret = blq_init(blq, qlen);
+    if (ret) {
         return NULL;
     }
-
-    blq->qlen       = qlen;
-    blq->qmask      = qlen - 1;
-    blq->prod_batch = prod_batch;
-    blq->cons_batch = cons_batch;
 
     assert(reinterpret_cast<uintptr_t>(blq) % ALIGN_SIZE == 0);
     assert((reinterpret_cast<uintptr_t>(&blq->write)) -
@@ -494,156 +447,6 @@ blq_create(int qlen, int prod_batch, int cons_batch, bool hugepages)
            ALIGN_SIZE);
 
     return blq;
-}
-
-static inline int
-lq_write(Blq *q, Mbuf *m)
-{
-    unsigned write    = q->write;
-    unsigned int next = (write + 1) & q->qmask;
-
-    if (next == ACCESS_ONCE(q->read)) {
-        return -1; /* no space */
-    }
-    ACCESS_ONCE(q->q[SMAP(write)]) = m;
-    compiler_barrier();
-    ACCESS_ONCE(q->write) = next;
-    return 0;
-}
-
-static inline Mbuf *
-lq_read(Blq *q)
-{
-    unsigned read = q->read;
-    Mbuf *m;
-
-    if (read == ACCESS_ONCE(q->write)) {
-        return NULL; /* queue empty */
-    }
-    compiler_barrier();
-    m                    = ACCESS_ONCE(q->q[SMAP(read)]);
-    ACCESS_ONCE(q->read) = (read + 1) & q->qmask;
-    return m;
-}
-
-static inline int
-llq_write(Blq *q, Mbuf *m)
-{
-    unsigned int write = q->write;
-    unsigned int check =
-        (write + (CACHELINE_SIZE / sizeof(uintptr_t))) & q->qmask;
-
-    if (check == q->read_shadow) {
-        q->read_shadow = ACCESS_ONCE(q->read);
-    }
-    if (check == q->read_shadow) {
-        return -1; /* no space */
-    }
-    ACCESS_ONCE(q->q[SMAP(write)]) = m;
-    compiler_barrier();
-    ACCESS_ONCE(q->write) = (write + 1) & q->qmask;
-    return 0;
-}
-
-#if 1
-static inline Mbuf *
-llq_read(Blq *q)
-{
-    unsigned read = q->read_priv;
-    Mbuf *m;
-    if (read == q->write_shadow) {
-        q->write_shadow = ACCESS_ONCE(q->write);
-        if (read == q->write_shadow) {
-            return NULL; /* queue empty */
-        }
-    }
-    compiler_barrier();
-    m                    = ACCESS_ONCE(q->q[SMAP(read)]);
-    ACCESS_ONCE(q->read) = q->read_priv = (read + 1) & q->qmask;
-    return m;
-}
-#else
-/* For some reason this lets LLQ go faster in case of
- * fast consumer (but not in the other case) ... */
-#define llq_read lq_read
-#endif
-
-static inline unsigned int
-blq_wspace(Blq *blq)
-{
-    unsigned int space =
-        (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
-         blq->write_priv) &
-        blq->qmask;
-
-    if (space) {
-        return space;
-    }
-    blq->read_shadow = ACCESS_ONCE(blq->read);
-
-    return (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
-            blq->write_priv) &
-           blq->qmask;
-}
-
-/* No boundary checks, to be called after blq_wspace(). */
-static inline void
-blq_write_local(Blq *blq, Mbuf *m)
-{
-    ACCESS_ONCE(blq->q[SMAP(blq->write_priv & blq->qmask)]) = m;
-    blq->write_priv++;
-}
-
-static inline void
-blq_write_publish(Blq *blq)
-{
-    /* Here we need a StoreStore barrier to prevent previous stores to the
-     * queue slot and mbuf content to be reordered after the store to
-     * blq->write. On x86 a compiler barrier suffices, because stores have
-     * release semantic (preventing StoreStore and LoadStore reordering). */
-    compiler_barrier();
-    ACCESS_ONCE(blq->write) = blq->write_priv;
-}
-
-static inline unsigned int
-blq_rspace(Blq *blq)
-{
-    unsigned int space = blq->write_shadow - blq->read_priv;
-
-    if (space) {
-        return space;
-    }
-    blq->write_shadow = ACCESS_ONCE(blq->write);
-    /* Here we need a LoadLoad barrier to prevent upcoming loads to the queue
-     * slot and mbuf content to be reordered before the load of blq->write. On
-     * x86 a compiler barrier suffices, because loads have acquire semantic
-     * (preventing LoadLoad and LoadStore reordering). */
-    compiler_barrier();
-
-    return blq->write_shadow - blq->read_priv;
-}
-
-/* No boundary checks, to be called after blq_rspace(). */
-static inline Mbuf *
-blq_read_local(Blq *blq)
-{
-    Mbuf *m = ACCESS_ONCE(blq->q[SMAP(blq->read_priv & blq->qmask)]);
-    blq->read_priv++;
-    return m;
-}
-
-static inline void
-blq_read_publish(Blq *blq)
-{
-    ACCESS_ONCE(blq->read) = blq->read_priv;
-}
-
-static void
-blq_dump(const char *prefix, Blq *blq)
-{
-    printf("[%s] r %u rspace %u w %u wspace %u\n", prefix,
-           blq->read & blq->qmask, blq_rspace(blq), blq->write & blq->qmask,
-           blq_wspace(blq));
 }
 
 static void
@@ -688,7 +491,7 @@ lq_producer(Global *const g)
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
-        while (lq_write(blq, m)) {
+        while (lq_write(blq, (uintptr_t)m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
@@ -717,7 +520,7 @@ lq_consumer(Global *const g)
 #ifdef QDEBUG
         blq_dump("C", blq);
 #endif
-        m = lq_read(blq);
+        m = (Mbuf *)lq_read(blq);
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
@@ -763,7 +566,7 @@ llq_producer(Global *const g)
 #ifdef QDEBUG
         blq_dump("P", blq);
 #endif
-        while (llq_write(blq, m)) {
+        while (llq_write(blq, (uintptr_t)m)) {
             batches += (batch_packets != 0) ? 1 : 0;
             batch_packets = 0;
         }
@@ -792,7 +595,7 @@ llq_consumer(Global *const g)
 #ifdef QDEBUG
         blq_dump("C", blq);
 #endif
-        m = llq_read(blq);
+        m = (Mbuf *)llq_read(blq);
         if (m) {
             ++g->pkt_cnt;
             ++batch_packets;
@@ -847,7 +650,7 @@ blq_producer(Global *const g)
                     spin_for<kMbufMode>(spin, &trash);
                 }
                 Mbuf *m = mbuf_get<kMbufMode>(g, trash);
-                blq_write_local(blq, m);
+                blq_write_local(blq, (uintptr_t)m);
             }
             blq_write_publish(blq);
         } else {
@@ -889,7 +692,7 @@ blq_consumer(Global *const g)
             batch_packets += avail;
             g->pkt_cnt += avail;
             for (; avail > 0; avail--) {
-                m = blq_read_local(blq);
+                m = (Mbuf *)blq_read_local(blq);
                 mbuf_put<kMbufMode>(m, &csum, &trash);
                 if (kEmulatedOverhead == EmulatedOverhead::SpinCycles) {
                     spin_for<kMbufMode>(spin, &trash);
@@ -1408,9 +1211,10 @@ lq_client(Global *const g)
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, 0);
-        ret     = lq_write(blq, m);
+        ret     = lq_write(blq, (uintptr_t)m);
         assert(ret == 0);
-        while ((m = lq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
+        while ((m = (Mbuf *)lq_read(blq_back)) == nullptr &&
+               !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1430,13 +1234,13 @@ lq_server(Global *const g)
     g->consumer_header();
     for (;;) {
         Mbuf *m;
-        while ((m = lq_read(blq)) == nullptr) {
+        while ((m = (Mbuf *)lq_read(blq)) == nullptr) {
             if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
         mbuf_put<kMbufMode>(m, &csum, &trash);
-        ret = lq_write(blq_back, m);
+        ret = lq_write(blq_back, (uintptr_t)m);
         assert(ret == 0);
     }
 out:
@@ -1456,9 +1260,10 @@ llq_client(Global *const g)
     g->producer_header();
     while (!ACCESS_ONCE(stop)) {
         Mbuf *m = mbuf_get<kMbufMode>(g, 0);
-        ret     = llq_write(blq, m);
+        ret     = llq_write(blq, (uintptr_t)m);
         assert(ret == 0);
-        while ((m = llq_read(blq_back)) == nullptr && !ACCESS_ONCE(stop)) {
+        while ((m = (Mbuf *)llq_read(blq_back)) == nullptr &&
+               !ACCESS_ONCE(stop)) {
         }
         ++g->pkt_cnt;
     }
@@ -1478,13 +1283,13 @@ llq_server(Global *const g)
     g->consumer_header();
     for (;;) {
         Mbuf *m;
-        while ((m = llq_read(blq)) == nullptr) {
+        while ((m = (Mbuf *)llq_read(blq)) == nullptr) {
             if (unlikely(ACCESS_ONCE(stop))) {
                 goto out;
             }
         }
         mbuf_put<kMbufMode>(m, &csum, &trash);
-        ret = llq_write(blq_back, m);
+        ret = llq_write(blq_back, (uintptr_t)m);
         assert(ret == 0);
     }
 out:
@@ -1804,15 +1609,13 @@ run_test(Global *g)
 
     if (g->test_type == "lq" || g->test_type == "llq" ||
         g->test_type == "blq") {
-        g->blq =
-            blq_create(g->qlen, g->prod_batch, g->cons_batch, g->hugepages);
+        g->blq = blq_create(g->qlen, g->hugepages);
         if (!g->blq) {
             exit(EXIT_FAILURE);
         }
         blq_dump("P", g->blq);
         if (g->latency) {
-            g->blq_back =
-                blq_create(g->qlen, g->prod_batch, g->cons_batch, g->hugepages);
+            g->blq_back = blq_create(g->qlen, g->hugepages);
             if (!g->blq_back) {
                 exit(EXIT_FAILURE);
             }
