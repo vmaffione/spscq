@@ -839,7 +839,11 @@ netmap_worker(void *opaque)
     for (i = 0; i < n; i++) {
         char ifname[128];
 
-        snprintf(ifname, sizeof(ifname), "%s{%d", ce->netmap_ifname, i);
+        if (ce->netmap_ifname) {
+            snprintf(ifname, sizeof(ifname), "%s{%d", ce->netmap_ifname, i);
+        } else {
+            snprintf(ifname, sizeof(ifname), "valefan:worker");
+        }
         nmds[i] = nm_open(ifname, NULL, 0, NULL);
         if (!nmds[i]) {
             printf("Failed to nm_open(%s)\n", ifname);
@@ -851,6 +855,14 @@ netmap_worker(void *opaque)
         netmap_ring_populate(NETMAP_RXRING(nmds[i]->nifp, 0));
     }
 
+    if (ce->netmap_ifname == NULL && !transmitter) {
+        /* The root worker is transmitting on a VALE port, so in
+         * principle we could receive. Just wait instead, to save CPU
+         * cycles for the experiment. */
+        while (!ACCESS_ONCE(stop)) {
+            usleep(300000);
+        }
+    }
     while (!ACCESS_ONCE(stop)) {
         /* In each iteration, poll the TX rings waiting for more
          * transmit space. */
@@ -968,7 +980,7 @@ main(int argc, char **argv)
     ce->qtype      = "lq";
     ce->root_batch = ce->leaf_batch = 8;
     ce->leaf_usleep                 = 0;
-    ce->netmap_ifname               = "netmap:fan";
+    ce->netmap_ifname               = NULL;
     ce->pin_threads                 = 0;
     ffq                             = 0;
 
@@ -1209,7 +1221,12 @@ main(int argc, char **argv)
             {
                 char ifname[128];
 
-                snprintf(ifname, sizeof(ifname), "%s}%d", ce->netmap_ifname, i);
+                if (ce->netmap_ifname) {
+                    snprintf(ifname, sizeof(ifname), "%s}%d", ce->netmap_ifname,
+                             i);
+                } else {
+                    snprintf(ifname, sizeof(ifname), "valefan:%d", i);
+                }
                 r->nmd = nm_open(ifname, NULL, 0, NULL);
                 if (!r->nmd) {
                     printf("Failed to nm_open(%s)\n", ifname);
