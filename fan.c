@@ -35,7 +35,7 @@ struct leaf {
 struct root {
     struct experiment *ce;
     pthread_t th;
-    unsigned int first_analyzer;
+    unsigned int first_leaf;
     unsigned int num_leaves;
     double mpps;
 };
@@ -139,7 +139,7 @@ analyze_mbuf(struct mbuf *m)
 }
 
 /*
- * Enqueue and dequeue wrappers.
+ * Per-queue root and leaf functions.
  */
 
 static unsigned int
@@ -362,20 +362,20 @@ static int stop = 0;
 static void *
 root_worker(void *opaque)
 {
-    struct root *p              = opaque;
-    struct leaf *first_consumer = p->ce->leaves + p->first_analyzer;
-    unsigned lb_idx             = (unsigned int)(p - p->ce->roots);
-    unsigned int num_leaves     = p->num_leaves;
-    unsigned int batch          = p->ce->batch;
-    root_func_t root_func       = p->ce->root_func;
-    unsigned int i              = 0;
-    unsigned long long count    = 0;
+    struct root *p           = opaque;
+    struct leaf *first_leaf  = p->ce->leaves + p->first_leaf;
+    unsigned lb_idx          = (unsigned int)(p - p->ce->roots);
+    unsigned int num_leaves  = p->num_leaves;
+    unsigned int batch       = p->ce->batch;
+    root_func_t root_func    = p->ce->root_func;
+    unsigned int i           = 0;
+    unsigned long long count = 0;
     struct timespec t_start, t_end;
 
     printf("root %u handles %u leaves\n", lb_idx, num_leaves);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
-        struct leaf *w = first_consumer + i;
+        struct leaf *w = first_leaf + i;
 
         count += root_func(w, batch);
         if (++i == num_leaves) {
@@ -651,15 +651,15 @@ main(int argc, char **argv)
     {
         unsigned int stride =
             (ce->num_leaves + ce->num_roots - 1) / ce->num_roots;
-        unsigned int overflow      = stride * ce->num_roots - ce->num_leaves;
-        unsigned int next_analyzer = 0;
+        unsigned int overflow  = stride * ce->num_roots - ce->num_leaves;
+        unsigned int next_leaf = 0;
 
         for (i = 0; i < ce->num_roots; i++) {
-            struct root *p    = ce->roots + i;
-            p->ce             = ce;
-            p->first_analyzer = next_analyzer;
-            p->num_leaves     = (i < overflow) ? (stride - 1) : stride;
-            next_analyzer += p->num_leaves;
+            struct root *p = ce->roots + i;
+            p->ce          = ce;
+            p->first_leaf  = next_leaf;
+            p->num_leaves  = (i < overflow) ? (stride - 1) : stride;
+            next_leaf += p->num_leaves;
         }
     }
 
