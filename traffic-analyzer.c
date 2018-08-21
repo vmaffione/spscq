@@ -358,6 +358,7 @@ lb(void *opaque)
 {
     struct producer *p              = opaque;
     struct consumer *first_consumer = p->ta->consumers + p->first_analyzer;
+    unsigned lb_idx                 = (unsigned int)(p - p->ta->producers);
     unsigned int num_consumers      = p->num_analyzers;
     unsigned int batch              = p->ta->batch;
     enq_t enq                       = p->ta->enq;
@@ -365,7 +366,7 @@ lb(void *opaque)
     unsigned long long count        = 0;
     struct timespec t_start, t_end;
 
-    printf("FC %u NC %u\n", p->first_analyzer, p->num_analyzers);
+    printf("lb %u handles %u analyzers\n", lb_idx, num_consumers);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
         struct consumer *w = first_consumer + i;
@@ -591,17 +592,17 @@ main(int argc, char **argv)
     }
 
     {
-        unsigned int stride        = ta->num_analyzers / ta->num_load_balancers;
+        unsigned int stride = (ta->num_analyzers + ta->num_load_balancers - 1) /
+                              ta->num_load_balancers;
+        unsigned int overflow =
+            stride * ta->num_load_balancers - ta->num_analyzers;
         unsigned int next_analyzer = 0;
 
         for (i = 0; i < ta->num_load_balancers; i++) {
             struct producer *p = ta->producers + i;
-
-            p->ta             = ta;
-            p->first_analyzer = next_analyzer;
-            p->num_analyzers  = (i + 1 == ta->num_load_balancers)
-                                   ? (ta->num_analyzers - next_analyzer)
-                                   : stride;
+            p->ta              = ta;
+            p->first_analyzer  = next_analyzer;
+            p->num_analyzers   = (i < overflow) ? (stride - 1) : stride;
             next_analyzer += p->num_analyzers;
         }
     }
