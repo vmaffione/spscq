@@ -74,6 +74,8 @@ argparser.add_argument('-w', '--disable-queue-prefetch', action = 'store_true',
 argparser.add_argument('--only-queue', type = str, default = '',
                        choices = ['lq', 'llq', 'blq', 'ffq', 'iffq', 'biffq'],
                        help = "Test only a given queue")
+argparser.add_argument('-H', '--hugepages', action = 'store_true',
+                       help = "Use hugepages")
 
 args = argparser.parse_args()
 
@@ -150,6 +152,8 @@ try:
             flags = '-p'
             if args.disable_queue_prefetch:
                 flags += 'w'
+            if args.hugepages:
+                flags += 'H'
             cmd = './spscq %s -D %d -l %d -L %d -b %d -b %d -P %d -C %d -t %s'\
                      % (flags, args.duration, args.queue_length, args.line_entries,
                         args.prod_batch, args.cons_batch, spin_p, spin_c,
