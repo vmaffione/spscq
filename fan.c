@@ -153,7 +153,7 @@ analyze_mbuf(struct mbuf *m)
 }
 
 /*
- * Per-queue root and leaf functions.
+ * Root and leaf functions for the load balancers and analyzers experiment.
  */
 
 static unsigned int
@@ -371,6 +371,10 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
     return count;
 }
 
+/*
+ * Root and leaf functions for the senders and transmitters experiment.
+ */
+
 static unsigned int
 lq_root_transmitter(struct leaf *w, unsigned int batch)
 {
@@ -395,9 +399,8 @@ static void
 lq_leaf_sender(struct leaf *w, unsigned int batch)
 {
     unsigned int mbuf_next = w->mbuf_next;
-    unsigned int count;
 
-    for (count = 0; count < batch; count++) {
+    for (; batch > 0; batch--) {
         struct mbuf *m = w->pool + mbuf_next;
 
         udp_60_bytes_packet_get(m);
@@ -407,9 +410,101 @@ lq_leaf_sender(struct leaf *w, unsigned int batch)
         if (unlikely(++mbuf_next == w->pool_mbufs)) {
             mbuf_next = 0;
         }
-        usleep(w->ce->sender_usleep);
     }
     w->mbuf_next = mbuf_next;
+
+    /* Don't be greedy, and wait a little while. */
+    usleep(w->ce->sender_usleep);
+}
+
+static unsigned int
+llq_root_transmitter(struct leaf *w, unsigned int batch)
+{
+    volatile struct mbuf *dst = &w->root->sink[0];
+    unsigned int count;
+
+    for (count = 0; count < batch; count++) {
+        struct mbuf *src = (struct mbuf *)llq_read(w->blq);
+
+        if (!src) {
+            break;
+        }
+
+        dst->len = src->len;
+        memcpy((void *)dst->buf, src->buf, src->len);
+    }
+
+    return count;
+}
+
+static void
+llq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        if (llq_write(w->blq, (uintptr_t)m)) {
+            break;
+        }
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+    w->mbuf_next = mbuf_next;
+
+    usleep(w->ce->sender_usleep);
+}
+
+static unsigned int
+blq_root_transmitter(struct leaf *w, unsigned int batch)
+{
+    volatile struct mbuf *dst = &w->root->sink[0];
+    struct Blq *blq           = w->blq;
+    unsigned int rspace       = blq_rspace(blq);
+    int i;
+
+    if (batch > rspace) {
+        batch = rspace;
+    }
+    for (i = 0; i < batch; i++) {
+        struct mbuf *src = (struct mbuf *)blq_read_local(blq);
+
+        dst->len = src->len;
+        memcpy((void *)dst->buf, src->buf, src->len);
+    }
+    blq_read_publish(blq);
+
+    return batch;
+}
+
+static void
+blq_leaf_sender(struct leaf *w, unsigned int batch)
+{
+    unsigned int mbuf_next = w->mbuf_next;
+    struct Blq *blq        = w->blq;
+    unsigned int wspace    = blq_wspace(blq);
+
+    if (batch > wspace) {
+        batch = wspace;
+    }
+
+    for (; batch > 0; batch--) {
+        struct mbuf *m = w->pool + mbuf_next;
+
+        udp_60_bytes_packet_get(m);
+        blq_write_local(blq, (uintptr_t)m);
+        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+            mbuf_next = 0;
+        }
+    }
+
+    blq_write_publish(blq);
+    w->mbuf_next = mbuf_next;
+
+    usleep(w->ce->sender_usleep);
 }
 
 static int stop = 0;
@@ -666,6 +761,12 @@ main(int argc, char **argv)
         if (!strcmp(ce->qtype, "lq")) {
             ce->root_func = lq_root_transmitter;
             ce->leaf_func = lq_leaf_sender;
+        } else if (!strcmp(ce->qtype, "llq")) {
+            ce->root_func = llq_root_transmitter;
+            ce->leaf_func = llq_leaf_sender;
+        } else if (!strcmp(ce->qtype, "blq")) {
+            ce->root_func = blq_root_transmitter;
+            ce->leaf_func = blq_leaf_sender;
         } else {
             printf("Not implemented yet ...\n");
             return -1;
