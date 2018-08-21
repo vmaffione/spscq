@@ -12,8 +12,8 @@ spscq: spscq.o mlib.o
 mlib.o: mlib.h
 spscq.o: mlib.h spscq.h
 
-fan: fan.o
-	gcc -o fan fan.o -lpthread -Wall -Werror -O2 -g
+fan: fan.o mlib.o
+	gcc -o fan fan.o mlib.o -lpthread -Wall -Werror -O2 -g
 
 fan.o: fan.c mlib.h spscq.h
 	gcc -c fan.c -Wall -Werror -O2 -g

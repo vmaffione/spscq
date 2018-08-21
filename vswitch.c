@@ -637,7 +637,7 @@ usage(const char *progname)
            "    [-b VSWITCH_BATCH = 8]\n"
            "    [-b CLIENT_BATCH = 1]\n"
            "    [-u SENDER_USLEEP = 50]\n"
-           "    [-p (pin theads to cores)\n",
+           "    [-p (pin theads to cores)]\n",
            progname);
 }
 

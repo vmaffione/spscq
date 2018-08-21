@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #include <poll.h>
+#include <sys/sysinfo.h>
 
 #define WITH_NETMAP
 #ifdef WITH_NETMAP
@@ -35,6 +36,7 @@ struct experiment;
 struct root {
     struct experiment *ce;
     pthread_t th;
+    int cpu;
     unsigned int first_leaf;
     unsigned int num_leaves;
 #ifdef WITH_NETMAP
@@ -58,6 +60,7 @@ struct leaf {
     struct experiment *ce;
     struct root *root;
     pthread_t th;
+    int cpu;
     struct mbuf *pool;
     unsigned int mbuf_next;
     unsigned int pool_mbufs;
@@ -65,8 +68,8 @@ struct leaf {
     struct Iffq *ffq;
 };
 
-typedef unsigned int (*root_func_t)(struct leaf *w, unsigned int batch);
-typedef void (*leaf_func_t)(struct leaf *w, unsigned int batch);
+typedef unsigned int (*root_func_t)(struct leaf *l, unsigned int batch);
+typedef void (*leaf_func_t)(struct leaf *l, unsigned int batch);
 
 struct experiment {
     /* Experiment name. */
@@ -87,6 +90,9 @@ struct experiment {
 
     /* Netmap interface name and other info. */
     const char *netmap_ifname;
+
+    /* Boolean: should we pin threads to cores? */
+    int pin_threads;
 
     /* Batch size (in packets) for root and leaf operation. */
     unsigned int root_batch;
@@ -259,35 +265,35 @@ analyze_mbuf(struct mbuf *m)
  */
 
 static unsigned int
-lq_root_lb(struct leaf *w, unsigned int batch)
+lq_root_lb(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct root *root      = w->root;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct root *root      = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
-        if (lq_write(w->blq, (uintptr_t)m)) {
+        if (lq_write(l->blq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
 
 static void
-lq_leaf_analyze(struct leaf *w, unsigned batch)
+lq_leaf_analyze(struct leaf *l, unsigned batch)
 {
     for (; batch > 0; batch--) {
-        struct mbuf *m = (struct mbuf *)lq_read(w->blq);
+        struct mbuf *m = (struct mbuf *)lq_read(l->blq);
 
         if (m == NULL) {
             return;
@@ -297,35 +303,35 @@ lq_leaf_analyze(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-llq_root_lb(struct leaf *w, unsigned int batch)
+llq_root_lb(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct root *root      = w->root;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct root *root      = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
-        if (llq_write(w->blq, (uintptr_t)m)) {
+        if (llq_write(l->blq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
 
 static void
-llq_leaf_analyze(struct leaf *w, unsigned batch)
+llq_leaf_analyze(struct leaf *l, unsigned batch)
 {
     for (; batch > 0; batch--) {
-        struct mbuf *m = (struct mbuf *)llq_read(w->blq);
+        struct mbuf *m = (struct mbuf *)llq_read(l->blq);
 
         if (m == NULL) {
             return;
@@ -335,12 +341,12 @@ llq_leaf_analyze(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-blq_root_lb(struct leaf *w, unsigned int batch)
+blq_root_lb(struct leaf *l, unsigned int batch)
 {
-    struct Blq *blq        = w->blq;
-    unsigned int mbuf_next = w->mbuf_next;
+    struct Blq *blq        = l->blq;
+    unsigned int mbuf_next = l->mbuf_next;
     unsigned int wspace    = blq_wspace(blq);
-    struct root *root      = w->root;
+    struct root *root      = l->root;
     unsigned int count;
 
     if (batch > wspace) {
@@ -348,27 +354,27 @@ blq_root_lb(struct leaf *w, unsigned int batch)
     }
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
         blq_write_local(blq, (uintptr_t)m);
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
 
     blq_write_publish(blq);
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
 
 static void
-blq_leaf_analyze(struct leaf *w, unsigned batch)
+blq_leaf_analyze(struct leaf *l, unsigned batch)
 {
-    struct Blq *blq     = w->blq;
+    struct Blq *blq     = l->blq;
     unsigned int rspace = blq_rspace(blq);
 
     if (batch > rspace) {
@@ -382,35 +388,35 @@ blq_leaf_analyze(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-ffq_root_lb(struct leaf *w, unsigned int batch)
+ffq_root_lb(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct root *root      = w->root;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct root *root      = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
-        if (ffq_write(w->ffq, (uintptr_t)m)) {
+        if (ffq_write(l->ffq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
 
 static void
-ffq_leaf_analyze(struct leaf *w, unsigned batch)
+ffq_leaf_analyze(struct leaf *l, unsigned batch)
 {
     for (; batch > 0; batch--) {
-        struct mbuf *m = (struct mbuf *)ffq_read(w->ffq);
+        struct mbuf *m = (struct mbuf *)ffq_read(l->ffq);
 
         if (m == NULL) {
             return;
@@ -420,34 +426,34 @@ ffq_leaf_analyze(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-iffq_root_lb(struct leaf *w, unsigned int batch)
+iffq_root_lb(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct root *root      = w->root;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct root *root      = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
-        if (iffq_insert(w->ffq, (uintptr_t)m)) {
+        if (iffq_insert(l->ffq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
 
 static void
-iffq_leaf_analyze(struct leaf *w, unsigned batch)
+iffq_leaf_analyze(struct leaf *l, unsigned batch)
 {
-    struct Iffq *ffq = w->ffq;
+    struct Iffq *ffq = l->ffq;
 
     for (; batch > 0; batch--) {
         struct mbuf *m = (struct mbuf *)iffq_extract(ffq);
@@ -461,12 +467,12 @@ iffq_leaf_analyze(struct leaf *w, unsigned batch)
 }
 
 static unsigned int
-biffq_root_lb(struct leaf *w, unsigned int batch)
+biffq_root_lb(struct leaf *l, unsigned int batch)
 {
-    struct Iffq *ffq       = w->ffq;
-    unsigned int mbuf_next = w->mbuf_next;
+    struct Iffq *ffq       = l->ffq;
+    unsigned int mbuf_next = l->mbuf_next;
     unsigned int wspace    = iffq_wspace(ffq);
-    struct root *root      = w->root;
+    struct root *root      = l->root;
     unsigned int count;
 
     if (batch > wspace) {
@@ -474,19 +480,19 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
     }
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         if (unlikely(root_packet_get(root, m))) {
             break;
         }
         iffq_insert_local(ffq, (uintptr_t)m);
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
 
     iffq_insert_publish(ffq);
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 
     return count;
 }
@@ -496,13 +502,13 @@ biffq_root_lb(struct leaf *w, unsigned int batch)
  */
 
 static unsigned int
-lq_root_transmitter(struct leaf *w, unsigned int batch)
+lq_root_transmitter(struct leaf *l, unsigned int batch)
 {
-    struct root *root = w->root;
+    struct root *root = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *src = (struct mbuf *)lq_read(w->blq);
+        struct mbuf *src = (struct mbuf *)lq_read(l->blq);
 
         if (!src) {
             break;
@@ -517,32 +523,32 @@ lq_root_transmitter(struct leaf *w, unsigned int batch)
 }
 
 static void
-lq_leaf_sender(struct leaf *w, unsigned int batch)
+lq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int mbuf_next = l->mbuf_next;
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
-        if (lq_write(w->blq, (uintptr_t)m)) {
+        if (lq_write(l->blq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 static unsigned int
-llq_root_transmitter(struct leaf *w, unsigned int batch)
+llq_root_transmitter(struct leaf *l, unsigned int batch)
 {
-    struct root *root = w->root;
+    struct root *root = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *src = (struct mbuf *)llq_read(w->blq);
+        struct mbuf *src = (struct mbuf *)llq_read(l->blq);
 
         if (!src) {
             break;
@@ -557,30 +563,30 @@ llq_root_transmitter(struct leaf *w, unsigned int batch)
 }
 
 static void
-llq_leaf_sender(struct leaf *w, unsigned int batch)
+llq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int mbuf_next = l->mbuf_next;
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
-        if (llq_write(w->blq, (uintptr_t)m)) {
+        if (llq_write(l->blq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 static unsigned int
-blq_root_transmitter(struct leaf *w, unsigned int batch)
+blq_root_transmitter(struct leaf *l, unsigned int batch)
 {
-    struct Blq *blq     = w->blq;
+    struct Blq *blq     = l->blq;
     unsigned int rspace = blq_rspace(blq);
-    struct root *root   = w->root;
+    struct root *root   = l->root;
     int i;
 
     if (batch > rspace) {
@@ -599,10 +605,10 @@ blq_root_transmitter(struct leaf *w, unsigned int batch)
 }
 
 static void
-blq_leaf_sender(struct leaf *w, unsigned int batch)
+blq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct Blq *blq        = w->blq;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct Blq *blq        = l->blq;
     unsigned int wspace    = blq_wspace(blq);
 
     if (batch > wspace) {
@@ -610,27 +616,27 @@ blq_leaf_sender(struct leaf *w, unsigned int batch)
     }
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
         blq_write_local(blq, (uintptr_t)m);
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
 
     blq_write_publish(blq);
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 static unsigned int
-ffq_root_transmitter(struct leaf *w, unsigned int batch)
+ffq_root_transmitter(struct leaf *l, unsigned int batch)
 {
-    struct root *root = w->root;
+    struct root *root = l->root;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
-        struct mbuf *src = (struct mbuf *)ffq_read(w->ffq);
+        struct mbuf *src = (struct mbuf *)ffq_read(l->ffq);
 
         if (!src) {
             break;
@@ -645,29 +651,29 @@ ffq_root_transmitter(struct leaf *w, unsigned int batch)
 }
 
 static void
-ffq_leaf_sender(struct leaf *w, unsigned int batch)
+ffq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
+    unsigned int mbuf_next = l->mbuf_next;
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
-        if (ffq_write(w->ffq, (uintptr_t)m)) {
+        if (ffq_write(l->ffq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 static unsigned int
-iffq_root_transmitter(struct leaf *w, unsigned int batch)
+iffq_root_transmitter(struct leaf *l, unsigned int batch)
 {
-    struct root *root = w->root;
-    struct Iffq *ffq  = w->ffq;
+    struct root *root = l->root;
+    struct Iffq *ffq  = l->ffq;
     unsigned int count;
 
     for (count = 0; count < batch; count++) {
@@ -687,30 +693,30 @@ iffq_root_transmitter(struct leaf *w, unsigned int batch)
 }
 
 static void
-iffq_leaf_sender(struct leaf *w, unsigned int batch)
+iffq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    unsigned int mbuf_next = w->mbuf_next;
-    struct Iffq *ffq       = w->ffq;
+    unsigned int mbuf_next = l->mbuf_next;
+    struct Iffq *ffq       = l->ffq;
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
         if (iffq_insert(ffq, (uintptr_t)m)) {
             break;
         }
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 static void
-biffq_leaf_sender(struct leaf *w, unsigned int batch)
+biffq_leaf_sender(struct leaf *l, unsigned int batch)
 {
-    struct Iffq *ffq       = w->ffq;
-    unsigned int mbuf_next = w->mbuf_next;
+    struct Iffq *ffq       = l->ffq;
+    unsigned int mbuf_next = l->mbuf_next;
     unsigned int wspace    = iffq_wspace(ffq);
 
     if (batch > wspace) {
@@ -718,17 +724,17 @@ biffq_leaf_sender(struct leaf *w, unsigned int batch)
     }
 
     for (; batch > 0; batch--) {
-        struct mbuf *m = w->pool + mbuf_next;
+        struct mbuf *m = l->pool + mbuf_next;
 
         leaf_packet_get(m);
         iffq_insert_local(ffq, (uintptr_t)m);
-        if (unlikely(++mbuf_next == w->pool_mbufs)) {
+        if (unlikely(++mbuf_next == l->pool_mbufs)) {
             mbuf_next = 0;
         }
     }
 
     iffq_insert_publish(ffq);
-    w->mbuf_next = mbuf_next;
+    l->mbuf_next = mbuf_next;
 }
 
 /*
@@ -740,12 +746,12 @@ static int stop = 0;
 static void *
 root_worker(void *opaque)
 {
-    struct root *p           = opaque;
-    struct leaf *first_leaf  = p->ce->leaves + p->first_leaf;
-    unsigned lb_idx          = (unsigned int)(p - p->ce->roots);
-    unsigned int num_leaves  = p->num_leaves;
-    unsigned int batch       = p->ce->root_batch;
-    root_func_t root_func    = p->ce->root_func;
+    struct root *r           = opaque;
+    struct leaf *first_leaf  = r->ce->leaves + r->first_leaf;
+    unsigned lb_idx          = (unsigned int)(r - r->ce->roots);
+    unsigned int num_leaves  = r->num_leaves;
+    unsigned int batch       = r->ce->root_batch;
+    root_func_t root_func    = r->ce->root_func;
     unsigned int i           = 0;
     unsigned long long count = 0;
     struct timespec t_start, t_end;
@@ -753,11 +759,15 @@ root_worker(void *opaque)
     timerslack_reset();
 
     printf("root %u handles %u leaves\n", lb_idx, num_leaves);
+    if (r->cpu >= 0) {
+        runon("root", r->cpu);
+    }
+
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
-        struct leaf *w = first_leaf + i;
+        struct leaf *l = first_leaf + i;
 
-        count += root_func(w, batch);
+        count += root_func(l, batch);
         if (++i == num_leaves) {
             i = 0;
         }
@@ -769,7 +779,7 @@ root_worker(void *opaque)
             (t_end.tv_nsec - t_start.tv_nsec);
         double rate = (double)count * 1000.0 / (double)ns;
         printf("root throughput: %.3f Mpps\n", rate);
-        p->mpps = rate;
+        r->mpps = rate;
     }
 
     return NULL;
@@ -778,15 +788,19 @@ root_worker(void *opaque)
 static void *
 leaf_worker(void *opaque)
 {
-    struct leaf *w           = opaque;
-    leaf_func_t leaf_func    = w->ce->leaf_func;
-    unsigned int batch       = w->ce->leaf_batch;
-    unsigned int leaf_usleep = w->ce->leaf_usleep;
+    struct leaf *l           = opaque;
+    leaf_func_t leaf_func    = l->ce->leaf_func;
+    unsigned int batch       = l->ce->leaf_batch;
+    unsigned int leaf_usleep = l->ce->leaf_usleep;
 
     timerslack_reset();
 
+    if (l->cpu >= 0) {
+        runon("leaf", l->cpu);
+    }
+
     while (!ACCESS_ONCE(stop)) {
-        leaf_func(w, batch);
+        leaf_func(l, batch);
         if (leaf_usleep > 0) {
             usleep(leaf_usleep);
         }
@@ -914,13 +928,15 @@ usage(const char *progname)
            "    [-b LEAF_BATCH = 8]\n"
            "    [-i NETMAP_IFNAME]\n"
            "    [-u LEAF_USLEEP = 0]\n"
-           "    [-j (run leaf benchmark)]\n",
+           "    [-j (run leaf benchmark)]\n"
+           "    [-p (pin theads to cores)]\n",
            progname);
 }
 
 int
 main(int argc, char **argv)
 {
+    int ncpus = get_nprocs();
     struct experiment _ce;
     struct experiment *ce = &_ce;
     size_t memory_size    = 0;
@@ -953,9 +969,10 @@ main(int argc, char **argv)
     ce->root_batch = ce->leaf_batch = 8;
     ce->leaf_usleep                 = 0;
     ce->netmap_ifname               = "netmap:fan";
+    ce->pin_threads                 = 0;
     ffq                             = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:p")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1044,6 +1061,10 @@ main(int argc, char **argv)
             printf("Netmap support not compiled (WITH_NETMAP)\n");
             return -1;
 #endif /* !WITH_NETMAP */
+            break;
+
+        case 'p':
+            ce->pin_threads = 1;
             break;
 
         default:
@@ -1138,24 +1159,30 @@ main(int argc, char **argv)
 
     {
         char *memory_cursor = memory;
+        int cpu_next        = ce->num_roots % ncpus;
 
         for (i = 0; i < ce->num_leaves; i++) {
-            struct leaf *w = ce->leaves + i;
+            struct leaf *l = ce->leaves + i;
 
-            w->ce         = ce;
-            w->pool       = (struct mbuf *)memory_cursor;
-            w->mbuf_next  = 0;
-            w->pool_mbufs = leaf_pool_mbufs(ce);
+            l->ce         = ce;
+            l->cpu        = ce->pin_threads ? cpu_next : -1;
+            l->pool       = (struct mbuf *)memory_cursor;
+            l->mbuf_next  = 0;
+            l->pool_mbufs = leaf_pool_mbufs(ce);
             memory_cursor += leaf_pool_size(ce);
             if (!ffq) {
-                w->blq = (struct Blq *)memory_cursor;
-                blq_init(w->blq, ce->qlen);
+                l->blq = (struct Blq *)memory_cursor;
+                blq_init(l->blq, ce->qlen);
             } else {
-                w->ffq = (struct Iffq *)memory_cursor;
-                iffq_init(w->ffq, ce->qlen, 32 * sizeof(w->ffq->q[0]),
+                l->ffq = (struct Iffq *)memory_cursor;
+                iffq_init(l->ffq, ce->qlen, 32 * sizeof(l->ffq->q[0]),
                           /*improved=*/!strcmp(ce->qtype, "iffq"));
             }
             memory_cursor += qsize;
+
+            if (++cpu_next >= ncpus) {
+                cpu_next = ce->num_roots % ncpus;
+            }
         }
     }
 
@@ -1170,6 +1197,7 @@ main(int argc, char **argv)
             int j;
 
             r->ce         = ce;
+            r->cpu        = ce->pin_threads ? (i % ncpus) : -1;
             r->first_leaf = next_leaf;
             r->num_leaves = (i < overflow) ? (stride - 1) : stride;
             next_leaf += r->num_leaves;
@@ -1215,9 +1243,9 @@ main(int argc, char **argv)
 #endif /* WITH_NETMAP */
 
     for (i = 0; i < ce->num_leaves; i++) {
-        struct leaf *w = ce->leaves + i;
+        struct leaf *l = ce->leaves + i;
 
-        if (pthread_create(&w->th, NULL, leaf_worker, w)) {
+        if (pthread_create(&l->th, NULL, leaf_worker, l)) {
             printf("pthread_create(leaf) failed\n");
             exit(EXIT_FAILURE);
         }
@@ -1247,9 +1275,9 @@ main(int argc, char **argv)
     }
 
     for (i = 0; i < ce->num_leaves; i++) {
-        struct leaf *w = ce->leaves + i;
+        struct leaf *l = ce->leaves + i;
 
-        if (pthread_join(w->th, NULL)) {
+        if (pthread_join(l->th, NULL)) {
             printf("pthread_join(leaf) failed\n");
             exit(EXIT_FAILURE);
         }
