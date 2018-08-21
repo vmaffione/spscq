@@ -47,7 +47,7 @@ szalloc(size_t size, bool hugepages)
 {
     void *p = NULL;
     if (hugepages) {
-        p = mmap(0, size, PROT_WRITE | PROT_READ,
+        p = mmap(NULL, size, PROT_WRITE | PROT_READ,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
         if (p == MAP_FAILED) {
             printf("mmap allocation failure: %s\n", strerror(errno));
