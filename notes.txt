@@ -1,5 +1,3 @@
 On XEON40:
 $ ./vswitch -p -u0 -n 20 -t llq
 $ ./vswitch -p -u0 -n 20 -t iffq
-
-TODO: add capability to send in batch

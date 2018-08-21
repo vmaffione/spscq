@@ -19,6 +19,7 @@
 #undef DEBUG
 
 struct mbuf {
+    struct mbuf *next;
     uint32_t len;
     char dst_mac[6];
     char src_mac[6];
@@ -35,6 +36,7 @@ mbuf_alloc(size_t iplen, unsigned int src_idx, unsigned int dst_idx)
     if (unlikely(!m)) {
         exit(EXIT_FAILURE);
     }
+    m->next    = NULL;
     m->len     = 14 + iplen;
     macp       = (uint16_t *)&m->dst_mac[4];
     *macp      = htons(dst_idx);
@@ -55,14 +57,21 @@ mbuf_free(struct mbuf *m)
 /* Forward declaration */
 struct vswitch_experiment;
 
+struct vswitch_list {
+    struct mbuf *head;
+    struct mbuf *tail;
+};
+
 /* Context of a vswitch thread (load balancer or transmission). */
 struct vswitch {
     struct vswitch_experiment *ce;
     pthread_t th;
     int cpu;
+    struct client *clients;
     unsigned int first_client;
+    unsigned int last_client;
     unsigned int num_clients;
-    struct mbuf **mbufs;
+    struct vswitch_list *lists;
     double mpps;
 };
 
@@ -81,7 +90,8 @@ struct client {
     struct Iffq *ffq[MAXQ];
 };
 
-typedef unsigned int (*vswitch_func_t)(struct client *c, unsigned int batch);
+typedef unsigned int (*vswitch_pull_t)(struct client *c, unsigned int batch);
+typedef void (*vswitch_push_t)(struct client *c, struct mbuf *m);
 typedef int (*client_func_t)(struct client *c, unsigned int batch);
 
 struct vswitch_experiment {
@@ -109,32 +119,35 @@ struct vswitch_experiment {
     unsigned int client_batch;
 
     /* Vswitch work. */
-    vswitch_func_t vswitch_func;
+    vswitch_pull_t vswitch_pull_func;
+    vswitch_push_t vswitch_push_func;
 
     /* Client work. */
     client_func_t client_func;
 
-    /* Leaf nodes. */
+    /* Client nodes. */
     struct client *clients;
 
-    /* Root nodes. */
+    /* Vswitch nodes. */
     struct vswitch *vswitches;
+    struct vswitch_list *lists;
 
     /* Microseconds for sender usleep(). */
     unsigned int client_usleep;
 };
 
-static inline struct client *
-dst_client(struct client *c, struct mbuf *m)
+static inline uint16_t
+mbuf_dst(struct mbuf *m)
 {
     uint16_t *dst_ptr = (uint16_t *)&m->dst_mac[4];
-    uint16_t dst_idx  = ntohs(*dst_ptr);
+    return ntohs(*dst_ptr);
+}
 
-#ifdef DEBUG
-    printf("send %u --> %u\n", c->idx, dst_idx);
-#endif /* DEBUG */
-
-    return c->ce->clients + dst_idx;
+static inline uint16_t
+mbuf_src(struct mbuf *m)
+{
+    uint16_t *src_ptr = (uint16_t *)&m->src_mac[4];
+    return ntohs(*src_ptr);
 }
 
 /* Alloc zeroed cacheline-aligned memory, aborting on failure. */
@@ -182,32 +195,52 @@ lq_client(struct client *c, unsigned int batch)
     return i;
 }
 
-static unsigned int
-lq_vswitch(struct client *c, unsigned int batch)
+static inline void
+mbuf_list_append(struct vswitch *v, struct mbuf *m)
 {
-    struct mbuf **mbufs = c->vswitch->mbufs;
+    struct vswitch_list *list;
+
+    list = v->lists + mbuf_dst(m);
+    if (list->tail) {
+        list->tail->next = m;
+        list->tail       = m;
+    } else {
+        list->tail = list->head = m;
+    }
+}
+
+static unsigned int
+lq_vswitch_pull(struct client *c, unsigned int batch)
+{
+    struct vswitch *v = c->vswitch;
     unsigned int count;
-    unsigned int i;
 
     for (count = 0; count < batch; count++) {
-        mbufs[count] = (struct mbuf *)lq_read(c->blq[TXQ]);
-        if (mbufs[count] == NULL) {
+        struct mbuf *m = (struct mbuf *)lq_read(c->blq[TXQ]);
+
+        if (m == NULL) {
             break;
         }
-    }
-
-    for (i = 0; i < count; i++) {
-        struct mbuf *m    = mbufs[i];
-        struct client *dc = dst_client(c, m);
-
-        if (lq_write(dc->blq[RXQ], (uintptr_t)m)) {
-            mbuf_free(m);
-        }
+        mbuf_list_append(v, m);
     }
 
     return count;
 }
 
+static void
+lq_vswitch_push(struct client *c, struct mbuf *m)
+{
+    do {
+        struct mbuf *next = m->next;
+
+        if (lq_write(c->blq[RXQ], (uintptr_t)m)) {
+            mbuf_free(m);
+        }
+        m = next;
+    } while (m != NULL);
+}
+
+#if 0
 static int
 llq_client(struct client *c, unsigned int batch)
 {
@@ -424,6 +457,7 @@ biffq_client(struct client *c, unsigned int batch)
 
     return batch;
 }
+#endif
 
 /*
  * Body of vswitch and clients.
@@ -434,27 +468,51 @@ static int stop = 0;
 static void *
 vswitch_worker(void *opaque)
 {
-    struct vswitch *p           = opaque;
-    struct client *first_client = p->ce->clients + p->first_client;
-    unsigned vswitch_idx        = (unsigned int)(p - p->ce->vswitches);
-    unsigned int num_clients    = p->num_clients;
-    unsigned int batch          = p->ce->vswitch_batch;
-    vswitch_func_t vswitch_func = p->ce->vswitch_func;
+    struct vswitch *v           = opaque;
+    struct client *first_client = v->clients;
+    unsigned vswitch_idx        = (unsigned int)(v - v->ce->vswitches);
+    unsigned int num_clients    = v->num_clients;
+    unsigned int batch          = v->ce->vswitch_batch;
+    vswitch_pull_t vswitch_pull = v->ce->vswitch_pull_func;
+    vswitch_push_t vswitch_push = v->ce->vswitch_push_func;
     unsigned int i              = 0;
     unsigned long long count    = 0;
     struct timespec t_start, t_end;
 
     printf("vswitch %u handles %u clients\n", vswitch_idx, num_clients);
-    if (p->cpu >= 0) {
-        runon("vswitch", p->cpu);
+    if (v->cpu >= 0) {
+        runon("vswitch", v->cpu);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     while (!ACCESS_ONCE(stop)) {
+        /* Pull packets from all the clients. */
         for (i = 0; i < num_clients; i++) {
-            struct client *w = first_client + i;
+            struct client *c = first_client + i;
 
-            count += vswitch_func(w, batch);
+            count += vswitch_pull(c, batch);
+        }
+#ifdef DEBUG
+        for (i = 0; i < num_clients; i++) {
+            struct vswitch_list *list = v->lists + i;
+            struct mbuf *m            = list->head;
+
+            while (m != NULL) {
+                printf("send %u --> %u\n", mbuf_src(m), i);
+                m = m->next;
+            }
+        }
+#endif
+        /* Push packets to all the clients. */
+        for (i = 0; i < num_clients; i++) {
+            struct vswitch_list *list = v->lists + i;
+            struct client *c          = v->clients + i;
+            struct mbuf *m            = list->head;
+
+            if (m) {
+                vswitch_push(c, m);
+                list->head = list->tail = NULL;
+            }
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &t_end);
@@ -464,7 +522,7 @@ vswitch_worker(void *opaque)
             (t_end.tv_nsec - t_start.tv_nsec);
         double rate = (double)count * 1000.0 / (double)ns;
         printf("vswitch throughput: %.3f Mpps\n", rate);
-        p->mpps = rate;
+        v->mpps = rate;
     }
 
     return NULL;
@@ -476,11 +534,10 @@ client_worker(void *opaque)
     struct client *c           = opaque;
     client_func_t client_func  = c->ce->client_func;
     size_t iplen               = c->ce->iplen;
-    unsigned int first_client  = c->vswitch->first_client;
-    unsigned int last_client   = first_client + c->vswitch->num_clients;
-    unsigned int dst_idx       = first_client;
+    unsigned int num_clients   = c->vswitch->num_clients;
     unsigned int client_usleep = c->ce->client_usleep;
     unsigned int batch         = c->ce->client_batch;
+    unsigned int dst_idx       = 0;
 
     if (c->cpu >= 0) {
         runon("client", c->cpu);
@@ -498,8 +555,8 @@ client_worker(void *opaque)
         /* Allocate and initialize a pool of mbufs. */
         for (i = 0; i < batch; i++) {
             c->mbufs[i] = mbuf_alloc(iplen, c->idx, dst_idx);
-            if (++dst_idx >= last_client) {
-                dst_idx = first_client;
+            if (++dst_idx >= num_clients) {
+                dst_idx = 0;
             }
         }
 
@@ -571,7 +628,7 @@ main(int argc, char **argv)
     ce->num_vswitches = 1;
     ce->num_clients   = 2;
     ce->qlen          = 128;
-    ce->iplen         = 60;
+    ce->iplen         = 60 - sizeof(struct mbuf *);
     ce->qtype         = "lq";
     ce->vswitch_batch = 8;
     ce->client_batch  = 1;
@@ -680,8 +737,10 @@ main(int argc, char **argv)
     qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
     if (!strcmp(ce->qtype, "lq")) {
-        ce->vswitch_func = lq_vswitch;
-        ce->client_func  = lq_client;
+        ce->vswitch_pull_func = lq_vswitch_pull;
+        ce->vswitch_push_func = lq_vswitch_push;
+        ce->client_func       = lq_client;
+#if 0
     } else if (!strcmp(ce->qtype, "llq")) {
         ce->vswitch_func = llq_vswitch;
         ce->client_func  = llq_client;
@@ -699,6 +758,7 @@ main(int argc, char **argv)
          * batches on reads (and not on writes). */
         ce->vswitch_func = iffq_vswitch;
         ce->client_func  = biffq_client;
+#endif
     }
 
     /*
@@ -726,6 +786,7 @@ main(int argc, char **argv)
     }
 
     ce->clients   = szalloc(ce->num_clients * sizeof(ce->clients[0]));
+    ce->lists     = szalloc(ce->num_clients * sizeof(ce->lists[0]));
     ce->vswitches = szalloc(ce->num_vswitches * sizeof(ce->vswitches[0]));
 
     {
@@ -737,7 +798,6 @@ main(int argc, char **argv)
             int j;
 
             c->ce    = ce;
-            c->idx   = i;
             c->cpu   = ce->pin_threads ? cpu_next : -1;
             c->mbufs = szalloc(ce->client_batch * sizeof(c->mbufs[0]));
             for (j = 0; j < MAXQ; j++) {
@@ -765,17 +825,20 @@ main(int argc, char **argv)
         unsigned int next_client = 0;
 
         for (i = 0; i < ce->num_vswitches; i++) {
-            struct vswitch *p = ce->vswitches + i;
+            struct vswitch *v = ce->vswitches + i;
             int j;
-            p->ce           = ce;
-            p->cpu          = ce->pin_threads ? (i % ncpus) : -1;
-            p->mbufs        = szalloc(ce->vswitch_batch * sizeof(p->mbufs[0]));
-            p->first_client = next_client;
-            p->num_clients  = (i < overflow) ? (stride - 1) : stride;
-            next_client += p->num_clients;
-            for (j = 0; j < p->num_clients; j++) {
-                struct client *l = ce->clients + p->first_client + j;
-                l->vswitch       = p;
+            v->ce           = ce;
+            v->cpu          = ce->pin_threads ? (i % ncpus) : -1;
+            v->first_client = next_client;
+            v->num_clients  = (i < overflow) ? (stride - 1) : stride;
+            v->last_client  = v->first_client + v->num_clients;
+            v->clients      = ce->clients + v->first_client;
+            v->lists        = ce->lists + v->first_client;
+            next_client += v->num_clients;
+            for (j = 0; j < v->num_clients; j++) {
+                struct client *c = ce->clients + v->first_client + j;
+                c->vswitch       = v;
+                c->idx           = j;
             }
         }
     }
