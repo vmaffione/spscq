@@ -65,6 +65,16 @@ szalloc(size_t size, bool hugepages)
     return p;
 }
 
+static void
+sfree(void *ptr, size_t size, bool hugepages)
+{
+    if (hugepages) {
+        munmap(ptr, size);
+    } else {
+        free(ptr);
+    }
+}
+
 static int
 is_power_of_two(int x)
 {
@@ -636,10 +646,10 @@ blq_dump(const char *prefix, Blq *blq)
 }
 
 static void
-blq_free(Blq *blq)
+blq_free(Blq *blq, bool hugepages)
 {
     memset(blq, 0, sizeof(*blq));
-    free(blq);
+    sfree(blq, sizeof(*blq) + blq->qlen * sizeof(blq->q[0]), hugepages);
 }
 
 template <MbufMode kMbufMode>
@@ -1147,9 +1157,9 @@ ffq_create(unsigned int entries, unsigned int line_size, bool hugepages)
  * @m: the mailbox to be deleted
  */
 void
-iffq_free(Iffq *m)
+iffq_free(Iffq *ffq, bool hugepages)
 {
-    free(m);
+    sfree(ffq, iffq_size(ffq->entry_mask + 1), hugepages);
 }
 
 void
@@ -1762,6 +1772,27 @@ run_test(Global *g)
         printf("Error: unknown test type '%s'\n", g->test_type.c_str());
         exit(EXIT_FAILURE);
     }
+
+    size_t pool_size          = (2 * g->qlen * sizeof(g->pool[0]));
+    size_t pool_and_smap_size = pool_size + (g->qlen * sizeof(SMAP(0)));
+    /* Allocate mbuf pool and smap together. */
+    void *pool_and_smap = szalloc(pool_and_smap_size, g->hugepages);
+
+    /* Init the mbuf pool and the mask. */
+    g->pool      = static_cast<Mbuf *>(pool_and_smap);
+    g->pool_mask = (2 * g->qlen) - 1;
+
+    /* Init the smap. */
+    smap = reinterpret_cast<unsigned short *>(
+        (static_cast<char *>(pool_and_smap) + pool_size));
+    qslotmap_init(smap, g->qlen, g->deceive_hw_data_prefetcher);
+#if 0
+    for (unsigned i = 0; i < g->qlen; i++) {
+        printf("%d ", SMAP(i));
+    }
+    printf("\n");
+#endif
+
     RateLimitMode rl = g->cons_rate_limit_cycles > 0 ? RateLimitMode::Limit
                                                      : RateLimitMode::None;
     EmulatedOverhead eo = (g->prod_spin_ticks == 0 && g->cons_spin_ticks == 0)
@@ -1824,11 +1855,6 @@ run_test(Global *g)
         assert(0);
     }
 
-    /* Allocate mbuf pool and init the mask. */
-    g->pool = static_cast<Mbuf *>(
-        szalloc(2 * g->qlen * sizeof(g->pool[0]), g->hugepages));
-    g->pool_mask = (2 * g->qlen) - 1;
-
     pth = std::thread(funcs.first, g);
     cth = std::thread(funcs.second, g);
     if (use_perf_tool) {
@@ -1846,21 +1872,21 @@ run_test(Global *g)
 
     g->print_results();
 
-    free(g->pool);
+    sfree(pool_and_smap, pool_and_smap_size, g->hugepages);
     if (g->blq) {
-        blq_free(g->blq);
+        blq_free(g->blq, g->hugepages);
         g->blq = nullptr;
     }
     if (g->blq_back) {
-        blq_free(g->blq_back);
+        blq_free(g->blq_back, g->hugepages);
         g->blq_back = nullptr;
     }
     if (g->ffq) {
-        iffq_free(g->ffq);
+        iffq_free(g->ffq, g->hugepages);
         g->ffq = nullptr;
     }
     if (g->ffq_back) {
-        iffq_free(g->ffq_back);
+        iffq_free(g->ffq_back, g->hugepages);
         g->ffq_back = nullptr;
     }
 
@@ -2059,17 +2085,6 @@ main(int argc, char **argv)
     }
 
     tsc_init();
-    {
-        smap = static_cast<unsigned short *>(
-            szalloc(g->qlen * sizeof(SMAP(0)), g->hugepages));
-        qslotmap_init(smap, g->qlen, g->deceive_hw_data_prefetcher);
-#if 0
-        for (unsigned i = 0; i < g->qlen; i++) {
-            printf("%d ", SMAP(i));
-        }
-        printf("\n");
-#endif
-    }
     g->cons_rate_limit_cycles = ns2tsc(g->cons_rate_limit_cycles);
     g->prod_spin_ticks        = ns2tsc(g->prod_spin_ticks);
     g->cons_spin_ticks        = ns2tsc(g->cons_spin_ticks);
