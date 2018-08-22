@@ -108,8 +108,12 @@ struct vswitch_experiment {
     /* Length of each SPSC queue. */
     unsigned int qlen;
 
-    /* Boolean: should we pin threads to cores? */
+    /* Boolean: should we pin threads to cores?
+     * If yes, should we avoid using some CPUs? */
     int pin_threads;
+#define MAX_RESERVED_CPUS 16
+    int reserved_cpus[MAX_RESERVED_CPUS];
+    unsigned int num_reserved_cpus;
 
     /* Length of each mbuf IP payload. */
     unsigned iplen;
@@ -618,6 +622,20 @@ client_worker(void *opaque)
     return NULL;
 }
 
+static int
+cpu_is_reserved(struct vswitch_experiment *ce, int cpu)
+{
+    int i;
+
+    for (i = 0; i < ce->num_reserved_cpus; i++) {
+        if (ce->reserved_cpus[i] == cpu) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void
 sigint_handler(int signum)
 {
@@ -637,7 +655,8 @@ usage(const char *progname)
            "    [-b VSWITCH_BATCH = 8]\n"
            "    [-b CLIENT_BATCH = 1]\n"
            "    [-u SENDER_USLEEP = 50]\n"
-           "    [-p (pin theads to cores)]\n",
+           "    [-p (pin theads to cores)]\n"
+           "    [-x CPU_TO_LEAVE_UNUSED]\n",
            progname);
 }
 
@@ -668,18 +687,19 @@ main(int argc, char **argv)
     }
 
     memset(ce, 0, sizeof(*ce));
-    ce->num_vswitches = 1;
-    ce->num_clients   = 2;
-    ce->qlen          = 128;
-    ce->iplen         = 60 - sizeof(struct mbuf *);
-    ce->qtype         = "lq";
-    ce->vswitch_batch = 8;
-    ce->client_batch  = 1;
-    ce->client_usleep = 50;
-    ce->pin_threads   = 0;
-    ffq               = 0;
+    ce->num_vswitches     = 1;
+    ce->num_clients       = 2;
+    ce->qlen              = 128;
+    ce->iplen             = 60 - sizeof(struct mbuf *);
+    ce->qtype             = "lq";
+    ce->vswitch_batch     = 8;
+    ce->client_batch      = 1;
+    ce->client_usleep     = 50;
+    ce->pin_threads       = 0;
+    ce->num_reserved_cpus = 0;
+    ffq                   = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:p")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:px:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -761,6 +781,22 @@ main(int argc, char **argv)
             ce->pin_threads = 1;
             break;
 
+        case 'x': {
+            int cpu;
+
+            cpu = atoi(optarg);
+            if (cpu < 0 || cpu >= ncpus) {
+                printf("    Invalid CPU id '%s'\n", optarg);
+                return -1;
+            }
+            if (ce->num_reserved_cpus >= MAX_RESERVED_CPUS) {
+                printf("    Too many reserved CPUs\n");
+                return -1;
+            }
+            ce->reserved_cpus[ce->num_reserved_cpus++] = cpu;
+            break;
+        }
+
         default:
             usage(argv[0]);
             return 0;
@@ -771,6 +807,11 @@ main(int argc, char **argv)
     if (ce->num_vswitches > ce->num_clients) {
         printf("Invalid parameters: num_clients must be "
                ">= num_vswitches\n");
+        return -1;
+    }
+
+    if (ncpus - (int)ce->num_vswitches < (int)ce->num_reserved_cpus) {
+        printf("Infeasible CPU assignment\n");
         return -1;
     }
 
@@ -835,11 +876,17 @@ main(int argc, char **argv)
 
     {
         char *memory_cursor = memory;
-        int cpu_next        = ce->num_vswitches % ncpus;
+        int cpu_next        = (ce->num_vswitches % ncpus) - 1;
 
         for (i = 0; i < ce->num_clients; i++) {
             struct client *c = ce->clients + i;
             int j;
+
+            do {
+                if (++cpu_next >= ncpus) {
+                    cpu_next = ce->num_vswitches % ncpus;
+                }
+            } while (cpu_is_reserved(ce, cpu_next));
 
             c->ce    = ce;
             c->cpu   = ce->pin_threads ? cpu_next : -1;
@@ -854,10 +901,6 @@ main(int argc, char **argv)
                               /*improved=*/!strcmp(ce->qtype, "iffq"));
                 }
                 memory_cursor += qsize;
-            }
-
-            if (++cpu_next >= ncpus) {
-                cpu_next = ce->num_vswitches % ncpus;
             }
         }
     }
