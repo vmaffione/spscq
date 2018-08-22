@@ -261,17 +261,14 @@ lq_rr_server(struct client *c, unsigned int batch)
 
         while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) == NULL) {
             if (unlikely(ACCESS_ONCE(stop))) {
-                return 0;
+                return i;
             }
         }
         mbuf_dst_set(c->mbufs[i], mbuf_src(m));
-        mbuf_free(m);
-    }
-
-    for (i = 0; i < batch; i++) {
         if (lq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
             break;
         }
+        mbuf_free(m);
     }
 
     return i;
@@ -322,6 +319,54 @@ llq_client(struct client *c, unsigned int batch)
         if (llq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
             break;
         }
+    }
+
+    return i;
+}
+
+static int
+llq_rr_client(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        if (llq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            return i;
+        }
+    }
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)llq_read(c->blq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return batch;
+            }
+        }
+        mbuf_free(m);
+    }
+
+    return batch;
+}
+
+static int
+llq_rr_server(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)llq_read(c->blq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return i;
+            }
+        }
+        mbuf_dst_set(c->mbufs[i], mbuf_src(m));
+        if (llq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+        mbuf_free(m);
     }
 
     return i;
@@ -437,6 +482,54 @@ ffq_client(struct client *c, unsigned int batch)
         if (ffq_write(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
             break;
         }
+    }
+
+    return i;
+}
+
+static int
+ffq_rr_client(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        if (ffq_write(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            return i;
+        }
+    }
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)ffq_read(c->ffq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return batch;
+            }
+        }
+        mbuf_free(m);
+    }
+
+    return batch;
+}
+
+static int
+ffq_rr_server(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)ffq_read(c->ffq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return i;
+            }
+        }
+        mbuf_dst_set(c->mbufs[i], mbuf_src(m));
+        if (ffq_write(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+        mbuf_free(m);
     }
 
     return i;
@@ -940,15 +1033,18 @@ main(int argc, char **argv)
     } else if (!strcmp(ce->qtype, "llq")) {
         ce->vswitch_pull_func = llq_vswitch_pull;
         ce->vswitch_push_func = llq_vswitch_push;
-        ce->client_func_a     = llq_client;
+        ce->client_func_a     = ce->latency ? llq_rr_client : llq_client;
+        ce->client_func_b     = llq_rr_server;
     } else if (!strcmp(ce->qtype, "blq")) {
         ce->vswitch_pull_func = blq_vswitch_pull;
         ce->vswitch_push_func = blq_vswitch_push;
-        ce->client_func_a     = blq_client;
+        ce->client_func_a     = ce->latency ? llq_rr_client : blq_client;
+        ce->client_func_b     = llq_rr_server;
     } else if (!strcmp(ce->qtype, "ffq")) {
         ce->vswitch_pull_func = ffq_vswitch_pull;
         ce->vswitch_push_func = ffq_vswitch_push;
-        ce->client_func_a     = ffq_client;
+        ce->client_func_a     = ce->latency ? ffq_rr_client : ffq_client;
+        ce->client_func_b     = ffq_rr_server;
     } else if (!strcmp(ce->qtype, "iffq")) {
         ce->vswitch_pull_func = iffq_vswitch_pull;
         ce->vswitch_push_func = iffq_vswitch_push;
