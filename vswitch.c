@@ -586,6 +586,56 @@ iffq_client(struct client *c, unsigned int batch)
     return i;
 }
 
+static int
+iffq_rr_client(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        if (iffq_insert(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            return i;
+        }
+    }
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)iffq_extract(c->ffq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return batch;
+            }
+        }
+        mbuf_free(m);
+    }
+    iffq_clear(c->ffq[RXQ]);
+
+    return batch;
+}
+
+static int
+iffq_rr_server(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)iffq_extract(c->ffq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return i;
+            }
+        }
+        mbuf_dst_set(c->mbufs[i], mbuf_src(m));
+        if (iffq_insert(c->ffq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+        mbuf_free(m);
+    }
+    iffq_clear(c->ffq[RXQ]);
+
+    return i;
+}
+
 static unsigned int
 iffq_vswitch_pull(struct client *c, unsigned int batch)
 {
@@ -1048,11 +1098,13 @@ main(int argc, char **argv)
     } else if (!strcmp(ce->qtype, "iffq")) {
         ce->vswitch_pull_func = iffq_vswitch_pull;
         ce->vswitch_push_func = iffq_vswitch_push;
-        ce->client_func_a     = iffq_client;
+        ce->client_func_a     = ce->latency ? iffq_rr_client : iffq_client;
+        ce->client_func_b     = iffq_rr_server;
     } else if (!strcmp(ce->qtype, "biffq")) {
         ce->vswitch_pull_func = iffq_vswitch_pull;
         ce->vswitch_push_func = biffq_vswitch_push;
-        ce->client_func_a     = biffq_client;
+        ce->client_func_a     = ce->latency ? iffq_rr_client : biffq_client;
+        ce->client_func_b     = iffq_rr_server;
     }
 
     /*
