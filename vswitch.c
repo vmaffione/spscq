@@ -108,6 +108,9 @@ struct vswitch_experiment {
     /* Length of each SPSC queue. */
     unsigned int qlen;
 
+    /* Boolean: latency experiment rather than throughput? */
+    int latency;
+
     /* Boolean: should we pin threads to cores?
      * If yes, should we avoid using some CPUs? */
     int pin_threads;
@@ -624,6 +627,28 @@ client_worker(void *opaque)
     return NULL;
 }
 
+static void
+malloc_benchmark(struct vswitch_experiment *ce)
+{
+    struct timespec t_start, t_end;
+    unsigned long long count = 0;
+
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
+    while (!ACCESS_ONCE(stop)) {
+        struct mbuf *m = mbuf_alloc(ce->iplen, 1, 3);
+        mbuf_free(m);
+        count++;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+    {
+        unsigned long long ns =
+            1000000000ULL * (t_end.tv_sec - t_start.tv_sec) +
+            (t_end.tv_nsec - t_start.tv_nsec);
+        double rate = (double)count * 1000.0 / (double)ns;
+        printf("Malloc benchmark: %.3f Mpps\n", rate);
+    }
+}
+
 static int
 cpu_is_reserved(struct vswitch_experiment *ce, int cpu)
 {
@@ -656,9 +681,11 @@ usage(const char *progname)
            "    [-t QUEUE_TYPE(lq,llq,blq,ffq,iffq,biffq) = lq]\n"
            "    [-b VSWITCH_BATCH = 8]\n"
            "    [-b CLIENT_BATCH = 1]\n"
-           "    [-u SENDER_USLEEP = 50]\n"
+           "    [-u SENDER_USLEEP = 0]\n"
+           "    [-T (run latency workload)]\n"
            "    [-p (pin theads to cores)]\n"
-           "    [-x CPU_TO_LEAVE_UNUSED]\n",
+           "    [-x CPU_TO_LEAVE_UNUSED]\n"
+           "    [-j (run leaf benchmark)]\n",
            progname);
 }
 
@@ -671,7 +698,8 @@ main(int argc, char **argv)
     size_t qsize                  = 0;
     char *memory                  = NULL;
     int opt;
-    int ffq; /* boolean */
+    int ffq;              /* boolean */
+    int benchmark    = 0; /* boolean */
     int got_b_option = 0;
     int ncpus        = get_nprocs();
     int i;
@@ -696,12 +724,13 @@ main(int argc, char **argv)
     ce->qtype             = "lq";
     ce->vswitch_batch     = 8;
     ce->client_batch      = 1;
-    ce->client_usleep     = 50;
+    ce->client_usleep     = 0;
     ce->pin_threads       = 0;
     ce->num_reserved_cpus = 0;
+    ce->latency           = 0;
     ffq                   = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:px:")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:px:Tj")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -799,6 +828,14 @@ main(int argc, char **argv)
             break;
         }
 
+        case 'T':
+            ce->latency = 1;
+            break;
+
+        case 'j':
+            benchmark = 1;
+            break;
+
         default:
             usage(argv[0]);
             return 0;
@@ -819,6 +856,12 @@ main(int argc, char **argv)
 
     /* Subtract the length of the Ethernet header. */
     ce->iplen -= 14;
+
+    if (benchmark) {
+        printf("Running leaf benchmark: CTRL-C to stop\n");
+        malloc_benchmark(ce);
+        return 0;
+    }
 
     qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
