@@ -586,6 +586,8 @@ client_worker(void *opaque)
     unsigned int batch         = c->ce->client_batch;
     unsigned int dst_idx       = 0;
 
+    c->mbufs = szalloc(batch * sizeof(c->mbufs[0]));
+
     if (c->cpu >= 0) {
         runon("client", c->cpu);
     }
@@ -890,7 +892,7 @@ main(int argc, char **argv)
 
             c->ce    = ce;
             c->cpu   = ce->pin_threads ? cpu_next : -1;
-            c->mbufs = szalloc(ce->client_batch * sizeof(c->mbufs[0]));
+            c->mbufs = NULL;
             for (j = 0; j < MAXQ; j++) {
                 if (!ffq) {
                     c->blq[j] = (struct Blq *)memory_cursor;
