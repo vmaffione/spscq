@@ -229,8 +229,12 @@ blq_dump(const char *prefix, struct Blq *blq)
 {
     unsigned int wspace = blq_wspace(blq);
     unsigned int rspace = blq_rspace(blq);
-    printf("[%s] r %u rspace %u w %u wspace %u\n", prefix,
-           blq->read & blq->qmask, rspace, blq->write & blq->qmask, wspace);
+
+    printf(
+        "[%s] rs %4u r %4u rp %4u rspace %4u, ws %4u w %4u wp %4u wspace %4u\n",
+        prefix, blq->read_shadow & blq->qmask, blq->read & blq->qmask,
+        blq->read_priv & blq->qmask, rspace, blq->write_shadow & blq->qmask,
+        blq->write & blq->qmask, blq->write_priv & blq->qmask, wspace);
 }
 
 /*

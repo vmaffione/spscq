@@ -446,6 +446,7 @@ blq_rr_client(struct client *c, unsigned int batch)
 
         while (space == 0) {
             if (unlikely(ACCESS_ONCE(stop))) {
+                blq_read_publish(c->blq[RXQ]);
                 return batch;
             }
             space = blq_rspace(c->blq[RXQ]);
