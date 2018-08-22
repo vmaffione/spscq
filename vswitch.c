@@ -1057,7 +1057,7 @@ main(int argc, char **argv)
     ce->iplen -= 14;
 
     if (benchmark) {
-        printf("Running leaf benchmark: CTRL-C to stop\n");
+        printf("Running malloc benchmark: CTRL-C to stop\n");
         malloc_benchmark(ce);
         return 0;
     }
