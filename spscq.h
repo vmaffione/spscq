@@ -227,9 +227,10 @@ blq_read_publish(struct Blq *blq)
 inline void
 blq_dump(const char *prefix, struct Blq *blq)
 {
+    unsigned int wspace = blq_wspace(blq);
+    unsigned int rspace = blq_rspace(blq);
     printf("[%s] r %u rspace %u w %u wspace %u\n", prefix,
-           blq->read & blq->qmask, blq_rspace(blq), blq->write & blq->qmask,
-           blq_wspace(blq));
+           blq->read & blq->qmask, rspace, blq->write & blq->qmask, wspace);
 }
 
 /*
