@@ -852,6 +852,7 @@ client_worker(void *opaque)
     unsigned int batch         = c->ce->client_batch;
     unsigned int dst_idx       = c->idx & (~0x1); /* phase */
     unsigned int dst_idx_inc   = c->ce->latency ? 2 : 1;
+    unsigned int consumed      = batch;
 
     if (!c->ce->latency || (c->idx % 2) == 1) {
         client_func = c->ce->client_func_a;
@@ -875,7 +876,7 @@ client_worker(void *opaque)
         }
 
         /* Allocate and initialize a pool of mbufs. */
-        for (i = 0; i < batch; i++) {
+        for (i = 0; i < consumed; i++) {
             c->mbufs[i] = mbuf_alloc(iplen, c->idx, dst_idx);
             dst_idx += dst_idx_inc;
             if (dst_idx >= num_clients) {
@@ -884,13 +885,14 @@ client_worker(void *opaque)
         }
 
         /* Receive arrived mbufs and send the new ones. */
-        i = client_func(c, batch);
+        consumed = i = client_func(c, batch);
 
-        /* Drop all the ones that were not transmitted. */
-        if (i < batch) {
-            // usleep(1);
-            for (; i < batch; i++) {
-                mbuf_free(c->mbufs[i]);
+        /* Reuse all the ones that were not transmitted. */
+        for (; i < batch; i++) {
+            mbuf_dst_set(c->mbufs[i], dst_idx);
+            dst_idx += dst_idx_inc;
+            if (dst_idx >= num_clients) {
+                dst_idx = 0;
             }
         }
     }
