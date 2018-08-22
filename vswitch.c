@@ -427,6 +427,67 @@ blq_client(struct client *c, unsigned int batch)
     return i;
 }
 
+static int
+blq_rr_client(struct client *c, unsigned int batch)
+{
+    unsigned int space = blq_wspace(c->blq[TXQ]);
+    unsigned int i;
+
+    if (batch > space) {
+        batch = space;
+    }
+    for (i = 0; i < batch; i++) {
+        blq_write_local(c->blq[TXQ], (uintptr_t)c->mbufs[i]);
+    }
+    blq_write_publish(c->blq[TXQ]);
+
+    for (space = 0, i = 0; i < batch; space--, i++) {
+        struct mbuf *m;
+
+        while (space == 0) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return batch;
+            }
+            space = blq_rspace(c->blq[RXQ]);
+        }
+        m = (struct mbuf *)blq_read_local(c->blq[RXQ]);
+        mbuf_free(m);
+    }
+    blq_read_publish(c->blq[RXQ]);
+
+    return batch;
+}
+
+static int
+blq_rr_server(struct client *c, unsigned int batch)
+{
+    unsigned int space = blq_rspace(c->blq[RXQ]);
+    unsigned int i;
+
+    if (batch > space) {
+        batch = space;
+    }
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        m = (struct mbuf *)blq_read_local(c->blq[RXQ]);
+        mbuf_dst_set(c->mbufs[i], mbuf_src(m));
+        mbuf_free(m);
+    }
+    blq_read_publish(c->blq[RXQ]);
+
+    space = blq_wspace(c->blq[TXQ]);
+    if (batch > space) {
+        batch = space;
+    }
+    for (i = 0; i < batch; i++) {
+        blq_write_local(c->blq[TXQ], (uintptr_t)c->mbufs[i]);
+    }
+    blq_write_publish(c->blq[TXQ]);
+
+    return batch;
+}
+
 static unsigned int
 blq_vswitch_pull(struct client *c, unsigned int batch)
 {
@@ -1088,8 +1149,8 @@ main(int argc, char **argv)
     } else if (!strcmp(ce->qtype, "blq")) {
         ce->vswitch_pull_func = blq_vswitch_pull;
         ce->vswitch_push_func = blq_vswitch_push;
-        ce->client_func_a     = ce->latency ? llq_rr_client : blq_client;
-        ce->client_func_b     = llq_rr_server;
+        ce->client_func_a     = ce->latency ? blq_rr_client : blq_client;
+        ce->client_func_b     = blq_rr_server;
     } else if (!strcmp(ce->qtype, "ffq")) {
         ce->vswitch_pull_func = ffq_vswitch_pull;
         ce->vswitch_push_func = ffq_vswitch_push;
