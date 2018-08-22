@@ -624,7 +624,7 @@ blq_producer(Global *const g)
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        unsigned int avail = blq_wspace(blq);
+        unsigned int avail = blq_wspace(blq, batch);
 
 #ifdef QDEBUG
         blq_dump("P", blq);
@@ -669,7 +669,7 @@ blq_consumer(Global *const g)
     g->consumer_header();
 
     for (;;) {
-        unsigned int avail = blq_rspace(blq);
+        unsigned int avail = blq_rspace(blq, batch);
 
 #ifdef QDEBUG
         blq_dump("C", blq);

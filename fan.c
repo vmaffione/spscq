@@ -345,14 +345,13 @@ blq_root_lb(struct leaf *l, unsigned int batch)
 {
     struct Blq *blq        = l->blq;
     unsigned int mbuf_next = l->mbuf_next;
-    unsigned int wspace    = blq_wspace(blq);
     struct root *root      = l->root;
+    unsigned int wspace    = blq_wspace(blq, batch);
     unsigned int count;
 
     if (batch > wspace) {
         batch = wspace;
     }
-
     for (count = 0; count < batch; count++) {
         struct mbuf *m = l->pool + mbuf_next;
 
@@ -375,7 +374,7 @@ static void
 blq_leaf_analyze(struct leaf *l, unsigned batch)
 {
     struct Blq *blq     = l->blq;
-    unsigned int rspace = blq_rspace(blq);
+    unsigned int rspace = blq_rspace(blq, batch);
 
     if (batch > rspace) {
         batch = rspace;
@@ -585,7 +584,7 @@ static unsigned int
 blq_root_transmitter(struct leaf *l, unsigned int batch)
 {
     struct Blq *blq     = l->blq;
-    unsigned int rspace = blq_rspace(blq);
+    unsigned int rspace = blq_rspace(blq, batch);
     struct root *root   = l->root;
     int i;
 
@@ -609,7 +608,7 @@ blq_leaf_sender(struct leaf *l, unsigned int batch)
 {
     unsigned int mbuf_next = l->mbuf_next;
     struct Blq *blq        = l->blq;
-    unsigned int wspace    = blq_wspace(blq);
+    unsigned int wspace    = blq_wspace(blq, batch);
 
     if (batch > wspace) {
         batch = wspace;

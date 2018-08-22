@@ -155,14 +155,14 @@ llq_read(struct Blq *q)
 }
 
 inline unsigned int
-blq_wspace(struct Blq *blq)
+blq_wspace(struct Blq *blq, unsigned int needed)
 {
     unsigned int space =
         (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
          blq->write_priv) &
         blq->qmask;
 
-    if (space) {
+    if (space >= needed) {
         return space;
     }
     blq->read_shadow = ACCESS_ONCE(blq->read);
@@ -192,11 +192,11 @@ blq_write_publish(struct Blq *blq)
 }
 
 inline unsigned int
-blq_rspace(struct Blq *blq)
+blq_rspace(struct Blq *blq, unsigned int needed)
 {
     unsigned int space = blq->write_shadow - blq->read_priv;
 
-    if (space) {
+    if (space >= needed) {
         return space;
     }
     blq->write_shadow = ACCESS_ONCE(blq->write);
@@ -227,8 +227,8 @@ blq_read_publish(struct Blq *blq)
 inline void
 blq_dump(const char *prefix, struct Blq *blq)
 {
-    unsigned int wspace = blq_wspace(blq);
-    unsigned int rspace = blq_rspace(blq);
+    unsigned int wspace = blq_wspace(blq, blq->qlen);
+    unsigned int rspace = blq_rspace(blq, blq->qlen);
 
     printf(
         "[%s] rs %4u r %4u rp %4u rspace %4u, ws %4u w %4u wp %4u wspace %4u\n",

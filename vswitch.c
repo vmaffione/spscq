@@ -60,6 +60,7 @@ struct vswitch_experiment;
 struct vswitch_list {
     struct mbuf *head;
     struct mbuf *tail;
+    unsigned int len;
 };
 
 /* Context of a vswitch thread (load balancer or transmission). */
@@ -91,7 +92,8 @@ struct client {
 };
 
 typedef unsigned int (*vswitch_pull_t)(struct client *c, unsigned int batch);
-typedef void (*vswitch_push_t)(struct client *c, struct mbuf *m);
+typedef void (*vswitch_push_t)(struct client *c, struct mbuf *m,
+                               unsigned int num_bufs);
 typedef int (*client_func_t)(struct client *c, unsigned int batch);
 
 struct vswitch_experiment {
@@ -199,6 +201,7 @@ mbuf_list_append(struct vswitch *v, struct mbuf *m)
     } else {
         list->tail = list->head = m;
     }
+    list->len++;
 }
 
 static int stop = 0;
@@ -293,7 +296,7 @@ lq_vswitch_pull(struct client *c, unsigned int batch)
 }
 
 static void
-lq_vswitch_push(struct client *c, struct mbuf *m)
+lq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     do {
         struct mbuf *next = m->next;
@@ -391,7 +394,7 @@ llq_vswitch_pull(struct client *c, unsigned int batch)
 }
 
 static void
-llq_vswitch_push(struct client *c, struct mbuf *m)
+llq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     do {
         struct mbuf *next = m->next;
@@ -406,7 +409,7 @@ llq_vswitch_push(struct client *c, struct mbuf *m)
 static int
 blq_client(struct client *c, unsigned int batch)
 {
-    unsigned int space = blq_rspace(c->blq[RXQ]);
+    unsigned int space = blq_rspace(c->blq[RXQ], batch);
     unsigned int i;
 
     for (; space > 0; space--) {
@@ -415,7 +418,7 @@ blq_client(struct client *c, unsigned int batch)
     }
     blq_read_publish(c->blq[RXQ]);
 
-    space = blq_wspace(c->blq[TXQ]);
+    space = blq_wspace(c->blq[TXQ], batch);
     if (batch > space) {
         batch = space;
     }
@@ -430,7 +433,7 @@ blq_client(struct client *c, unsigned int batch)
 static int
 blq_rr_client(struct client *c, unsigned int batch)
 {
-    unsigned int space = blq_wspace(c->blq[TXQ]);
+    unsigned int space = blq_wspace(c->blq[TXQ], batch);
     unsigned int i;
 
     if (batch > space) {
@@ -449,7 +452,7 @@ blq_rr_client(struct client *c, unsigned int batch)
                 blq_read_publish(c->blq[RXQ]);
                 return batch;
             }
-            space = blq_rspace(c->blq[RXQ]);
+            space = blq_rspace(c->blq[RXQ], batch);
         }
         m = (struct mbuf *)blq_read_local(c->blq[RXQ]);
         mbuf_free(m);
@@ -462,7 +465,7 @@ blq_rr_client(struct client *c, unsigned int batch)
 static int
 blq_rr_server(struct client *c, unsigned int batch)
 {
-    unsigned int space = blq_rspace(c->blq[RXQ]);
+    unsigned int space = blq_rspace(c->blq[RXQ], batch);
     unsigned int i;
 
     if (batch > space) {
@@ -477,7 +480,7 @@ blq_rr_server(struct client *c, unsigned int batch)
     }
     blq_read_publish(c->blq[RXQ]);
 
-    space = blq_wspace(c->blq[TXQ]);
+    space = blq_wspace(c->blq[TXQ], batch);
     if (batch > space) {
         batch = space;
     }
@@ -492,7 +495,7 @@ blq_rr_server(struct client *c, unsigned int batch)
 static unsigned int
 blq_vswitch_pull(struct client *c, unsigned int batch)
 {
-    unsigned int rspace = blq_rspace(c->blq[TXQ]);
+    unsigned int rspace = blq_rspace(c->blq[TXQ], batch);
     struct vswitch *v   = c->vswitch;
     unsigned int count;
 
@@ -510,10 +513,10 @@ blq_vswitch_pull(struct client *c, unsigned int batch)
 }
 
 static void
-blq_vswitch_push(struct client *c, struct mbuf *m)
+blq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     struct Blq *blq     = c->blq[RXQ];
-    unsigned int wspace = blq_wspace(blq);
+    unsigned int wspace = blq_wspace(blq, num_bufs);
 
     do {
         struct mbuf *next = m->next;
@@ -616,7 +619,7 @@ ffq_vswitch_pull(struct client *c, unsigned int batch)
 }
 
 static void
-ffq_vswitch_push(struct client *c, struct mbuf *m)
+ffq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     do {
         struct mbuf *next = m->next;
@@ -718,7 +721,7 @@ iffq_vswitch_pull(struct client *c, unsigned int batch)
 }
 
 static void
-iffq_vswitch_push(struct client *c, struct mbuf *m)
+iffq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     do {
         struct mbuf *next = m->next;
@@ -755,7 +758,7 @@ biffq_client(struct client *c, unsigned int batch)
 }
 
 static void
-biffq_vswitch_push(struct client *c, struct mbuf *m)
+biffq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     struct Iffq *ffq    = c->ffq[RXQ];
     unsigned int wspace = iffq_wspace(ffq);
@@ -824,8 +827,9 @@ vswitch_worker(void *opaque)
             struct mbuf *m            = list->head;
 
             if (m) {
-                vswitch_push(c, m);
+                vswitch_push(c, m, list->len);
                 list->head = list->tail = NULL;
+                list->len               = 0;
             }
         }
     }
