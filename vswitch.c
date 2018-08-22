@@ -130,7 +130,8 @@ struct vswitch_experiment {
     vswitch_push_t vswitch_push_func;
 
     /* Client work. */
-    client_func_t client_func;
+    client_func_t client_func_a;
+    client_func_t client_func_b;
 
     /* Client nodes. */
     struct client *clients;
@@ -148,6 +149,13 @@ mbuf_dst(struct mbuf *m)
 {
     uint16_t *dst_ptr = (uint16_t *)&m->dst_mac[4];
     return ntohs(*dst_ptr);
+}
+
+static inline void
+mbuf_dst_set(struct mbuf *m, uint16_t dst_idx)
+{
+    uint16_t *dst_ptr = (uint16_t *)&m->dst_mac[4];
+    *dst_ptr          = htons(dst_idx);
 }
 
 static inline uint16_t
@@ -193,6 +201,8 @@ mbuf_list_append(struct vswitch *v, struct mbuf *m)
     }
 }
 
+static int stop = 0;
+
 /*
  * Queue-specific client and vswitch implementations.
  */
@@ -204,6 +214,57 @@ lq_client(struct client *c, unsigned int batch)
     unsigned int i;
 
     while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) != NULL) {
+        mbuf_free(m);
+    }
+
+    for (i = 0; i < batch; i++) {
+        if (lq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            break;
+        }
+    }
+
+    return i;
+}
+
+static int
+lq_rr_client(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        if (lq_write(c->blq[TXQ], (uintptr_t)c->mbufs[i])) {
+            return i;
+        }
+    }
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return batch;
+            }
+        }
+        mbuf_free(m);
+    }
+
+    return batch;
+}
+
+static int
+lq_rr_server(struct client *c, unsigned int batch)
+{
+    unsigned int i;
+
+    for (i = 0; i < batch; i++) {
+        struct mbuf *m;
+
+        while ((m = (struct mbuf *)lq_read(c->blq[RXQ])) == NULL) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                return 0;
+            }
+        }
+        mbuf_dst_set(c->mbufs[i], mbuf_src(m));
         mbuf_free(m);
     }
 
@@ -513,8 +574,6 @@ biffq_vswitch_push(struct client *c, struct mbuf *m)
  * Body of vswitch and clients.
  */
 
-static int stop = 0;
-
 static void *
 vswitch_worker(void *opaque)
 {
@@ -582,12 +641,19 @@ static void *
 client_worker(void *opaque)
 {
     struct client *c           = opaque;
-    client_func_t client_func  = c->ce->client_func;
+    client_func_t client_func  = NULL;
     size_t iplen               = c->ce->iplen;
     unsigned int num_clients   = c->vswitch->num_clients;
     unsigned int client_usleep = c->ce->client_usleep;
     unsigned int batch         = c->ce->client_batch;
-    unsigned int dst_idx       = 0;
+    unsigned int dst_idx       = c->idx & (~0x1); /* phase */
+    unsigned int dst_idx_inc   = c->ce->latency ? 2 : 1;
+
+    if (!c->ce->latency || (c->idx % 2) == 1) {
+        client_func = c->ce->client_func_a;
+    } else {
+        client_func = c->ce->client_func_b;
+    }
 
     c->mbufs = szalloc(batch * sizeof(c->mbufs[0]));
 
@@ -607,7 +673,8 @@ client_worker(void *opaque)
         /* Allocate and initialize a pool of mbufs. */
         for (i = 0; i < batch; i++) {
             c->mbufs[i] = mbuf_alloc(iplen, c->idx, dst_idx);
-            if (++dst_idx >= num_clients) {
+            dst_idx += dst_idx_inc;
+            if (dst_idx >= num_clients) {
                 dst_idx = 0;
             }
         }
@@ -843,6 +910,15 @@ main(int argc, char **argv)
         }
     }
 
+    /* Subtract the length of the Ethernet header. */
+    ce->iplen -= 14;
+
+    if (benchmark) {
+        printf("Running leaf benchmark: CTRL-C to stop\n");
+        malloc_benchmark(ce);
+        return 0;
+    }
+
     if (ce->num_vswitches > ce->num_clients) {
         printf("Invalid parameters: num_clients must be "
                ">= num_vswitches\n");
@@ -854,41 +930,33 @@ main(int argc, char **argv)
         return -1;
     }
 
-    /* Subtract the length of the Ethernet header. */
-    ce->iplen -= 14;
-
-    if (benchmark) {
-        printf("Running leaf benchmark: CTRL-C to stop\n");
-        malloc_benchmark(ce);
-        return 0;
-    }
-
     qsize = ffq ? iffq_size(ce->qlen) : blq_size(ce->qlen);
 
     if (!strcmp(ce->qtype, "lq")) {
         ce->vswitch_pull_func = lq_vswitch_pull;
         ce->vswitch_push_func = lq_vswitch_push;
-        ce->client_func       = lq_client;
+        ce->client_func_a     = ce->latency ? lq_rr_client : lq_client;
+        ce->client_func_b     = lq_rr_server;
     } else if (!strcmp(ce->qtype, "llq")) {
         ce->vswitch_pull_func = llq_vswitch_pull;
         ce->vswitch_push_func = llq_vswitch_push;
-        ce->client_func       = llq_client;
+        ce->client_func_a     = llq_client;
     } else if (!strcmp(ce->qtype, "blq")) {
         ce->vswitch_pull_func = blq_vswitch_pull;
         ce->vswitch_push_func = blq_vswitch_push;
-        ce->client_func       = blq_client;
+        ce->client_func_a     = blq_client;
     } else if (!strcmp(ce->qtype, "ffq")) {
         ce->vswitch_pull_func = ffq_vswitch_pull;
         ce->vswitch_push_func = ffq_vswitch_push;
-        ce->client_func       = ffq_client;
+        ce->client_func_a     = ffq_client;
     } else if (!strcmp(ce->qtype, "iffq")) {
         ce->vswitch_pull_func = iffq_vswitch_pull;
         ce->vswitch_push_func = iffq_vswitch_push;
-        ce->client_func       = iffq_client;
+        ce->client_func_a     = iffq_client;
     } else if (!strcmp(ce->qtype, "biffq")) {
         ce->vswitch_pull_func = iffq_vswitch_pull;
         ce->vswitch_push_func = biffq_vswitch_push;
-        ce->client_func       = biffq_client;
+        ce->client_func_a     = biffq_client;
     }
 
     /*
@@ -971,6 +1039,11 @@ main(int argc, char **argv)
                 struct client *c = ce->clients + v->first_client + j;
                 c->vswitch       = v;
                 c->idx           = j;
+            }
+            if (ce->latency && v->num_clients % 2 != 0) {
+                printf("Latency experiment requires an even number "
+                       "of clients for each vswitch\n");
+                return -1;
             }
         }
     }
