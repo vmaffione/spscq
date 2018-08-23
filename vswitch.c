@@ -113,6 +113,9 @@ struct vswitch_experiment {
     /* Boolean: latency experiment rather than throughput? */
     int latency;
 
+    /* Test duration in seconds. */
+    int duration;
+
     /* Boolean: should we pin threads to cores?
      * If yes, should we avoid using some CPUs? */
     int pin_threads;
@@ -952,6 +955,7 @@ usage(const char *progname)
 {
     printf("%s\n"
            "    [-h (show this help and exit)]\n"
+           "    [-D DURATION_SECONDS = 10]\n"
            "    [-n NUM_VSWITCHES = 1]\n"
            "    [-N NUM_CLIENTS = 2]\n"
            "    [-l SPSC_QUEUES_LEN = 128]\n"
@@ -995,6 +999,7 @@ main(int argc, char **argv)
     }
 
     memset(ce, 0, sizeof(*ce));
+    ce->duration          = 10;
     ce->num_vswitches     = 1;
     ce->num_clients       = 2;
     ce->qlen              = 128;
@@ -1008,7 +1013,7 @@ main(int argc, char **argv)
     ce->latency           = 0;
     ffq                   = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:px:Tj")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:u:px:TjD:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1112,6 +1117,14 @@ main(int argc, char **argv)
 
         case 'j':
             benchmark = 1;
+            break;
+
+        case 'D':
+            ce->duration = atoi(optarg);
+            if (ce->duration == 0 || ce->duration > 1000) {
+                printf("    Invalid duration '%s'\n", optarg);
+                return -1;
+            }
             break;
 
         default:
@@ -1283,6 +1296,9 @@ main(int argc, char **argv)
     }
 
     printf("Press CTRL-C to stop\n");
+
+    sleep(ce->duration);
+    ACCESS_ONCE(stop) = 1;
 
     /*
      * Teardown phase.
