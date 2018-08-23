@@ -14,4 +14,5 @@ SKIPCPU=20
                 -x $SKIPCPU --Bv 8 --Bc 8  -n $N | tee $EXPDIR/002
 ./run-vswitch.py -v $MORE -l $QLEN --duration $DURATION --max-trials $TRIALS \
                 -x $SKIPCPU --Bv 8 --Bc 1  -n $N --exp-type latency | tee $EXPDIR/003
-
+./run-vswitch.py -v $MORE -l $QLEN --duration $DURATION --max-trials $TRIALS \
+                -x $SKIPCPU --Bv 8 --Bc 8  -n $N --exp-type latency | tee $EXPDIR/004
