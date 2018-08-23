@@ -91,8 +91,12 @@ struct experiment {
     /* Netmap interface name and other info. */
     const char *netmap_ifname;
 
-    /* Boolean: should we pin threads to cores? */
+    /* Boolean: should we pin threads to cores?
+     * If yes, should we avoid using some CPUs? */
     int pin_threads;
+#define MAX_RESERVED_CPUS 16
+    int reserved_cpus[MAX_RESERVED_CPUS];
+    unsigned int num_reserved_cpus;
 
     /* Batch size (in packets) for root and leaf operation. */
     unsigned int root_batch;
@@ -919,6 +923,20 @@ analyzer_benchmark(void)
     }
 }
 
+static int
+cpu_is_reserved(struct experiment *ce, int cpu)
+{
+    int i;
+
+    for (i = 0; i < ce->num_reserved_cpus; i++) {
+        if (ce->reserved_cpus[i] == cpu) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void
 sigint_handler(int signum)
 {
@@ -940,6 +958,7 @@ usage(const char *progname)
            "    [-i NETMAP_IFNAME]\n"
            "    [-u LEAF_USLEEP = 0]\n"
            "    [-j (run leaf benchmark)]\n"
+           "    [-x CPU_TO_LEAVE_UNUSED]\n"
            "    [-p (pin theads to cores)]\n",
            progname);
 }
@@ -981,9 +1000,10 @@ main(int argc, char **argv)
     ce->leaf_usleep                 = 0;
     ce->netmap_ifname               = NULL;
     ce->pin_threads                 = 0;
+    ce->num_reserved_cpus           = 0;
     ffq                             = 0;
 
-    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:p")) != -1) {
+    while ((opt = getopt(argc, argv, "hn:l:t:b:N:je:u:i:px:")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
@@ -1078,6 +1098,22 @@ main(int argc, char **argv)
             ce->pin_threads = 1;
             break;
 
+        case 'x': {
+            int cpu;
+
+            cpu = atoi(optarg);
+            if (cpu < 0 || cpu >= ncpus) {
+                printf("    Invalid CPU id '%s'\n", optarg);
+                return -1;
+            }
+            if (ce->num_reserved_cpus >= MAX_RESERVED_CPUS) {
+                printf("    Too many reserved CPUs\n");
+                return -1;
+            }
+            ce->reserved_cpus[ce->num_reserved_cpus++] = cpu;
+            break;
+        }
+
         default:
             usage(argv[0]);
             return 0;
@@ -1088,6 +1124,11 @@ main(int argc, char **argv)
     if (ce->num_roots > ce->num_leaves) {
         printf("Invalid parameters: num_leaves must be "
                ">= num_roots\n");
+        return -1;
+    }
+
+    if (ncpus - (int)ce->num_roots < (int)ce->num_reserved_cpus) {
+        printf("Infeasible CPU assignment\n");
         return -1;
     }
 
@@ -1170,10 +1211,16 @@ main(int argc, char **argv)
 
     {
         char *memory_cursor = memory;
-        int cpu_next        = ce->num_roots % ncpus;
+        int cpu_next        = (ce->num_roots % ncpus) - 1;
 
         for (i = 0; i < ce->num_leaves; i++) {
             struct leaf *l = ce->leaves + i;
+
+            do {
+                if (++cpu_next >= ncpus) {
+                    cpu_next = ce->num_roots % ncpus;
+                }
+            } while (cpu_is_reserved(ce, cpu_next));
 
             l->ce         = ce;
             l->cpu        = ce->pin_threads ? cpu_next : -1;
@@ -1190,10 +1237,6 @@ main(int argc, char **argv)
                           /*improved=*/!strcmp(ce->qtype, "iffq"));
             }
             memory_cursor += qsize;
-
-            if (++cpu_next >= ncpus) {
-                cpu_next = ce->num_roots % ncpus;
-            }
         }
     }
 
