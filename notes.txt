@@ -1,5 +1,4 @@
 On XEON40:
-$ ./vswitch -p -x 20  -b 8 -b 1  -n20 -t xxx
-$ ./vswitch -p -x 20  -b 8 -b 8  -n20 -t xxx
-
-$ ./fan -n 30 -N5 -u0  -t XYZ
+$ ./vswitch -p -x 20 -b 8 -b 1  -n20 -t xxx
+$ ./vswitch -p -x 20 -T -b 8 -b 1  -n20 -t xxx
+$ ./vswitch -p -x 20 -b 8 -b 8  -n20 -t xxx
