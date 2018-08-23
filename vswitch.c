@@ -745,7 +745,7 @@ biffq_client(struct client *c, unsigned int batch)
     }
     iffq_clear(c->ffq[RXQ]);
 
-    wspace = iffq_wspace(c->ffq[TXQ]);
+    wspace = iffq_wspace(c->ffq[TXQ], batch);
     if (batch > wspace) {
         batch = wspace;
     }
@@ -761,7 +761,7 @@ static void
 biffq_vswitch_push(struct client *c, struct mbuf *m, unsigned int num_bufs)
 {
     struct Iffq *ffq    = c->ffq[RXQ];
-    unsigned int wspace = iffq_wspace(ffq);
+    unsigned int wspace = iffq_wspace(ffq, num_bufs);
 
     do {
         struct mbuf *next = m->next;

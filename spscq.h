@@ -387,15 +387,21 @@ iffq_insert(struct Iffq *ffq, uintptr_t m)
 }
 
 inline unsigned int
-iffq_wspace(struct Iffq *ffq)
+iffq_wspace(struct Iffq *ffq, unsigned int needed)
 {
-    if (unlikely(ffq->prod_write == ffq->prod_check)) {
-        /* Leave a cache line empty. */
-        if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                                    ffq->entry_mask)]))
-            return 0;
-        ffq->prod_check += ffq->line_entries;
+    unsigned int space = ffq->prod_check - ffq->prod_write;
+
+    if (space >= needed) {
+        return space;
     }
+
+    /* Leave an empty cache line. */
+    if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
+                                ffq->entry_mask)])) {
+        return space;
+    }
+    ffq->prod_check += ffq->line_entries;
+
     return ffq->prod_check - ffq->prod_write;
 }
 

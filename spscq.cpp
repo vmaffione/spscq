@@ -937,7 +937,7 @@ biffq_producer(Global *const g)
     g->producer_header();
 
     while (!ACCESS_ONCE(stop)) {
-        unsigned int avail = iffq_wspace(ffq);
+        unsigned int avail = iffq_wspace(ffq, batch);
 
 #ifdef QDEBUG
         iffq_dump("P", ffq);

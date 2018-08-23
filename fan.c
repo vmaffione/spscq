@@ -470,7 +470,7 @@ biffq_root_lb(struct leaf *l, unsigned int batch)
 {
     struct Iffq *ffq       = l->ffq;
     unsigned int mbuf_next = l->mbuf_next;
-    unsigned int wspace    = iffq_wspace(ffq);
+    unsigned int wspace    = iffq_wspace(ffq, batch);
     struct root *root      = l->root;
     unsigned int count;
 
@@ -716,7 +716,7 @@ biffq_leaf_sender(struct leaf *l, unsigned int batch)
 {
     struct Iffq *ffq       = l->ffq;
     unsigned int mbuf_next = l->mbuf_next;
-    unsigned int wspace    = iffq_wspace(ffq);
+    unsigned int wspace    = iffq_wspace(ffq, batch);
 
     if (batch > wspace) {
         batch = wspace;
