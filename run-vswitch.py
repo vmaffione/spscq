@@ -35,7 +35,7 @@ epilog = "2018 Vincenzo Maffione <v.maffione@gmail.com>"
 argparser = argparse.ArgumentParser(description = description,
                                     epilog = epilog)
 argparser.add_argument('-n', '--max-num-clients', help = "Number of points to take",
-                       type = int, default = 25)
+                       type = int, default = 20)
 argparser.add_argument('-D', '--duration',
                        help = "Duration of a test run in seconds",
                        type = int, default = 10)
@@ -78,7 +78,9 @@ if args.max_trials < 1 or args.min_trials < 1:
 if args.max_trials < args.min_trials:
     args.min_trials = args.max_trials
 
-points = [x for x in range(1, args.max_num_clients+1)]
+step = 2 if args.exp_type == 'latency' else 1
+points = [x for x in range(step, args.max_num_clients+1, step)]
+print(points)
 
 try:
     for num_clients in points:
