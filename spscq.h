@@ -30,25 +30,34 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef ACCESS_ONCE
+#ifdef __cplusplus
 #define ACCESS_ONCE(x)                                                         \
     (*static_cast<std::remove_reference<decltype(x)>::type volatile *>(&(x)))
-#else
+#else /* !__cplusplus */
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
-#endif
+#endif /* !__cplusplus */
+#endif /* !ACCESS_ONCE */
 
 #include <stdint.h>
 #include <stdio.h>
 
 #define compiler_barrier() asm volatile("" ::: "memory")
 
-/* Prepend this to a struct field to make it aligned. */
-#define CACHELINE_SIZE 64
-#define ALIGN_SIZE 128
-#define CACHELINE_ALIGNED __attribute__((aligned(ALIGN_SIZE)))
-#define ALIGNED_SIZE(_sz) ((_sz + ALIGN_SIZE - 1) & (~(ALIGN_SIZE - 1)))
+#define SPSCQ_CACHELINE_SIZE 64
+#define SPSCQ_ALIGN_SIZE 128
+#define SPSCQ_CACHELINE_ALIGNED __attribute__((aligned(SPSCQ_ALIGN_SIZE)))
+#define SPSCQ_ALIGNED_SIZE(_sz)                                                \
+    ((_sz + SPSCQ_ALIGN_SIZE - 1) & (~(SPSCQ_ALIGN_SIZE - 1)))
 
+#ifndef unlikely
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+#ifndef likely
 #define likely(x) __builtin_expect(!!(x), 1)
+#endif
 
 /* Support for slot remapping. No slot remapping happens by default. */
 #ifndef SMAP
@@ -62,35 +71,34 @@ is_power_of_two(int x)
 }
 
 /*
- * Multi-section queue, based on the Lamport classic queue.
- * All indices are free running.
+ * Queues based on the Lamport concurrent lock-free queue.
  */
 struct Blq {
     /* Producer private data. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int write_priv;
     unsigned int read_shadow;
 
     /* Producer write, consumer read. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int write;
 
     /* Consumer private data. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int read_priv;
     unsigned int write_shadow;
 
     /* Producer read, consumer write. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int read;
 
     /* Shared read only data. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int qlen;
     unsigned int qmask;
 
     /* The queue. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     uintptr_t q[0];
 };
 
@@ -98,7 +106,7 @@ inline size_t
 blq_size(int qlen)
 {
     struct Blq *blq;
-    return ALIGNED_SIZE(sizeof(*blq) + qlen * sizeof(blq->q[0]));
+    return SPSCQ_ALIGNED_SIZE(sizeof(*blq) + qlen * sizeof(blq->q[0]));
 }
 
 inline int
@@ -150,7 +158,7 @@ llq_write(struct Blq *q, uintptr_t m)
 {
     unsigned int write = q->write;
     unsigned int check =
-        (write + (CACHELINE_SIZE / sizeof(uintptr_t))) & q->qmask;
+        (write + (SPSCQ_CACHELINE_SIZE / sizeof(uintptr_t))) & q->qmask;
 
     if (check == q->read_shadow) {
         q->read_shadow = ACCESS_ONCE(q->read);
@@ -185,7 +193,7 @@ inline unsigned int
 blq_wspace(struct Blq *blq, unsigned int needed)
 {
     unsigned int space =
-        (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
+        (blq->read_shadow - (SPSCQ_CACHELINE_SIZE / sizeof(uintptr_t)) -
          blq->write_priv) &
         blq->qmask;
 
@@ -194,7 +202,7 @@ blq_wspace(struct Blq *blq, unsigned int needed)
     }
     blq->read_shadow = ACCESS_ONCE(blq->read);
 
-    return (blq->read_shadow - (CACHELINE_SIZE / sizeof(uintptr_t)) -
+    return (blq->read_shadow - (SPSCQ_CACHELINE_SIZE / sizeof(uintptr_t)) -
             blq->write_priv) &
            blq->qmask;
 }
@@ -272,25 +280,25 @@ struct Iffq {
 #define IFFQ_PROD_CACHE_ENTRIES 256
     uintptr_t prod_cache[IFFQ_PROD_CACHE_ENTRIES];
 
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     /* Shared (constant) fields. */
     unsigned int entry_mask;
     unsigned int line_entries;
     unsigned int line_mask;
 
     /* Producer fields. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int prod_write;
     unsigned int prod_check;
     unsigned int prod_cache_write;
 
     /* Consumer fields. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     unsigned int cons_clear;
     unsigned int cons_read;
 
     /* The queue. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     uintptr_t q[0];
 };
 
@@ -329,7 +337,7 @@ inline size_t
 iffq_size(unsigned int entries)
 {
     struct Iffq *ffq;
-    return ALIGNED_SIZE(sizeof(*ffq) + entries * sizeof(ffq->q[0]));
+    return SPSCQ_ALIGNED_SIZE(sizeof(*ffq) + entries * sizeof(ffq->q[0]));
 }
 
 /**

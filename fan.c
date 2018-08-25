@@ -150,7 +150,7 @@ struct experiment {
 static size_t
 leaf_pool_size(struct experiment *ce)
 {
-    return ALIGNED_SIZE(sizeof(struct mbuf) * ce->qlen * 2);
+    return SPSCQ_ALIGNED_SIZE(sizeof(struct mbuf) * ce->qlen * 2);
 }
 
 static size_t
@@ -164,7 +164,7 @@ static void *
 szalloc(size_t size)
 {
     void *p = NULL;
-    int ret = posix_memalign(&p, ALIGN_SIZE, size);
+    int ret = posix_memalign(&p, SPSCQ_ALIGN_SIZE, size);
     if (ret) {
         printf("allocation failure: %s\n", strerror(errno));
         exit(EXIT_FAILURE);

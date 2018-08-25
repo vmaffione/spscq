@@ -83,9 +83,9 @@ szalloc(size_t size, bool hugepages)
             printf("mmap allocation failure: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
-        assert(reinterpret_cast<uint64_t>(p) % ALIGN_SIZE == 0);
+        assert(reinterpret_cast<uint64_t>(p) % SPSCQ_ALIGN_SIZE == 0);
     } else {
-        int ret = posix_memalign(&p, ALIGN_SIZE, size);
+        int ret = posix_memalign(&p, SPSCQ_ALIGN_SIZE, size);
         if (ret) {
             printf("allocation failure: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
@@ -163,7 +163,7 @@ enum class MbufMode {
 struct Mbuf {
     unsigned int len;
     unsigned int __padding[7];
-#define MBUF_LEN_MAX (4096 + CACHELINE_SIZE - 8 * sizeof(unsigned int))
+#define MBUF_LEN_MAX (4096 + SPSCQ_CACHELINE_SIZE - 8 * sizeof(unsigned int))
     char buf[MBUF_LEN_MAX];
 };
 
@@ -245,11 +245,11 @@ struct Global {
 
     /* Packet count written back by consumers. It's safer for it
      * to have its own cacheline. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     volatile long long unsigned pkt_cnt = 0;
 
     /* Average batches as seen by producer and consumer. */
-    CACHELINE_ALIGNED
+    SPSCQ_CACHELINE_ALIGNED
     long long int producer_batches = 0;
     long long int consumer_batches = 0;
 
@@ -402,7 +402,7 @@ qslotmap_init(unsigned short *qslotmap, unsigned qlen, bool shuffle)
     /* Prepare support for shuffled queue slots to disable the effect of hw
      * prefetching on the queue slots.
      * K is the number of entries per cacheline. */
-    unsigned int K = CACHELINE_SIZE / sizeof(uintptr_t);
+    unsigned int K = SPSCQ_CACHELINE_SIZE / sizeof(uintptr_t);
     std::vector<unsigned short> v(qlen / K);
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -441,22 +441,22 @@ blq_create(int qlen, bool hugepages)
         return NULL;
     }
 
-    assert(reinterpret_cast<uintptr_t>(blq) % ALIGN_SIZE == 0);
+    assert(reinterpret_cast<uintptr_t>(blq) % SPSCQ_ALIGN_SIZE == 0);
     assert((reinterpret_cast<uintptr_t>(&blq->write)) -
                (reinterpret_cast<uintptr_t>(&blq->write_priv)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->read_priv)) -
                (reinterpret_cast<uintptr_t>(&blq->write)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->read)) -
                (reinterpret_cast<uintptr_t>(&blq->read_priv)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->qlen)) -
                (reinterpret_cast<uintptr_t>(&blq->read)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
     assert((reinterpret_cast<uintptr_t>(&blq->q[0])) -
                (reinterpret_cast<uintptr_t>(&blq->qlen)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
 
     return blq;
 }
@@ -826,14 +826,14 @@ __iffq_create(unsigned int entries, unsigned int line_size, bool hugepages,
         return NULL;
     }
 
-    assert(reinterpret_cast<uintptr_t>(ffq) % ALIGN_SIZE == 0);
+    assert(reinterpret_cast<uintptr_t>(ffq) % SPSCQ_ALIGN_SIZE == 0);
     assert(((reinterpret_cast<uintptr_t>(&ffq->cons_clear)) -
             (reinterpret_cast<uintptr_t>(&ffq->prod_write))) %
-               ALIGN_SIZE ==
+               SPSCQ_ALIGN_SIZE ==
            0);
     assert((reinterpret_cast<uintptr_t>(&ffq->q[0])) -
                (reinterpret_cast<uintptr_t>(&ffq->cons_clear)) ==
-           ALIGN_SIZE);
+           SPSCQ_ALIGN_SIZE);
 
     return ffq;
 }
@@ -1377,7 +1377,7 @@ run_test(Global *g)
         exit(EXIT_FAILURE);
     }
 
-    size_t pool_size          = ALIGNED_SIZE(2 * g->qlen * sizeof(g->pool[0]));
+    size_t pool_size = SPSCQ_ALIGNED_SIZE(2 * g->qlen * sizeof(g->pool[0]));
     size_t pool_and_smap_size = pool_size + (g->qlen * sizeof(SMAP(0)));
     /* Allocate mbuf pool and smap together. */
     void *pool_and_smap = szalloc(pool_and_smap_size, g->hugepages);
