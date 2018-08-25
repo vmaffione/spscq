@@ -362,14 +362,14 @@ Global::consumer_footer()
     end = std::chrono::system_clock::now();
 }
 
-static Mbuf gm;
+static Mbuf gm[2];
 
 template <MbufMode kMbufMode>
 static inline Mbuf *
 mbuf_get(Global *const g, unsigned int trash)
 {
     if (kMbufMode == MbufMode::NoAccess) {
-        return &gm;
+        return &gm[trash & 1];
     } else {
         Mbuf *m = &g->pool[g->pool_idx & g->pool_mask];
         /* We want that m->len depends on trash but we
@@ -384,9 +384,9 @@ template <MbufMode kMbufMode>
 static inline void
 mbuf_put(Mbuf *const m, unsigned int *csum, unsigned int *trash)
 {
+    *trash += reinterpret_cast<uintptr_t>(m);
     if (kMbufMode != MbufMode::NoAccess) {
         *csum += m->len;
-        *trash += *csum;
     }
 }
 
@@ -475,9 +475,7 @@ spin_for(uint64_t spin, unsigned int *trash)
     uint64_t when = rdtsc() + spin;
 
     while (rdtsc() < when) {
-        if (kMbufMode != MbufMode::NoAccess) {
-            (*trash)++;
-        }
+        (*trash)++;
         compiler_barrier();
     }
 }
