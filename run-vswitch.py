@@ -80,7 +80,6 @@ if args.max_trials < args.min_trials:
 
 step = 2 if args.exp_type == 'latency' else 1
 points = [x for x in range(step, args.max_num_clients+1, step)]
-print(points)
 
 try:
     for num_clients in points:
