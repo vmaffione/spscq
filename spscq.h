@@ -425,19 +425,19 @@ inline unsigned int
 iffq_wspace(struct Iffq *ffq, unsigned int needed)
 {
     unsigned int space = ffq->prod_check - ffq->prod_write;
+    unsigned next_check;
 
     if (space >= needed) {
         return space;
     }
 
-    /* Leave an empty cache line. */
-    if (ACCESS_ONCE(ffq->q[SMAP((ffq->prod_check + ffq->line_entries) &
-                                ffq->entry_mask)])) {
+    next_check = ffq->prod_check + ffq->line_entries;
+    if (ACCESS_ONCE(ffq->q[SMAP(next_check & ffq->entry_mask)])) {
         return space;
     }
-    ffq->prod_check += ffq->line_entries;
+    ffq->prod_check = next_check;
 
-    return ffq->prod_check - ffq->prod_write;
+    return next_check - ffq->prod_write;
 }
 
 inline void
