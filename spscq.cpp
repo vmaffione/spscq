@@ -1257,19 +1257,68 @@ out:
     g->consumer_footer();
 }
 
-#define biffq_client iffq_client
-#define biffq_server iffq_server
+template <MbufMode kMbufMode>
+void
+biffq_client(Global *const g)
+{
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
+
+    g->producer_header();
+    while (!ACCESS_ONCE(stop)) {
+        Mbuf *m            = mbuf_get<kMbufMode>(g, 0);
+        unsigned int space = iffq_wspace(ffq, 1);
+
+        assert(space > 0);
+        iffq_insert_local(ffq, (uintptr_t)m);
+        iffq_insert_publish(ffq);
+
+        while ((m = (Mbuf *)iffq_extract(ffq_back)) == nullptr &&
+               !ACCESS_ONCE(stop)) {
+        }
+        iffq_clear(ffq_back);
+        ++g->pkt_cnt;
+    }
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+biffq_server(Global *const g)
+{
+    Iffq *const ffq      = g->ffq;
+    Iffq *const ffq_back = g->ffq_back;
+    unsigned int csum    = 0;
+    unsigned int trash   = 0;
+
+    g->consumer_header();
+    for (;;) {
+        unsigned int space;
+        Mbuf *m;
+
+        while ((m = (Mbuf *)iffq_extract(ffq)) == nullptr) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                goto out;
+            }
+        }
+        iffq_clear(ffq);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
+        space = iffq_wspace(ffq_back, 1);
+        assert(space > 0);
+        iffq_insert_local(ffq_back, (uintptr_t)m);
+        iffq_insert_publish(ffq_back);
+    }
+out:
+    g->csum  = csum;
+    g->trash = trash;
+    g->consumer_footer();
+}
 
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 #if 1
 using pc_function_t = void (*)(Global *const);
 #else
-/* Just using std::function makes the processing loops slower.
- * I cannot believe it! It could be due to some differences in how
- * code is laid out in memory... maybe it has effect on the
- * CPU branch predictor?
- */
 using pc_function_t = std::function<void(Global *const)>;
 #endif
 
