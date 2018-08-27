@@ -1093,8 +1093,69 @@ out:
     g->trash = trash;
     g->consumer_footer();
 }
-#define blq_client llq_client
-#define blq_server llq_server
+
+template <MbufMode kMbufMode>
+void
+blq_client(Global *const g)
+{
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
+
+    g->producer_header();
+    while (!ACCESS_ONCE(stop)) {
+        Mbuf *m            = mbuf_get<kMbufMode>(g, 0);
+        unsigned int space = blq_wspace(blq, 1);
+
+        assert(space > 0);
+        blq_write_local(blq, (uintptr_t)m);
+        blq_write_publish(blq);
+
+        while (blq_rspace(blq_back, 1) == 0) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                goto out;
+            }
+        }
+        m = (Mbuf *)blq_read_local(blq_back);
+        (void)m;
+        blq_read_publish(blq_back);
+        ++g->pkt_cnt;
+    }
+out:
+    g->producer_footer();
+}
+
+template <MbufMode kMbufMode>
+void
+blq_server(Global *const g)
+{
+    Blq *const blq      = g->blq;
+    Blq *const blq_back = g->blq_back;
+    unsigned int csum   = 0;
+    unsigned int trash  = 0;
+
+    g->consumer_header();
+    for (;;) {
+        unsigned int space;
+        Mbuf *m;
+
+        while (blq_rspace(blq, 1) == 0) {
+            if (unlikely(ACCESS_ONCE(stop))) {
+                goto out;
+            }
+        }
+        m = (Mbuf *)blq_read_local(blq);
+        blq_read_publish(blq);
+        mbuf_put<kMbufMode>(m, &csum, &trash);
+        space = blq_wspace(blq_back, 1);
+        assert(space > 0);
+        blq_write_local(blq_back, (uintptr_t)m);
+        blq_write_publish(blq_back);
+    }
+out:
+    g->csum  = csum;
+    g->trash = trash;
+    g->consumer_footer();
+}
 
 template <MbufMode kMbufMode>
 void
