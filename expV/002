@@ -1,32 +1,1408 @@
-./run-vswitch.py -v -l 128 --duration 10 --max-trials 5 -x 20 --Bv 8 --Bc 8 -n 30
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t lq'
+Got 3.755000 Mpps
+Got 3.838000 Mpps
+Got 3.835000 Mpps
+Got 3.629000 Mpps
+Got 3.886000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t llq'
+Got 3.968000 Mpps
+Got 4.175000 Mpps
+Got 4.131000 Mpps
+Got 4.261000 Mpps
+Got 4.131000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t blq'
+Got 6.224000 Mpps
+Got 5.966000 Mpps
+Got 6.103000 Mpps
+Got 5.974000 Mpps
+Got 6.152000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t ffq'
+Got 5.006000 Mpps
+Got 5.076000 Mpps
+Got 5.111000 Mpps
+Got 5.275000 Mpps
+Got 5.162000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t iffq'
+Got 5.098000 Mpps
+Got 5.177000 Mpps
+Got 5.222000 Mpps
+Got 5.186000 Mpps
+Got 5.152000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 1 -t biffq'
+Got 5.060000 Mpps
+Got 5.067000 Mpps
+Got 4.972000 Mpps
+Got 4.958000 Mpps
+Got 5.120000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t lq'
+Got 4.226000 Mpps
+Got 3.869000 Mpps
+Got 4.054000 Mpps
+Got 3.889000 Mpps
+Got 4.007000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t llq'
+Got 4.311000 Mpps
+Got 4.055000 Mpps
+Got 4.128000 Mpps
+Got 4.239000 Mpps
+Got 4.133000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t blq'
+Got 4.502000 Mpps
+Got 4.860000 Mpps
+Got 4.856000 Mpps
+Got 4.900000 Mpps
+Got 4.883000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t ffq'
+Got 4.696000 Mpps
+Got 4.721000 Mpps
+Got 4.707000 Mpps
+Got 4.705000 Mpps
+Got 4.694000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t iffq'
+Got 4.692000 Mpps
+Got 4.662000 Mpps
+Got 4.704000 Mpps
+Got 4.692000 Mpps
+Got 4.656000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 2 -t biffq'
+Got 4.687000 Mpps
+Got 4.624000 Mpps
+Got 4.634000 Mpps
+Got 4.663000 Mpps
+Got 4.658000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t lq'
+Got 5.065000 Mpps
+Got 5.095000 Mpps
+Got 5.103000 Mpps
+Got 5.152000 Mpps
+Got 5.102000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t llq'
+Got 5.396000 Mpps
+Got 5.351000 Mpps
+Got 5.350000 Mpps
+Got 5.342000 Mpps
+Got 5.377000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t blq'
+Got 5.848000 Mpps
+Got 5.795000 Mpps
+Got 5.851000 Mpps
+Got 5.814000 Mpps
+Got 5.872000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t ffq'
+Got 5.380000 Mpps
+Got 5.398000 Mpps
+Got 5.022000 Mpps
+Got 5.454000 Mpps
+Got 5.437000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t iffq'
+Got 5.393000 Mpps
+Got 5.414000 Mpps
+Got 5.405000 Mpps
+Got 5.384000 Mpps
+Got 4.916000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 3 -t biffq'
+Got 5.417000 Mpps
+Got 5.382000 Mpps
+Got 5.448000 Mpps
+Got 5.432000 Mpps
+Got 5.438000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t lq'
+Got 5.761000 Mpps
+Got 5.758000 Mpps
+Got 5.715000 Mpps
+Got 5.754000 Mpps
+Got 5.758000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t llq'
+Got 5.775000 Mpps
+Got 5.869000 Mpps
+Got 5.815000 Mpps
+Got 5.672000 Mpps
+Got 5.843000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t blq'
+Got 6.628000 Mpps
+Got 6.602000 Mpps
+Got 6.628000 Mpps
+Got 6.620000 Mpps
+Got 6.315000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t ffq'
+Got 5.866000 Mpps
+Got 5.931000 Mpps
+Got 5.897000 Mpps
+Got 5.922000 Mpps
+Got 5.713000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t iffq'
+Got 5.813000 Mpps
+Got 5.828000 Mpps
+Got 5.849000 Mpps
+Got 5.869000 Mpps
+Got 5.777000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 4 -t biffq'
+Got 5.833000 Mpps
+Got 5.876000 Mpps
+Got 5.871000 Mpps
+Got 5.884000 Mpps
+Got 5.920000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t lq'
+Got 5.616000 Mpps
+Got 6.055000 Mpps
+Got 6.212000 Mpps
+Got 6.207000 Mpps
+Got 6.282000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t llq'
+Got 6.328000 Mpps
+Got 6.412000 Mpps
+Got 6.106000 Mpps
+Got 6.180000 Mpps
+Got 6.351000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t blq'
+Got 7.260000 Mpps
+Got 7.361000 Mpps
+Got 7.323000 Mpps
+Got 7.299000 Mpps
+Got 7.293000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t ffq'
+Got 6.224000 Mpps
+Got 6.269000 Mpps
+Got 6.268000 Mpps
+Got 6.254000 Mpps
+Got 6.326000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t iffq'
+Got 6.191000 Mpps
+Got 6.249000 Mpps
+Got 6.234000 Mpps
+Got 5.820000 Mpps
+Got 6.142000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 5 -t biffq'
+Got 6.266000 Mpps
+Got 6.315000 Mpps
+Got 6.299000 Mpps
+Got 6.308000 Mpps
+Got 6.269000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t lq'
+Got 6.572000 Mpps
+Got 6.411000 Mpps
+Got 6.671000 Mpps
+Got 6.445000 Mpps
+Got 6.426000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t llq'
+Got 6.659000 Mpps
+Got 6.679000 Mpps
+Got 6.609000 Mpps
+Got 6.487000 Mpps
+Got 6.652000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t blq'
+Got 7.951000 Mpps
+Got 7.845000 Mpps
+Got 7.912000 Mpps
+Got 7.879000 Mpps
+Got 7.963000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t ffq'
+Got 6.617000 Mpps
+Got 6.624000 Mpps
+Got 6.570000 Mpps
+Got 6.528000 Mpps
+Got 6.611000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t iffq'
+Got 6.542000 Mpps
+Got 6.420000 Mpps
+Got 6.533000 Mpps
+Got 6.577000 Mpps
+Got 6.406000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 6 -t biffq'
+Got 6.703000 Mpps
+Got 6.606000 Mpps
+Got 6.633000 Mpps
+Got 6.511000 Mpps
+Got 6.672000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t lq'
+Got 6.624000 Mpps
+Got 6.645000 Mpps
+Got 6.380000 Mpps
+Got 6.532000 Mpps
+Got 6.499000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t llq'
+Got 6.980000 Mpps
+Got 6.947000 Mpps
+Got 6.858000 Mpps
+Got 6.747000 Mpps
+Got 6.843000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t blq'
+Got 8.413000 Mpps
+Got 8.323000 Mpps
+Got 8.293000 Mpps
+Got 8.350000 Mpps
+Got 8.448000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t ffq'
+Got 6.767000 Mpps
+Got 6.779000 Mpps
+Got 6.748000 Mpps
+Got 6.687000 Mpps
+Got 6.723000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t iffq'
+Got 6.706000 Mpps
+Got 6.706000 Mpps
+Got 6.723000 Mpps
+Got 6.671000 Mpps
+Got 6.689000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 7 -t biffq'
+Got 7.255000 Mpps
+Got 6.870000 Mpps
+Got 7.006000 Mpps
+Got 6.940000 Mpps
+Got 6.935000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t lq'
+Got 6.953000 Mpps
+Got 6.787000 Mpps
+Got 6.619000 Mpps
+Got 6.841000 Mpps
+Got 6.731000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t llq'
+Got 6.857000 Mpps
+Got 6.880000 Mpps
+Got 7.045000 Mpps
+Got 6.876000 Mpps
+Got 6.861000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t blq'
+Got 8.767000 Mpps
+Got 8.825000 Mpps
+Got 9.154000 Mpps
+Got 8.833000 Mpps
+Got 8.876000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t ffq'
+Got 6.901000 Mpps
+Got 6.723000 Mpps
+Got 6.780000 Mpps
+Got 6.789000 Mpps
+Got 6.825000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t iffq'
+Got 6.905000 Mpps
+Got 6.841000 Mpps
+Got 7.121000 Mpps
+Got 6.637000 Mpps
+Got 6.749000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 8 -t biffq'
+Got 6.874000 Mpps
+Got 6.756000 Mpps
+Got 6.797000 Mpps
+Got 7.426000 Mpps
+Got 7.807000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t lq'
+Got 8.373000 Mpps
+Got 8.116000 Mpps
+Got 8.382000 Mpps
+Got 8.631000 Mpps
+Got 8.612000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t llq'
+Got 8.793000 Mpps
+Got 8.810000 Mpps
+Got 8.817000 Mpps
+Got 8.762000 Mpps
+Got 8.863000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t blq'
+Got 9.175000 Mpps
+Got 9.256000 Mpps
+Got 9.248000 Mpps
+Got 9.185000 Mpps
+Got 9.217000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t ffq'
+Got 8.267000 Mpps
+Got 8.436000 Mpps
+Got 8.290000 Mpps
+Got 8.421000 Mpps
+Got 8.312000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t iffq'
+Got 8.791000 Mpps
+Got 7.671000 Mpps
+Got 7.661000 Mpps
+Got 7.630000 Mpps
+Got 8.327000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 9 -t biffq'
+Got 8.553000 Mpps
+Got 8.262000 Mpps
+Got 8.120000 Mpps
+Got 7.981000 Mpps
+Got 8.005000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t lq'
+Got 8.986000 Mpps
+Got 8.879000 Mpps
+Got 8.836000 Mpps
+Got 9.034000 Mpps
+Got 8.907000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t llq'
+Got 9.016000 Mpps
+Got 8.933000 Mpps
+Got 9.048000 Mpps
+Got 9.074000 Mpps
+Got 9.029000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t blq'
+Got 9.259000 Mpps
+Got 9.213000 Mpps
+Got 9.164000 Mpps
+Got 9.192000 Mpps
+Got 9.175000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t ffq'
+Got 8.416000 Mpps
+Got 8.493000 Mpps
+Got 8.391000 Mpps
+Got 8.650000 Mpps
+Got 8.648000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t iffq'
+Got 11.354000 Mpps
+Got 11.766000 Mpps
+Got 11.079000 Mpps
+Got 11.515000 Mpps
+Got 9.709000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 10 -t biffq'
+Got 11.464000 Mpps
+Got 11.258000 Mpps
+Got 11.438000 Mpps
+Got 11.399000 Mpps
+Got 11.344000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t lq'
+Got 8.747000 Mpps
+Got 8.679000 Mpps
+Got 8.682000 Mpps
+Got 8.740000 Mpps
+Got 8.736000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t llq'
+Got 8.735000 Mpps
+Got 8.631000 Mpps
+Got 8.786000 Mpps
+Got 8.752000 Mpps
+Got 8.687000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t blq'
+Got 9.160000 Mpps
+Got 9.119000 Mpps
+Got 9.141000 Mpps
+Got 9.133000 Mpps
+Got 9.078000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t ffq'
+Got 7.982000 Mpps
+Got 8.088000 Mpps
+Got 7.939000 Mpps
+Got 8.092000 Mpps
+Got 8.182000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t iffq'
+Got 11.183000 Mpps
+Got 11.040000 Mpps
+Got 11.271000 Mpps
+Got 11.318000 Mpps
+Got 11.306000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 11 -t biffq'
+Got 11.036000 Mpps
+Got 11.233000 Mpps
+Got 10.935000 Mpps
+Got 11.116000 Mpps
+Got 10.929000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t lq'
+Got 8.820000 Mpps
+Got 8.879000 Mpps
+Got 8.724000 Mpps
+Got 8.716000 Mpps
+Got 8.766000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t llq'
+Got 8.815000 Mpps
+Got 8.768000 Mpps
+Got 8.869000 Mpps
+Got 8.753000 Mpps
+Got 8.683000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t blq'
+Got 9.019000 Mpps
+Got 8.923000 Mpps
+Got 8.956000 Mpps
+Got 8.961000 Mpps
+Got 8.969000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t ffq'
+Got 7.860000 Mpps
+Got 8.030000 Mpps
+Got 8.062000 Mpps
+Got 8.102000 Mpps
+Got 8.216000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t iffq'
+Got 11.219000 Mpps
+Got 10.837000 Mpps
+Got 11.156000 Mpps
+Got 10.727000 Mpps
+Got 11.074000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 12 -t biffq'
+Got 10.978000 Mpps
+Got 10.971000 Mpps
+Got 10.826000 Mpps
+Got 10.878000 Mpps
+Got 10.937000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t lq'
+Got 8.794000 Mpps
+Got 8.627000 Mpps
+Got 8.642000 Mpps
+Got 8.722000 Mpps
+Got 8.723000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t llq'
+Got 9.084000 Mpps
+Got 8.997000 Mpps
+Got 8.861000 Mpps
+Got 8.826000 Mpps
+Got 8.812000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t blq'
+Got 9.335000 Mpps
+Got 9.260000 Mpps
+Got 9.246000 Mpps
+Got 9.159000 Mpps
+Got 9.110000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t ffq'
+Got 8.087000 Mpps
+Got 8.138000 Mpps
+Got 8.102000 Mpps
+Got 8.126000 Mpps
+Got 8.171000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t iffq'
+Got 10.805000 Mpps
+Got 11.145000 Mpps
+Got 11.016000 Mpps
+Got 11.107000 Mpps
+Got 10.968000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 13 -t biffq'
+Got 11.107000 Mpps
+Got 10.889000 Mpps
+Got 11.074000 Mpps
+Got 10.777000 Mpps
+Got 10.916000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t lq'
+Got 8.900000 Mpps
+Got 8.904000 Mpps
+Got 8.741000 Mpps
+Got 8.850000 Mpps
+Got 8.810000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t llq'
+Got 9.013000 Mpps
+Got 8.946000 Mpps
+Got 8.886000 Mpps
+Got 9.063000 Mpps
+Got 8.888000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t blq'
+Got 9.496000 Mpps
+Got 9.305000 Mpps
+Got 9.199000 Mpps
+Got 9.399000 Mpps
+Got 9.465000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t ffq'
+Got 8.250000 Mpps
+Got 8.202000 Mpps
+Got 8.424000 Mpps
+Got 8.364000 Mpps
+Got 8.237000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t iffq'
+Got 10.991000 Mpps
+Got 11.120000 Mpps
+Got 10.916000 Mpps
+Got 11.037000 Mpps
+Got 11.024000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 14 -t biffq'
+Got 11.383000 Mpps
+Got 11.389000 Mpps
+Got 11.374000 Mpps
+Got 11.315000 Mpps
+Got 11.359000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t lq'
+Got 8.759000 Mpps
+Got 8.802000 Mpps
+Got 9.111000 Mpps
+Got 8.840000 Mpps
+Got 8.608000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t llq'
+Got 8.795000 Mpps
+Got 9.089000 Mpps
+Got 8.988000 Mpps
+Got 9.098000 Mpps
+Got 9.144000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t blq'
+Got 9.765000 Mpps
+Got 9.419000 Mpps
+Got 9.586000 Mpps
+Got 9.420000 Mpps
+Got 10.086000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t ffq'
+Got 8.431000 Mpps
+Got 8.312000 Mpps
+Got 8.464000 Mpps
+Got 8.457000 Mpps
+Got 8.153000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t iffq'
+Got 10.747000 Mpps
+Got 10.448000 Mpps
+Got 10.403000 Mpps
+Got 10.553000 Mpps
+Got 10.505000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 15 -t biffq'
+Got 11.512000 Mpps
+Got 11.582000 Mpps
+Got 11.623000 Mpps
+Got 11.837000 Mpps
+Got 11.861000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t lq'
+Got 8.423000 Mpps
+Got 8.609000 Mpps
+Got 8.687000 Mpps
+Got 8.731000 Mpps
+Got 8.640000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t llq'
+Got 9.034000 Mpps
+Got 8.857000 Mpps
+Got 8.800000 Mpps
+Got 8.594000 Mpps
+Got 8.842000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t blq'
+Got 9.650000 Mpps
+Got 9.478000 Mpps
+Got 9.546000 Mpps
+Got 9.684000 Mpps
+Got 9.642000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t ffq'
+Got 8.245000 Mpps
+Got 8.346000 Mpps
+Got 8.391000 Mpps
+Got 8.416000 Mpps
+Got 8.088000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t iffq'
+Got 11.075000 Mpps
+Got 11.159000 Mpps
+Got 11.287000 Mpps
+Got 11.145000 Mpps
+Got 11.146000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 16 -t biffq'
+Got 13.112000 Mpps
+Got 12.944000 Mpps
+Got 12.930000 Mpps
+Got 13.047000 Mpps
+Got 12.629000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t lq'
+Got 9.167000 Mpps
+Got 9.099000 Mpps
+Got 8.949000 Mpps
+Got 9.104000 Mpps
+Got 9.036000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t llq'
+Got 9.610000 Mpps
+Got 9.527000 Mpps
+Got 9.422000 Mpps
+Got 9.561000 Mpps
+Got 9.441000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t blq'
+Got 9.877000 Mpps
+Got 9.877000 Mpps
+Got 9.905000 Mpps
+Got 9.919000 Mpps
+Got 9.898000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t ffq'
+Got 8.857000 Mpps
+Got 8.927000 Mpps
+Got 9.147000 Mpps
+Got 8.941000 Mpps
+Got 8.617000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t iffq'
+Got 11.645000 Mpps
+Got 11.204000 Mpps
+Got 11.617000 Mpps
+Got 11.454000 Mpps
+Got 11.497000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 17 -t biffq'
+Got 13.428000 Mpps
+Got 13.269000 Mpps
+Got 13.182000 Mpps
+Got 12.159000 Mpps
+Got 12.746000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t lq'
+Got 9.038000 Mpps
+Got 9.306000 Mpps
+Got 9.295000 Mpps
+Got 9.038000 Mpps
+Got 9.251000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t llq'
+Got 9.821000 Mpps
+Got 9.417000 Mpps
+Got 9.722000 Mpps
+Got 9.897000 Mpps
+Got 9.912000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t blq'
+Got 10.107000 Mpps
+Got 10.196000 Mpps
+Got 10.064000 Mpps
+Got 10.443000 Mpps
+Got 10.312000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t ffq'
+Got 9.065000 Mpps
+Got 9.336000 Mpps
+Got 9.347000 Mpps
+Got 9.220000 Mpps
+Got 9.331000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t iffq'
+Got 11.983000 Mpps
+Got 11.756000 Mpps
+Got 11.867000 Mpps
+Got 11.895000 Mpps
+Got 11.976000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 18 -t biffq'
+Got 13.890000 Mpps
+Got 13.424000 Mpps
+Got 13.919000 Mpps
+Got 13.589000 Mpps
+Got 14.128000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t lq'
+Got 9.234000 Mpps
+Got 9.011000 Mpps
+Got 9.385000 Mpps
+Got 9.231000 Mpps
+Got 9.138000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t llq'
+Got 9.870000 Mpps
+Got 9.662000 Mpps
+Got 9.726000 Mpps
+Got 10.030000 Mpps
+Got 9.677000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t blq'
+Got 10.443000 Mpps
+Got 10.514000 Mpps
+Got 10.426000 Mpps
+Got 10.196000 Mpps
+Got 10.397000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t ffq'
+Got 9.162000 Mpps
+Got 9.117000 Mpps
+Got 9.183000 Mpps
+Got 9.105000 Mpps
+Got 9.150000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t iffq'
+Got 12.826000 Mpps
+Got 11.942000 Mpps
+Got 12.349000 Mpps
+Got 12.142000 Mpps
+Got 12.159000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 19 -t biffq'
+Got 13.736000 Mpps
+Got 14.115000 Mpps
+Got 12.868000 Mpps
+Got 13.796000 Mpps
+Got 13.346000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t lq'
+Got 9.210000 Mpps
+Got 9.314000 Mpps
+Got 9.011000 Mpps
+Got 9.373000 Mpps
+Got 9.299000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t llq'
+Got 9.795000 Mpps
+Got 9.740000 Mpps
+Got 9.738000 Mpps
+Got 9.634000 Mpps
+Got 9.711000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t blq'
+Got 10.603000 Mpps
+Got 10.316000 Mpps
+Got 10.706000 Mpps
+Got 10.539000 Mpps
+Got 10.398000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t ffq'
+Got 9.040000 Mpps
+Got 9.373000 Mpps
+Got 9.146000 Mpps
+Got 8.901000 Mpps
+Got 9.191000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t iffq'
+Got 12.548000 Mpps
+Got 12.145000 Mpps
+Got 12.445000 Mpps
+Got 12.111000 Mpps
+Got 12.585000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 20 -t biffq'
+Got 13.319000 Mpps
+Got 13.550000 Mpps
+Got 13.328000 Mpps
+Got 13.507000 Mpps
+Got 13.724000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t lq'
+Got 9.441000 Mpps
+Got 9.439000 Mpps
+Got 9.481000 Mpps
+Got 9.103000 Mpps
+Got 9.269000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t llq'
+Got 9.859000 Mpps
+Got 9.981000 Mpps
+Got 10.121000 Mpps
+Got 9.850000 Mpps
+Got 9.591000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t blq'
+Got 10.733000 Mpps
+Got 10.866000 Mpps
+Got 10.905000 Mpps
+Got 10.863000 Mpps
+Got 10.721000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t ffq'
+Got 9.325000 Mpps
+Got 9.456000 Mpps
+Got 9.286000 Mpps
+Got 9.526000 Mpps
+Got 9.511000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t iffq'
+Got 12.456000 Mpps
+Got 12.640000 Mpps
+Got 12.799000 Mpps
+Got 13.066000 Mpps
+Got 12.686000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 21 -t biffq'
+Got 13.307000 Mpps
+Got 13.969000 Mpps
+Got 13.598000 Mpps
+Got 13.672000 Mpps
+Got 14.004000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t lq'
+Got 9.298000 Mpps
+Got 9.268000 Mpps
+Got 9.380000 Mpps
+Got 9.320000 Mpps
+Got 9.368000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t llq'
+Got 10.039000 Mpps
+Got 10.018000 Mpps
+Got 9.767000 Mpps
+Got 9.979000 Mpps
+Got 9.768000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t blq'
+Got 10.950000 Mpps
+Got 10.828000 Mpps
+Got 10.601000 Mpps
+Got 10.555000 Mpps
+Got 10.806000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t ffq'
+Got 9.384000 Mpps
+Got 9.387000 Mpps
+Got 9.265000 Mpps
+Got 9.288000 Mpps
+Got 9.264000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t iffq'
+Got 12.774000 Mpps
+Got 12.623000 Mpps
+Got 12.858000 Mpps
+Got 12.657000 Mpps
+Got 12.405000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 22 -t biffq'
+Got 13.641000 Mpps
+Got 13.609000 Mpps
+Got 13.247000 Mpps
+Got 12.832000 Mpps
+Got 12.897000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t lq'
+Got 9.435000 Mpps
+Got 9.549000 Mpps
+Got 9.613000 Mpps
+Got 9.555000 Mpps
+Got 9.379000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t llq'
+Got 10.125000 Mpps
+Got 10.074000 Mpps
+Got 10.303000 Mpps
+Got 10.231000 Mpps
+Got 9.933000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t blq'
+Got 11.397000 Mpps
+Got 10.999000 Mpps
+Got 11.343000 Mpps
+Got 10.751000 Mpps
+Got 10.886000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t ffq'
+Got 9.512000 Mpps
+Got 9.461000 Mpps
+Got 9.497000 Mpps
+Got 9.674000 Mpps
+Got 9.688000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t iffq'
+Got 12.978000 Mpps
+Got 12.866000 Mpps
+Got 12.732000 Mpps
+Got 12.890000 Mpps
+Got 12.828000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 23 -t biffq'
+Got 13.658000 Mpps
+Got 13.569000 Mpps
+Got 13.762000 Mpps
+Got 13.862000 Mpps
+Got 13.241000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t lq'
+Got 9.469000 Mpps
+Got 9.282000 Mpps
+Got 8.576000 Mpps
+Got 8.566000 Mpps
+Got 8.650000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t llq'
+Got 9.509000 Mpps
+Got 9.281000 Mpps
+Got 9.265000 Mpps
+Got 9.461000 Mpps
+Got 9.525000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t blq'
+Got 10.994000 Mpps
+Got 11.169000 Mpps
+Got 10.844000 Mpps
+Got 11.317000 Mpps
+Got 11.152000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t ffq'
+Got 8.094000 Mpps
+Got 8.265000 Mpps
+Got 8.393000 Mpps
+Got 8.221000 Mpps
+Got 7.829000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t iffq'
+Got 12.360000 Mpps
+Got 12.282000 Mpps
+Got 12.294000 Mpps
+Got 12.673000 Mpps
+Got 12.225000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 24 -t biffq'
+Got 13.038000 Mpps
+Got 13.355000 Mpps
+Got 13.029000 Mpps
+Got 12.850000 Mpps
+Got 13.266000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t lq'
+Got 8.863000 Mpps
+Got 8.743000 Mpps
+Got 8.802000 Mpps
+Got 8.724000 Mpps
+Got 8.845000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t llq'
+Got 9.831000 Mpps
+Got 9.736000 Mpps
+Got 9.766000 Mpps
+Got 9.806000 Mpps
+Got 9.631000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t blq'
+Got 11.518000 Mpps
+Got 11.474000 Mpps
+Got 11.137000 Mpps
+Got 11.335000 Mpps
+Got 11.115000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t ffq'
+Got 8.584000 Mpps
+Got 8.508000 Mpps
+Got 8.430000 Mpps
+Got 8.370000 Mpps
+Got 8.486000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t iffq'
+Got 12.616000 Mpps
+Got 12.515000 Mpps
+Got 12.756000 Mpps
+Got 12.378000 Mpps
+Got 12.676000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 25 -t biffq'
+Got 13.454000 Mpps
+Got 13.222000 Mpps
+Got 13.370000 Mpps
+Got 13.356000 Mpps
+Got 13.260000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t lq'
+Got 8.555000 Mpps
+Got 8.689000 Mpps
+Got 8.759000 Mpps
+Got 8.747000 Mpps
+Got 8.717000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t llq'
+Got 9.613000 Mpps
+Got 9.574000 Mpps
+Got 9.696000 Mpps
+Got 9.600000 Mpps
+Got 9.632000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t blq'
+Got 10.900000 Mpps
+Got 11.392000 Mpps
+Got 11.233000 Mpps
+Got 11.682000 Mpps
+Got 11.696000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t ffq'
+Got 8.185000 Mpps
+Got 8.416000 Mpps
+Got 8.273000 Mpps
+Got 8.228000 Mpps
+Got 8.546000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t iffq'
+Got 12.409000 Mpps
+Got 12.315000 Mpps
+Got 12.344000 Mpps
+Got 12.434000 Mpps
+Got 12.203000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 26 -t biffq'
+Got 13.070000 Mpps
+Got 12.958000 Mpps
+Got 13.136000 Mpps
+Got 13.270000 Mpps
+Got 13.303000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t lq'
+Got 8.768000 Mpps
+Got 8.760000 Mpps
+Got 8.748000 Mpps
+Got 8.757000 Mpps
+Got 8.762000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t llq'
+Got 9.934000 Mpps
+Got 9.979000 Mpps
+Got 9.935000 Mpps
+Got 9.928000 Mpps
+Got 9.927000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t blq'
+Got 11.466000 Mpps
+Got 11.503000 Mpps
+Got 11.390000 Mpps
+Got 11.582000 Mpps
+Got 11.244000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t ffq'
+Got 8.169000 Mpps
+Got 8.729000 Mpps
+Got 8.753000 Mpps
+Got 8.599000 Mpps
+Got 8.581000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t iffq'
+Got 12.377000 Mpps
+Got 12.630000 Mpps
+Got 12.484000 Mpps
+Got 12.568000 Mpps
+Got 12.466000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 27 -t biffq'
+Got 13.173000 Mpps
+Got 13.232000 Mpps
+Got 13.227000 Mpps
+Got 13.375000 Mpps
+Got 13.353000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t lq'
+Got 8.823000 Mpps
+Got 8.704000 Mpps
+Got 8.667000 Mpps
+Got 8.517000 Mpps
+Got 8.558000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t llq'
+Got 9.609000 Mpps
+Got 9.633000 Mpps
+Got 9.677000 Mpps
+Got 9.843000 Mpps
+Got 9.824000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t blq'
+Got 11.289000 Mpps
+Got 11.133000 Mpps
+Got 11.285000 Mpps
+Got 11.325000 Mpps
+Got 11.190000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t ffq'
+Got 8.509000 Mpps
+Got 8.474000 Mpps
+Got 8.488000 Mpps
+Got 8.360000 Mpps
+Got 8.468000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t iffq'
+Got 12.358000 Mpps
+Got 12.107000 Mpps
+Got 12.365000 Mpps
+Got 12.285000 Mpps
+Got 12.300000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 28 -t biffq'
+Got 12.987000 Mpps
+Got 12.817000 Mpps
+Got 13.075000 Mpps
+Got 12.883000 Mpps
+Got 12.936000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t lq'
+Got 8.790000 Mpps
+Got 8.843000 Mpps
+Got 8.778000 Mpps
+Got 8.771000 Mpps
+Got 8.785000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t llq'
+Got 9.797000 Mpps
+Got 9.849000 Mpps
+Got 9.778000 Mpps
+Got 9.799000 Mpps
+Got 9.814000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t blq'
+Got 11.431000 Mpps
+Got 11.479000 Mpps
+Got 11.525000 Mpps
+Got 11.576000 Mpps
+Got 11.222000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t ffq'
+Got 8.752000 Mpps
+Got 8.641000 Mpps
+Got 8.693000 Mpps
+Got 8.535000 Mpps
+Got 8.549000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t iffq'
+Got 12.258000 Mpps
+Got 12.342000 Mpps
+Got 12.474000 Mpps
+Got 12.204000 Mpps
+Got 12.379000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 29 -t biffq'
+Got 12.944000 Mpps
+Got 12.866000 Mpps
+Got 12.941000 Mpps
+Got 12.651000 Mpps
+Got 12.814000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t lq'
+Got 8.569000 Mpps
+Got 8.624000 Mpps
+Got 8.656000 Mpps
+Got 8.689000 Mpps
+Got 8.644000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t llq'
+Got 9.771000 Mpps
+Got 9.548000 Mpps
+Got 9.661000 Mpps
+Got 9.763000 Mpps
+Got 9.790000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t blq'
+Got 11.076000 Mpps
+Got 11.244000 Mpps
+Got 11.370000 Mpps
+Got 11.111000 Mpps
+Got 11.400000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t ffq'
+Got 8.554000 Mpps
+Got 8.733000 Mpps
+Got 8.605000 Mpps
+Got 8.669000 Mpps
+Got 8.598000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t iffq'
+Got 11.969000 Mpps
+Got 12.173000 Mpps
+Got 12.107000 Mpps
+Got 12.241000 Mpps
+Got 12.320000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 30 -t biffq'
+Got 13.208000 Mpps
+Got 12.993000 Mpps
+Got 12.681000 Mpps
+Got 12.930000 Mpps
+Got 13.074000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t lq'
+Got 8.696000 Mpps
+Got 8.721000 Mpps
+Got 8.731000 Mpps
+Got 8.725000 Mpps
+Got 8.740000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t llq'
+Got 9.725000 Mpps
+Got 9.829000 Mpps
+Got 9.899000 Mpps
+Got 9.982000 Mpps
+Got 9.893000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t blq'
+Got 11.326000 Mpps
+Got 11.286000 Mpps
+Got 11.590000 Mpps
+Got 11.199000 Mpps
+Got 11.603000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t ffq'
+Got 8.452000 Mpps
+Got 8.611000 Mpps
+Got 8.558000 Mpps
+Got 8.773000 Mpps
+Got 8.431000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t iffq'
+Got 12.308000 Mpps
+Got 12.300000 Mpps
+Got 12.110000 Mpps
+Got 11.976000 Mpps
+Got 12.094000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 31 -t biffq'
+Got 12.829000 Mpps
+Got 12.689000 Mpps
+Got 13.040000 Mpps
+Got 12.919000 Mpps
+Got 13.143000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t lq'
+Got 8.552000 Mpps
+Got 8.555000 Mpps
+Got 8.427000 Mpps
+Got 8.646000 Mpps
+Got 8.559000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t llq'
+Got 9.557000 Mpps
+Got 9.720000 Mpps
+Got 9.727000 Mpps
+Got 9.596000 Mpps
+Got 9.630000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t blq'
+Got 11.087000 Mpps
+Got 11.489000 Mpps
+Got 11.448000 Mpps
+Got 11.313000 Mpps
+Got 11.149000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t ffq'
+Got 8.725000 Mpps
+Got 8.357000 Mpps
+Got 8.758000 Mpps
+Got 8.824000 Mpps
+Got 8.839000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t iffq'
+Got 12.268000 Mpps
+Got 11.944000 Mpps
+Got 11.964000 Mpps
+Got 12.242000 Mpps
+Got 12.125000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 32 -t biffq'
+Got 12.593000 Mpps
+Got 12.551000 Mpps
+Got 13.035000 Mpps
+Got 12.785000 Mpps
+Got 12.747000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t lq'
+Got 8.764000 Mpps
+Got 8.744000 Mpps
+Got 8.716000 Mpps
+Got 8.679000 Mpps
+Got 8.746000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t llq'
+Got 9.844000 Mpps
+Got 9.916000 Mpps
+Got 9.731000 Mpps
+Got 9.674000 Mpps
+Got 9.795000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t blq'
+Got 11.352000 Mpps
+Got 11.396000 Mpps
+Got 11.373000 Mpps
+Got 11.575000 Mpps
+Got 11.530000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t ffq'
+Got 8.905000 Mpps
+Got 8.826000 Mpps
+Got 8.782000 Mpps
+Got 8.872000 Mpps
+Got 8.859000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t iffq'
+Got 12.225000 Mpps
+Got 12.160000 Mpps
+Got 12.348000 Mpps
+Got 12.033000 Mpps
+Got 12.250000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 33 -t biffq'
+Got 12.777000 Mpps
+Got 12.864000 Mpps
+Got 12.873000 Mpps
+Got 12.890000 Mpps
+Got 12.564000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t lq'
+Got 8.724000 Mpps
+Got 8.593000 Mpps
+Got 8.745000 Mpps
+Got 8.721000 Mpps
+Got 8.739000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t llq'
+Got 9.791000 Mpps
+Got 9.790000 Mpps
+Got 9.752000 Mpps
+Got 9.805000 Mpps
+Got 9.836000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t blq'
+Got 11.052000 Mpps
+Got 11.306000 Mpps
+Got 11.226000 Mpps
+Got 11.405000 Mpps
+Got 11.531000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t ffq'
+Got 8.779000 Mpps
+Got 8.699000 Mpps
+Got 8.484000 Mpps
+Got 8.633000 Mpps
+Got 8.757000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t iffq'
+Got 12.240000 Mpps
+Got 12.088000 Mpps
+Got 12.299000 Mpps
+Got 11.874000 Mpps
+Got 12.253000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 34 -t biffq'
+Got 12.762000 Mpps
+Got 12.533000 Mpps
+Got 12.407000 Mpps
+Got 12.583000 Mpps
+Got 12.804000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t lq'
+Got 8.755000 Mpps
+Got 8.748000 Mpps
+Got 8.704000 Mpps
+Got 8.787000 Mpps
+Got 8.791000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t llq'
+Got 9.804000 Mpps
+Got 9.856000 Mpps
+Got 9.901000 Mpps
+Got 10.031000 Mpps
+Got 9.928000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t blq'
+Got 11.228000 Mpps
+Got 11.613000 Mpps
+Got 11.103000 Mpps
+Got 11.342000 Mpps
+Got 11.274000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t ffq'
+Got 8.965000 Mpps
+Got 8.850000 Mpps
+Got 8.777000 Mpps
+Got 8.931000 Mpps
+Got 8.656000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t iffq'
+Got 12.011000 Mpps
+Got 12.223000 Mpps
+Got 12.193000 Mpps
+Got 12.075000 Mpps
+Got 12.001000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 35 -t biffq'
+Got 12.924000 Mpps
+Got 12.788000 Mpps
+Got 12.750000 Mpps
+Got 12.838000 Mpps
+Got 12.906000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t lq'
+Got 8.544000 Mpps
+Got 8.650000 Mpps
+Got 8.748000 Mpps
+Got 8.779000 Mpps
+Got 8.614000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t llq'
+Got 9.827000 Mpps
+Got 9.734000 Mpps
+Got 9.793000 Mpps
+Got 9.884000 Mpps
+Got 9.783000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t blq'
+Got 11.434000 Mpps
+Got 11.478000 Mpps
+Got 11.246000 Mpps
+Got 11.125000 Mpps
+Got 11.285000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t ffq'
+Got 8.730000 Mpps
+Got 8.890000 Mpps
+Got 8.605000 Mpps
+Got 8.740000 Mpps
+Got 8.728000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t iffq'
+Got 11.811000 Mpps
+Got 11.831000 Mpps
+Got 12.017000 Mpps
+Got 11.951000 Mpps
+Got 12.001000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 36 -t biffq'
+Got 12.722000 Mpps
+Got 12.803000 Mpps
+Got 12.882000 Mpps
+Got 12.802000 Mpps
+Got 12.525000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t lq'
+Got 8.757000 Mpps
+Got 8.751000 Mpps
+Got 8.751000 Mpps
+Got 8.730000 Mpps
+Got 8.772000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t llq'
+Got 9.923000 Mpps
+Got 9.894000 Mpps
+Got 10.009000 Mpps
+Got 9.868000 Mpps
+Got 9.844000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t blq'
+Got 11.046000 Mpps
+Got 11.466000 Mpps
+Got 11.347000 Mpps
+Got 11.356000 Mpps
+Got 11.295000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t ffq'
+Got 8.711000 Mpps
+Got 8.737000 Mpps
+Got 8.891000 Mpps
+Got 9.704000 Mpps
+Got 9.989000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t iffq'
+Got 12.052000 Mpps
+Got 11.995000 Mpps
+Got 12.126000 Mpps
+Got 12.133000 Mpps
+Got 12.224000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 37 -t biffq'
+Got 12.679000 Mpps
+Got 12.418000 Mpps
+Got 13.083000 Mpps
+Got 12.879000 Mpps
+Got 12.398000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t lq'
+Got 8.672000 Mpps
+Got 8.689000 Mpps
+Got 8.675000 Mpps
+Got 8.706000 Mpps
+Got 8.649000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t llq'
+Got 9.796000 Mpps
+Got 9.792000 Mpps
+Got 9.686000 Mpps
+Got 9.693000 Mpps
+Got 9.696000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t blq'
+Got 10.867000 Mpps
+Got 10.988000 Mpps
+Got 11.315000 Mpps
+Got 11.161000 Mpps
+Got 11.097000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t ffq'
+Got 8.752000 Mpps
+Got 8.666000 Mpps
+Got 8.781000 Mpps
+Got 8.739000 Mpps
+Got 8.605000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t iffq'
+Got 11.648000 Mpps
+Got 11.712000 Mpps
+Got 11.885000 Mpps
+Got 11.688000 Mpps
+Got 11.802000 Mpps
+Running './vswitch -p -x 20 -D 10 -l 128 -b 8 -b 8 -n 38 -t biffq'
+Got 12.775000 Mpps
+Got 12.343000 Mpps
+Got 12.778000 Mpps
+Got 12.562000 Mpps
+Got 12.454000 Mpps
+./run-vswitch.py -v -l 128 --duration 10 --max-trials 5 -x 20 --Bv 8 --Bc 8 -n 38
        N       Bv       Bc     lq.T    llq.T    blq.T    ffq.T   iffq.T  biffq.T 
-       1        8        8     3.94     4.29     6.13     5.14     5.25     4.99 
-       2        8        8     4.15     4.32     4.59     4.40     4.36     4.35 
-       3        8        8     4.62     4.89     5.41     4.80     5.15     5.40 
-       4        8        8     5.68     5.79     6.53     5.85     5.82     5.88 
-       5        8        8     6.06     6.20     7.27     6.10     6.08     6.20 
-       6        8        8     6.44     6.51     7.85     6.54     6.40     6.55 
-       7        8        8     6.56     6.88     8.46     6.87     6.81     6.85 
-       8        8        8     6.78     6.97     8.84     6.77     6.88     7.07 
-       9        8        8     8.76     8.89     9.21     8.34     7.87     8.06 
-      10        8        8     8.81     8.89     9.15     8.28    11.07    11.37 
-      11        8        8     8.68     8.70     9.07     8.13    11.37    11.00 
-      12        8        8     8.74     8.92     9.19     8.19    11.31    11.01 
-      13        8        8     8.80     8.79     9.25     8.05    10.85    10.92 
-      14        8        8     8.88     8.90     9.57     8.34    11.03    11.41 
-      15        8        8     8.76     9.13     9.58     8.41    10.92    11.91 
-      16        8        8     8.67     8.97     9.80     8.39    11.23    12.93 
-      17        8        8     9.11     9.53    10.09     8.94    11.65    13.40 
-      18        8        8     9.21     9.82    10.38     9.23    12.04    13.80 
-      19        8        8     9.30     9.79    10.41     9.18    12.34    13.78 
-      20        8        8     9.23     9.80    10.47     9.19    12.33    13.28 
-      21        8        8     9.42    10.01    11.27     8.11    12.73    13.49 
-      22        8        8     8.63     9.52    11.12     8.14    12.45    13.30 
-      23        8        8     9.35    10.18    10.96     9.51    12.84    13.50 
-      24        8        8     8.74     9.49    11.32     8.12    12.66    13.51 
-      25        8        8     8.81     9.79    11.38     8.39    12.93    13.60 
-      26        8        8     8.66     9.67    11.53     8.39    12.72    13.49 
-      27        8        8     8.79     9.90    11.63     8.49    12.61    13.42 
-      28        8        8     8.67     9.67    11.43     8.48    12.52    13.29 
-      29        8        8     8.70     9.90    11.59     8.67    12.51    13.26 
-      30        8        8     8.63     9.71    11.41     8.63    12.55    13.26 
+       1        8        8     3.79     4.13     6.08     5.13     5.17     5.04 
+       2        8        8     4.01     4.17     4.80     4.70     4.68     4.65 
+       3        8        8     5.10     5.36     5.84     5.34     5.30     5.42 
+       4        8        8     5.75     5.79     6.56     5.87     5.83     5.88 
+       5        8        8     6.07     6.28     7.31     6.27     6.13     6.29 
+       6        8        8     6.50     6.62     7.91     6.59     6.50     6.62 
+       7        8        8     6.54     6.88     8.37     6.74     6.70     7.00 
+       8        8        8     6.79     6.90     8.89     6.80     6.85     7.13 
+       9        8        8     8.42     8.81     9.22     8.35     8.02     8.18 
+      10        8        8     8.93     9.02     9.20     8.52    11.08    11.38 
+      11        8        8     8.72     8.72     9.13     8.06    11.22    11.05 
+      12        8        8     8.78     8.78     8.97     8.05    11.00    10.92 
+      13        8        8     8.70     8.92     9.22     8.12    11.01    10.95 
+      14        8        8     8.84     8.96     9.37     8.30    11.02    11.36 
+      15        8        8     8.82     9.02     9.66     8.36    10.53    11.68 
+      16        8        8     8.62     8.83     9.60     8.30    11.16    12.93 
+      17        8        8     9.07     9.51     9.90     8.90    11.48    12.96 
+      18        8        8     9.19     9.75    10.22     9.26    11.90    13.79 
+      19        8        8     9.20     9.79    10.40     9.14    12.28    13.57 
+      20        8        8     9.24     9.72    10.51     9.13    12.37    13.49 
+      21        8        8     9.35     9.88    10.82     9.42    12.73    13.71 
+      22        8        8     9.33     9.91    10.75     9.32    12.66    13.25 
+      23        8        8     9.51    10.13    11.08     9.57    12.86    13.62 
+      24        8        8     8.91     9.41    11.10     8.16    12.37    13.11 
+      25        8        8     8.80     9.75    11.32     8.48    12.59    13.33 
+      26        8        8     8.69     9.62    11.38     8.33    12.34    13.15 
+      27        8        8     8.76     9.94    11.44     8.57    12.50    13.27 
+      28        8        8     8.65     9.72    11.24     8.46    12.28    12.94 
+      29        8        8     8.79     9.81    11.45     8.63    12.33    12.84 
+      30        8        8     8.64     9.71    11.24     8.63    12.16    12.98 
+      31        8        8     8.72     9.87    11.40     8.57    12.16    12.92 
+      32        8        8     8.55     9.65    11.30     8.70    12.11    12.74 
+      33        8        8     8.73     9.79    11.45     8.85    12.20    12.79 
+      34        8        8     8.70     9.79    11.30     8.67    12.15    12.62 
+      35        8        8     8.76     9.90    11.31     8.84    12.10    12.84 
+      36        8        8     8.67     9.80    11.31     8.74    11.92    12.75 
+      37        8        8     8.75     9.91    11.30     9.21    12.11    12.69 
+      38        8        8     8.68     9.73    11.09     8.71    11.75    12.58 
