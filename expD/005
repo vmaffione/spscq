@@ -1,27 +1,3 @@
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t lq -T'
-Got 1.115000 Mpps, 9.318000 Pmpp, 9.242000 Cmpp
-Got 1.123000 Mpps, 9.303000 Pmpp, 9.214000 Cmpp
-Got 1.118000 Mpps, 9.239000 Pmpp, 9.111000 Cmpp
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t llq -T'
-Got 1.264000 Mpps, 5.936000 Pmpp, 5.751000 Cmpp
-Got 1.268000 Mpps, 5.696000 Pmpp, 5.514000 Cmpp
-Got 1.267000 Mpps, 5.702000 Pmpp, 5.579000 Cmpp
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t blq -T'
-Got 1.049000 Mpps, 5.084000 Pmpp, 4.810000 Cmpp
-Got 1.045000 Mpps, 4.824000 Pmpp, 4.794000 Cmpp
-Got 1.040000 Mpps, 4.632000 Pmpp, 4.777000 Cmpp
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t ffq -T'
-Got 1.518000 Mpps, 3.613000 Pmpp, 3.570000 Cmpp
-Got 1.510000 Mpps, 3.652000 Pmpp, 3.667000 Cmpp
-Got 2.108000 Mpps, 2.972000 Pmpp, 2.954000 Cmpp
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t iffq -T'
-Got 1.731000 Mpps, 2.430000 Pmpp, 2.417000 Cmpp
-Got 1.741000 Mpps, 2.437000 Pmpp, 2.394000 Cmpp
-Got 2.015000 Mpps, 2.507000 Pmpp, 2.460000 Cmpp
-Running './spscq -pwH -D 5 -l 256 -L 32 -b 32 -b 32 -P 0 -C 0 -t biffq -T'
-Got 1.650000 Mpps, 2.712000 Pmpp, 2.774000 Cmpp
-Got 1.646000 Mpps, 2.753000 Pmpp, 2.685000 Cmpp
-Got 1.656000 Mpps, 2.746000 Pmpp, 2.674000 Cmpp
 ./run-tests.py -vw -H --duration 5 --max-trials 3 --exp-type latency --spin-min 0 --num-points 1
   P   C     lq.T    llq.T    blq.T    ffq.T   iffq.T  biffq.T     lq.P    llq.P    blq.P    ffq.P   iffq.P  biffq.P     lq.C    llq.C    blq.C    ffq.C   iffq.C  biffq.C 
   0   0     1.12     1.27     1.04     1.71     1.83     1.65     9.29     5.78     4.85     3.41     2.46     2.74     9.19     5.61     4.79     3.40     2.42     2.71 
