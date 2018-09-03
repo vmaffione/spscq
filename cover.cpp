@@ -79,19 +79,25 @@ roll()
 
             double rate = static_cast<double>(misses) / static_cast<double>(L);
 #if 1
+            /* (1+ceil((b-1)/k))/b */
             double predict =
                 static_cast<double>(b - 1) / static_cast<double>(K);
             predict = std::ceil(predict) + 1.0;
             predict /= b;
 #else
-            double binv = 1.0/static_cast<double>(b);
-            double kinv = 1.0/static_cast<double>(K);
+            /* min{1, 1/b + max{1/b,1/k}} */
+            double binv    = 1.0 / static_cast<double>(b);
+            double kinv    = 1.0 / static_cast<double>(K);
             double predict = binv;
 
             if (binv > kinv) {
                 predict += binv;
             } else {
                 predict += kinv;
+            }
+
+            if (predict > 1) {
+                predict = 1;
             }
 #endif
 
@@ -108,7 +114,8 @@ roll()
         }
     }
 
-    std::printf("Total error = %.2f\n", total_error);
+    std::printf("Total error = %.2f, avg = %.5f\n", total_error,
+                total_error / cases);
 
     return 0;
 }
