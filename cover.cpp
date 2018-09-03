@@ -6,7 +6,6 @@
 int
 covered_cachelines(int first, int b, int L, int K)
 {
-    int ofs   = first % K;
     int fk    = first / K;
     int lines = 0;
 
@@ -15,7 +14,7 @@ covered_cachelines(int first, int b, int L, int K)
         /* Check if any slot in the cache line is covered by the
          * batch. */
         for (int s = k; s < k + K; s++) {
-            if (s >= ofs && s < ofs + b) {
+            if (s >= first && s < first + b) {
                 lines++;
                 break;
             }
@@ -73,11 +72,7 @@ roll()
         int misses = 0;
 
         for (int cur = 0; cur < L; cur += b) {
-            if ((cur % K) != ((cur + b - 1) % K)) {
-                misses += 2;
-            } else {
-                misses += 1;
-            }
+            misses += covered_cachelines(cur, b, L, K);
         }
 
         double predict = static_cast<double>(b) / static_cast<double>(K);
