@@ -1,6 +1,6 @@
 CC=g++
 #CC=clang++
-PROGS=spscq fan vswitch
+PROGS=spscq fan vswitch cover
 CFLAGS=-Wall -Werror -g
 CXXFLAGS=$(CFLAGS) -std=c++11
 CFLAGS+=-O2
@@ -11,6 +11,7 @@ all: $(PROGS)
 spscq: spscq.o mlib.o
 mlib.o: mlib.h
 spscq.o: mlib.h spscq.h
+cover: cover.o
 
 fan: fan.o mlib.o
 	gcc -o fan fan.o mlib.o -lpthread -Wall -Werror -O2 -g
