@@ -65,34 +65,38 @@ roll()
     constexpr int L    = 4096;
     constexpr int Bmax = 64;
     constexpr int K    = 8;
-    int total_error    = 0;
+    double total_error = 0;
+    int cases          = 0;
 
     /* For all the possible batches... */
     for (int b = 1; b <= Bmax; b++) {
-        int misses = 0;
+        for (int ofs = 0; ofs < b; ofs++) {
+            int misses = 0;
 
-        for (int cur = 0; cur < L; cur += b) {
-            misses += covered_cachelines(cur, b, L, K);
-        }
+            for (int cur = ofs; cur < L; cur += b) {
+                misses += covered_cachelines(cur, b, L, K);
+            }
 
-        double rate    = static_cast<double>(misses) / static_cast<double>(L);
-        double predict = static_cast<double>(b - 1) / static_cast<double>(K);
-        predict        = std::ceil(predict) + 1.0;
-        predict /= b;
+            double rate = static_cast<double>(misses) / static_cast<double>(L);
+            double predict =
+                static_cast<double>(b - 1) / static_cast<double>(K);
+            predict = std::ceil(predict) + 1.0;
+            predict /= b;
 
-        int diff = predict - rate;
+            double diff = predict - rate;
+            total_error += std::abs(diff);
+            cases++;
 
-        total_error += std::abs(diff);
-
-        std::printf("B=%03d rate=%.2f predict=%.2f\n", b, rate, predict);
-
-        if (false && diff < 0) {
-            std::printf("Wrong formula\n");
-            return -1;
+            std::printf("B=%03d ofs=%03d rate=%.2f predict=%.2f diff=%.4f\n", b,
+                        ofs, rate, predict, diff);
+            if (diff < -0.01) {
+                std::printf("Wrong upper bound\n");
+                return -1;
+            }
         }
     }
 
-    std::printf("Total error = %d\n", total_error);
+    std::printf("Average error = %.2f\n", total_error / cases);
 
     return 0;
 }
