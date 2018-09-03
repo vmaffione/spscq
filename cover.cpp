@@ -1,9 +1,10 @@
 #include <iostream>
 #include <cstdio>
 #include <cmath>
+#include <unistd.h>
 
 int
-main()
+cover()
 {
     constexpr int Bmax = 256;
     constexpr int K    = 8;
@@ -45,6 +46,84 @@ main()
     }
 
     std::printf("Total error = %d\n", total_error);
+
+    return 0;
+}
+
+int
+roll()
+{
+    constexpr int L    = 4096;
+    constexpr int Bmax = 64;
+    constexpr int K    = 8;
+    int total_error    = 0;
+
+    /* For all the possible batches... */
+    for (int b = 1; b <= Bmax; b++) {
+        int misses = 0;
+
+        for (int cur = 0; cur < L; cur += b) {
+            if ((cur % K) != ((cur + b - 1) % K)) {
+                misses += 2;
+            } else {
+                misses += 1;
+            }
+        }
+
+        double predict = static_cast<double>(b) / static_cast<double>(K);
+        if (b < K) {
+        predict = std::ceil(predict);
+        }
+
+        int diff = static_cast<int>(predict * L) - misses;
+
+        total_error += std::abs(diff);
+
+        std::printf("B=%03d misses=%03d\n (+%d)\n", b, misses, diff);
+
+        if (diff < 0) {
+            std::printf("Wrong formula\n");
+            return -1;
+        }
+    }
+
+    std::printf("Total error = %d\n", total_error);
+
+    return 0;
+}
+
+static void
+usage(const char *progname)
+{
+    std::printf("%s: [-hcr]\n", progname);
+}
+
+int
+main(int argc, char **argv)
+{
+    int opt;
+
+    while ((opt = getopt(argc, argv, "hcr")) != -1) {
+        switch (opt) {
+        case 'h':
+            usage(argv[0]);
+            return 0;
+            break;
+
+        case 'c':
+            return cover();
+            break;
+
+        case 'r':
+            return roll();
+            break;
+
+        default:
+            usage(argv[0]);
+            return 0;
+            break;
+        }
+    }
 
     return 0;
 }
