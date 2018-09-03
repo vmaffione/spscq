@@ -6,7 +6,7 @@
 int
 covered_cachelines(int first, int b, int L, int K)
 {
-    int fk    = first / K;
+    int fk    = (first / K) * K;
     int lines = 0;
 
     /* For all the possible cache lines... */
@@ -75,9 +75,9 @@ roll()
             misses += covered_cachelines(cur, b, L, K);
         }
 
-        double rate = static_cast<double>(misses)/static_cast<double>(L);
-        double predict = static_cast<double>(b-1) / static_cast<double>(K);
-        predict = std::ceil(predict) + 1.0;
+        double rate    = static_cast<double>(misses) / static_cast<double>(L);
+        double predict = static_cast<double>(b - 1) / static_cast<double>(K);
+        predict        = std::ceil(predict) + 1.0;
         predict /= b;
 
         int diff = predict - rate;
