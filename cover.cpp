@@ -75,18 +75,18 @@ roll()
             misses += covered_cachelines(cur, b, L, K);
         }
 
-        double predict = static_cast<double>(b) / static_cast<double>(K);
-        if (b < K) {
-            predict = std::ceil(predict);
-        }
+        double rate = static_cast<double>(misses)/static_cast<double>(L);
+        double predict = static_cast<double>(b-1) / static_cast<double>(K);
+        predict = std::ceil(predict) + 1.0;
+        predict /= b;
 
-        int diff = static_cast<int>(predict * L) - misses;
+        int diff = predict - rate;
 
         total_error += std::abs(diff);
 
-        std::printf("B=%03d misses=%03d\n (+%d)\n", b, misses, diff);
+        std::printf("B=%03d rate=%.2f predict=%.2f\n", b, rate, predict);
 
-        if (diff < 0) {
+        if (false && diff < 0) {
             std::printf("Wrong formula\n");
             return -1;
         }
