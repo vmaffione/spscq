@@ -4,6 +4,28 @@
 #include <unistd.h>
 
 int
+covered_cachelines(int first, int b, int L, int K)
+{
+    int ofs   = first % K;
+    int fk    = first / K;
+    int lines = 0;
+
+    /* For all the possible cache lines... */
+    for (int k = fk; k <= L; k += K) {
+        /* Check if any slot in the cache line is covered by the
+         * batch. */
+        for (int s = k; s < k + K; s++) {
+            if (s >= ofs && s < ofs + b) {
+                lines++;
+                break;
+            }
+        }
+    }
+
+    return lines;
+}
+
+int
 cover()
 {
     constexpr int Bmax = 256;
@@ -14,19 +36,7 @@ cover()
     for (int b = 1; b <= Bmax; b++) {
         /* For all the possible offsets in a cache line... */
         for (int ofs = 0; ofs < K; ofs++) {
-            int lines = 0;
-
-            /* For all the possible cache lilnes... */
-            for (int k = 0; k <= Bmax; k += K) {
-                /* Check if any slot in the cache line is covered by the
-                 * batch. */
-                for (int s = k; s < k + K; s++) {
-                    if (s >= ofs && s < ofs + b) {
-                        lines++;
-                        break;
-                    }
-                }
-            }
+            int lines = covered_cachelines(ofs, b, Bmax, K);
 
             double predict =
                 static_cast<double>(b - 1) / static_cast<double>(K);
@@ -72,7 +82,7 @@ roll()
 
         double predict = static_cast<double>(b) / static_cast<double>(K);
         if (b < K) {
-        predict = std::ceil(predict);
+            predict = std::ceil(predict);
         }
 
         int diff = static_cast<int>(predict * L) - misses;
