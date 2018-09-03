@@ -7,6 +7,7 @@ main()
 {
     constexpr int K    = 8;
     constexpr int Bmax = 256;
+    int total_error    = 0;
 
     /* For all the possible batches... */
     for (int b = 1; b <= Bmax; b++) {
@@ -32,6 +33,8 @@ main()
 
             int diff = static_cast<int>(predict) - lines;
 
+            total_error += std::abs(diff);
+
             std::printf("B=%03d o=%03d lines=%03d (+%d)\n", b, ofs, lines,
                         diff);
             if (diff < 0 || diff > 1) {
@@ -40,6 +43,8 @@ main()
             }
         }
     }
+
+    std::printf("Total error = %d\n", total_error);
 
     return 0;
 }
