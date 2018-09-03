@@ -5,8 +5,8 @@
 int
 main()
 {
-    constexpr int K    = 8;
     constexpr int Bmax = 256;
+    constexpr int K    = 8;
     int total_error    = 0;
 
     /* For all the possible batches... */
