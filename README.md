@@ -27,3 +27,6 @@ Supported queues:
 
 The `spscq.h` header file contains an inline implementation of all the queues
 above, and can be easily used by any C/C++ application.
+
+Scientific paper:
+  https://onlinelibrary.wiley.com/doi/full/10.1002/spe.2675
